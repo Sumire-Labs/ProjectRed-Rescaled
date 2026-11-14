@@ -16,6 +16,7 @@ import com.mojang.realmsclient.gui.ChatFormatting
 import mrtjp.core.item.ItemCore
 import mrtjp.core.vec.{Point, Size}
 import mrtjp.projectred.ProjectRedFabrication
+import mrtjp.projectred.core.CompressedNBT
 import mrtjp.projectred.fabrication.IIOGateTile.*
 import mrtjp.projectred.integration.GateDefinition
 import net.minecraft.client.renderer.GlStateManager.*
@@ -35,6 +36,12 @@ class ItemICBlueprint extends Item //hack to allow first-person map rendering of
 {
     setMaxStackSize(1)
     setCreativeTab(ProjectRedFabrication.tabFabrication)
+
+    override def getNBTShareTag(stack:ItemStack):NBTTagCompound =
+        CompressedNBT.encode(super.getNBTShareTag(stack))
+
+    override def readNBTShareTag(stack:ItemStack, tag:NBTTagCompound):Unit =
+        super.readNBTShareTag(stack,CompressedNBT.decode(tag))
 
     override def addInformation(stack:ItemStack, world:World, tooltip:JList[String], advanced:ITooltipFlag): Unit =
     {
@@ -293,6 +300,12 @@ class ItemICChip extends ItemCore
     setMaxStackSize(1)
     setHasSubtypes(true)
     setCreativeTab(ProjectRedFabrication.tabFabrication)
+
+    override def getNBTShareTag(stack:ItemStack):NBTTagCompound =
+        CompressedNBT.encode(super.getNBTShareTag(stack))
+
+    override def readNBTShareTag(stack:ItemStack, tag:NBTTagCompound):Unit =
+        super.readNBTShareTag(stack,CompressedNBT.decode(tag))
 
     override def addInformation(stack:ItemStack, world:World, tooltip:JList[String], advanced:ITooltipFlag): Unit =
     {

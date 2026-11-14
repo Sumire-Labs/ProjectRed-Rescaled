@@ -13,6 +13,7 @@ import codechicken.lib.vec.*
 import mrtjp.core.math.MathLib
 import mrtjp.projectred.fabrication.IIOGateTile.*
 import mrtjp.projectred.integration
+import mrtjp.projectred.core.CompressedNBT
 import mrtjp.projectred.integration.*
 import mrtjp.projectred.transmission.BundledCommons.*
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats
@@ -46,13 +47,13 @@ class ICGatePart extends RedstoneGatePart with TBundledGatePart with TComplexGat
     override def writeDesc(packet:MCDataOutput): Unit =
     {
         super.writeDesc(packet)
-        packet.writeNBTTagCompound(itemTag)
+        packet.writeNBTTagCompound(CompressedNBT.encode(itemTag))
     }
 
     override def readDesc(packet:MCDataInput): Unit =
     {
         super.readDesc(packet)
-        itemTag = packet.readNBTTagCompound()
+        itemTag = CompressedNBT.decode(packet.readNBTTagCompound())
     }
 
     override def preparePlacement(player:EntityPlayer, pos:BlockPos, side:Int, meta:Int): Unit =

@@ -61,6 +61,12 @@ and validated dimensions instead of client-supplied tile/simulation descriptions
 Matching client/server builds are required for this changed internal packet format.
 Names are bounded and edits/renames mark the tile dirty.
 
+Large IC item share tags and multipart descriptions use a compressed transport
+envelope. The receiver restores the full tag before item or circuit code sees it.
+Item/world saves retain the original NBT format, and small/legacy tags still read
+directly. Decoding is bounded to one MiB compressed, four MiB expanded and sixteen MiB
+of NBT allocation accounting. Client and server must both support the envelope.
+
 The barrel's overridden extraction preserves its hidden item; insertion stops if no
 items are accepted. These need ProjectRed-side handling even though the library's
 base wrappers already contain fixes.

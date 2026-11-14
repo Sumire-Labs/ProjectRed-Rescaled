@@ -15,13 +15,14 @@ import codechicken.lib.vec.*
 import codechicken.multipart.{MultiPartRegistry, TItemMultiPart, TMultiPart}
 import mrtjp.core.item.{ItemCore, ItemDefinition}
 import mrtjp.projectred.ProjectRedIntegration
-import mrtjp.projectred.core.PRLib
+import mrtjp.projectred.core.{CompressedNBT, PRLib}
 import net.minecraft.block.SoundType
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms.TransformType
 import net.minecraft.client.util.ITooltipFlag
 import net.minecraft.creativetab.CreativeTabs
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.item.{Item, ItemStack}
+import net.minecraft.nbt.NBTTagCompound
 import net.minecraft.util.{EnumFacing, NonNullList, ResourceLocation}
 import net.minecraft.util.math.BlockPos
 import net.minecraft.world.World
@@ -33,6 +34,17 @@ class ItemPartGate extends ItemCore with TItemMultiPart
     setHasSubtypes(true)
     setCreativeTab(ProjectRedIntegration.tabIntegration)
     var infoBuilderFunc = {(stack:ItemStack, l:JList[String]) => }
+
+    override def getNBTShareTag(stack:ItemStack):NBTTagCompound = {
+        val tag = super.getNBTShareTag(stack)
+        if stack.getItemDamage == GateDefinition.ICGate.meta then CompressedNBT.encode(tag)
+        else tag
+    }
+
+    override def readNBTShareTag(stack:ItemStack, tag:NBTTagCompound):Unit = {
+        super.readNBTShareTag(stack,if stack.getItemDamage == GateDefinition.ICGate.meta then
+            CompressedNBT.decode(tag) else tag)
+    }
 
     def newPart(item:ItemStack, player:EntityPlayer, world:World, pos:BlockPos, side:Int, vhit:Vector3):TMultiPart =
     {

@@ -40,7 +40,7 @@ object ClientSmokeChecks {
             assert(mrtjp.projectred.fabrication.RenderICPrinterItem.world == null &&
                 mrtjp.projectred.fabrication.RenderICPrinterItem.entity == null, "IC Printer renderer retained a client world or entity")
             Files.writeString(Path.of(System.getProperty("projectred.client.result")), "PASS\n")
-            println("PROJECTRED_CLIENT_PASS: "+rendered.size+" item variants rendered; IC Workbench opened/resized; Project Bench opened, crafted and closed out of range through the server")
+            println("PROJECTRED_CLIENT_PASS: "+rendered.size+" item variants rendered; IC Workbench opened/resized; Project Bench crafted/closed out of range; large IC inventory/GUI/placement synchronized")
         } finally mc.shutdown()
     }
     @SubscribeEvent def tick(event:ClientTickEvent):Unit = {
@@ -157,9 +157,13 @@ object ClientSmokeChecks {
                     ticks += 1
                     if serverAction.isDone then {
                         serverAction.get()
-                        if ticks >= 10 && !mc.currentScreen.isInstanceOf[mrtjp.projectred.expansion.GuiProjectBench] then finish()
+                        if ticks >= 10 && !mc.currentScreen.isInstanceOf[mrtjp.projectred.expansion.GuiProjectBench] then {
+                            LargeICClientChecks.start()
+                            state = 7
+                        }
                         else assert(ticks < 100, "Project Bench GUI remained open after leaving its range")
                     }
+                case 7 => if LargeICClientChecks.tick() then finish()
                 case _ =>
             }
         } catch { case error:Throwable => failure = error; finish() }

@@ -17,6 +17,7 @@ class ServerSmokeMod {
             RegressionChecks.run(server.getWorld(0))
             ICScheduleChecks.run(server.getWorld(0))
             ICWireNetChecks.run()
+            LargeICPacketChecks.run(server.getWorld(0))
             CraftingRemainderChecks.run(server.getWorld(0))
             BundledSignalChecks.run()
             BundledMaskChecks.run(server.getWorld(0))

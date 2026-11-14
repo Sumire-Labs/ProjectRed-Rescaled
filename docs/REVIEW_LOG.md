@@ -216,3 +216,29 @@ in its Counter starting-value setting. A regression test reproduced a start valu
 against that validated maximum, preserving a start value of 1. The test also checks
 save/recompile notifications, the 32767 upper bound and settings saved through NBT.
 Development and installed-distribution server verification passed.
+
+## Large IC transport limits
+
+Following upstream #1257/#1316, a 64x64 fixture with 3,844 Counter tiles exposed a
+different size failure: a 426,829-byte IC item exceeded Minecraft's two-MiB NBT
+allocation accounting limit when read from a PacketBuffer. The editor description
+round-trip passed at 103,838 raw bytes; this does not reproduce the original report's
+32767-byte failure.
+
+Large Blueprint, Printed IC and gate item share tags now use a compressed transport
+envelope. Multipart gate descriptions use the same codec. Receivers restore the
+original tag, and item/world saves retain their existing compound format. Small and
+legacy uncompressed tags are accepted directly. Compression and expansion have
+explicit bounds, including separate NBT allocation accounting for the decoder.
+
+The gate fixture now uses 73,406 bytes in transit. Regression checks cover all three
+item types, preservation of source tags, complete tile/state round-trips, multipart
+descriptions and saved-gate reloads. Invalid gzip data and expansion beyond four MiB
+are rejected. Development and installed-distribution server checks passed.
+
+The graphical client also received the large IC in its inventory, opened its actual
+server-side Workbench, rendered the circuit, placed it through the normal right-click
+path and received its multipart description. The server confirmed all 3,844 circuit
+tiles after placement. The 472-item gallery and existing GUI checks passed alongside it.
+
+The original #1257 save was not available. Its exact failure remains unconfirmed.

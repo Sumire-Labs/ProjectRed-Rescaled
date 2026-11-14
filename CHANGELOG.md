@@ -32,3 +32,4 @@
 - Finish Synchronizer pulses after reset and retain falling-edge feedback inputs.
 - Preserve boundary-tick AND Cell/Stacking Latch pulses and migrate legacy input snapshots.
 - Clamp IC Counter starting values to the validated maximum when editing its settings.
+- Compress large IC data in transit so blueprints, printed chips and placed gates fit the NBT network limits.
