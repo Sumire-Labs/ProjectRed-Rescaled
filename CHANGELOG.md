@@ -24,3 +24,4 @@
 - Release temporary IC Printer renderer world/entity references.
 - Execute IC scheduled events at their deadlines and preserve callback rescheduling.
 - Close tile inventory windows when the player leaves range or the tile is removed.
+- Avoid server stalls when compiling dense IC wire networks (upstream #1747).

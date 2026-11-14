@@ -44,3 +44,17 @@ The client check now opens an actual server-side Project Bench, waits for block 
 verifies that its GUI reaches the client, then teleports the player away and checks
 that the server closes the window. That client verification passed alongside all
 472 item variants and the IC Workbench render checks.
+
+## Dense IC wire search — upstream #1747
+
+The reported 32x32 dense blueprint was reproduced with 900 wire tiles. The original
+channel search spent over 60 seconds in `List.contains` and triggered the server
+watchdog. Its repeated pending-list scans/copies and per-direction duplicate states
+are replaced with a queue and a set of discovered position/colour/propagation-group
+states. Every port in a group is still recorded, and crossed groups remain distinct.
+
+The same channel-search fixture takes about 45–63 ms in development after the repair.
+Checks cover separated white/black bundled channels, crossed propagation groups,
+agreement between topology/channel searches, all 3,600 dense-network ports, complete
+input/output simulation and the same simulation after NBT save/reload. Timings describe
+this fixture, not a general performance guarantee.
