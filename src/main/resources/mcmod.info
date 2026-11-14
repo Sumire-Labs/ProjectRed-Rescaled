@@ -1,0 +1,202 @@
+[
+  {
+    "modid": "projectred-core",
+    "name": "ProjectRed Rescaled Core",
+    "description": "Redstone. The way it was meant to be.",
+    "version": "@{MOD_VERSION}",
+    "mcversion": "1.12.2",
+    "url": "https://github.com/Sumire-Labs/ProjectRed-Rescaled",
+    "authorList": [
+      "MrTJP",
+      "ChickenBones",
+      "covers1624"
+    ],
+    "credits": "Eloraam, GitHub contributors",
+    "logoFile": "",
+    "screenshots": [],
+    "requiredMods": [
+      "cleanroom@[@{CLEANROOM_VERSION},)",
+      "scalar@[3.10.0,)",
+      "mrtjpcore@[@{TJPCORE_VERSION},)",
+      "codechickenlib@[@{CCL_VERSION},)",
+      "forgemultipartcbe@[@{FMP_VERSION},)"
+    ],
+    "dependencies": [
+      "cleanroom@[@{CLEANROOM_VERSION},)",
+      "scalar@[3.10.0,)",
+      "mrtjpcore@[@{TJPCORE_VERSION},)",
+      "codechickenlib@[@{CCL_VERSION},)",
+      "forgemultipartcbe@[@{FMP_VERSION},)"
+    ],
+    "dependants": [
+      "projectred-transmission",
+      "projectred-integration",
+      "projectred-fabrication",
+      "projectred-illumination",
+      "projectred-expansion",
+      "projectred-transportation",
+      "projectred-exploration",
+      "projectred-compatibility"
+    ],
+    "useDependencyInformation": true
+  },
+  {
+    "modid": "projectred-compat",
+    "name": "ProjectRed Compatibility",
+    "parent": "projectred-core",
+    "version": "@{MOD_VERSION}",
+    "mcversion": "1.12.2",
+    "requiredMods": [
+      "projectred-core@[@{MOD_VERSION},]"
+    ],
+    "dependencies": [
+      "projectred-core@[@{MOD_VERSION},]",
+      "projectred-transmission@[@{MOD_VERSION},]",
+      "projectred-exploration@[@{MOD_VERSION},]",
+      "projectred-transportation@[@{MOD_VERSION},]",
+      "TConstruct",
+      "ThermalExpansion",
+      "ComputerCraft"
+    ],
+    "dependants": [],
+    "useDependencyInformation": true,
+    "url": "https://github.com/Sumire-Labs/ProjectRed-Rescaled"
+  },
+  {
+    "modid": "projectred-fabrication",
+    "name": "ProjectRed Fabrication",
+    "parent": "projectred-core",
+    "version": "@{MOD_VERSION}",
+    "mcversion": "1.12.2",
+    "requiredMods": [
+      "projectred-core@[@{MOD_VERSION},]",
+      "projectred-integration@[@{MOD_VERSION},]",
+      "projectred-transmission@[@{MOD_VERSION},]"
+    ],
+    "dependencies": [
+      "projectred-core@[@{MOD_VERSION},]",
+      "projectred-integration@[@{MOD_VERSION},]",
+      "projectred-transmission@[@{MOD_VERSION},]"
+    ],
+    "dependants": [],
+    "useDependencyInformation": true,
+    "url": "https://github.com/Sumire-Labs/ProjectRed-Rescaled"
+  },
+  {
+    "modid": "projectred-transmission",
+    "name": "ProjectRed Transmission",
+    "parent": "projectred-core",
+    "version": "@{MOD_VERSION}",
+    "mcversion": "1.12.2",
+    "requiredMods": [
+      "projectred-core@[@{MOD_VERSION},]"
+    ],
+    "dependencies": [
+      "projectred-core@[@{MOD_VERSION},]"
+    ],
+    "dependants": [
+      "projectred-expansion",
+      "projectred-fabrication"
+    ],
+    "useDependencyInformation": true,
+    "url": "https://github.com/Sumire-Labs/ProjectRed-Rescaled"
+  },
+  {
+    "modid": "projectred-integration",
+    "name": "ProjectRed Integration",
+    "parent": "projectred-core",
+    "version": "@{MOD_VERSION}",
+    "mcversion": "1.12.2",
+    "requiredMods": [
+      "projectred-core@[@{MOD_VERSION},]"
+    ],
+    "dependencies": [
+      "projectred-core@[@{MOD_VERSION},]"
+    ],
+    "dependants": [
+      "projectred-fabrication"
+    ],
+    "useDependencyInformation": true,
+    "url": "https://github.com/Sumire-Labs/ProjectRed-Rescaled"
+  },
+  {
+    "modid": "projectred-illumination",
+    "name": "ProjectRed Illumination",
+    "parent": "projectred-core",
+    "version": "@{MOD_VERSION}",
+    "mcversion": "1.12.2",
+    "requiredMods": [
+      "projectred-core@[@{MOD_VERSION},]"
+    ],
+    "dependencies": [
+      "projectred-core@[@{MOD_VERSION},]"
+    ],
+    "dependants": [],
+    "useDependencyInformation": true,
+    "url": "https://github.com/Sumire-Labs/ProjectRed-Rescaled"
+  },
+  {
+    "modid": "projectred-expansion",
+    "name": "ProjectRed Expansion",
+    "parent": "projectred-core",
+    "version": "@{MOD_VERSION}",
+    "mcversion": "1.12.2",
+    "requiredMods": [
+      "projectred-core@[@{MOD_VERSION},]"
+    ],
+    "dependencies": [
+      "projectred-core@[@{MOD_VERSION},]"
+    ],
+    "dependants": [],
+    "useDependencyInformation": true,
+    "url": "https://github.com/Sumire-Labs/ProjectRed-Rescaled"
+  },
+  {
+    "modid": "projectred-transportation",
+    "name": "ProjectRed Transportation",
+    "parent": "projectred-core",
+    "version": "@{MOD_VERSION}",
+    "mcversion": "1.12.2",
+    "requiredMods": [
+      "projectred-core@[@{MOD_VERSION},]"
+    ],
+    "dependencies": [
+      "projectred-core@[@{MOD_VERSION},]"
+    ],
+    "dependants": [],
+    "useDependencyInformation": true,
+    "url": "https://github.com/Sumire-Labs/ProjectRed-Rescaled"
+  },
+  {
+    "modid": "projectred-relocation",
+    "name": "ProjectRed Relocation",
+    "parent": "projectred-core",
+    "version": "@{MOD_VERSION}",
+    "mcversion": "1.12.2",
+    "requiredMods": [
+      "projectred-core@[@{MOD_VERSION},]"
+    ],
+    "dependencies": [
+      "projectred-core@[@{MOD_VERSION},]"
+    ],
+    "dependants": [],
+    "useDependencyInformation": true,
+    "url": "https://github.com/Sumire-Labs/ProjectRed-Rescaled"
+  },
+  {
+    "modid": "projectred-exploration",
+    "name": "ProjectRed Exploration",
+    "parent": "projectred-core",
+    "version": "@{MOD_VERSION}",
+    "mcversion": "1.12.2",
+    "requiredMods": [
+      "projectred-core@[@{MOD_VERSION},]"
+    ],
+    "dependencies": [
+      "projectred-core@[@{MOD_VERSION},]"
+    ],
+    "dependants": [],
+    "useDependencyInformation": true,
+    "url": "https://github.com/Sumire-Labs/ProjectRed-Rescaled"
+  }
+]

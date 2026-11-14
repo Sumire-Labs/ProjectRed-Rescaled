@@ -1,0 +1,33 @@
+package mrtjp.projectred
+
+import mrtjp.projectred.integration.{GateDefinition, IntegrationProxy, ItemPartGate}
+import net.minecraft.creativetab.CreativeTabs
+import net.minecraftforge.fml.common.Mod
+import net.minecraftforge.fml.common.event.{FMLInitializationEvent, FMLPostInitializationEvent, FMLPreInitializationEvent}
+
+@Mod(version = mrtjp.projectred.core.BuildInfo.VERSION, modid = "projectred-integration", useMetadata = true, modLanguage = "scala")
+object ProjectRedIntegration
+{
+    /** Multipart items **/
+    var itemPartGate:ItemPartGate = scala.compiletime.uninitialized
+
+    val tabIntegration = new CreativeTabs("projectred.integration")
+    {
+        override def createIcon = GateDefinition.OR.makeStack
+    }
+
+    @Mod.EventHandler
+    def preInit(event: FMLPreInitializationEvent): Unit = {
+        IntegrationProxy.preinit()
+    }
+
+    @Mod.EventHandler
+    def init(event: FMLInitializationEvent): Unit = {
+        IntegrationProxy.init()
+    }
+
+    @Mod.EventHandler
+    def postInit(event: FMLPostInitializationEvent): Unit = {
+        IntegrationProxy.postinit()
+    }
+}

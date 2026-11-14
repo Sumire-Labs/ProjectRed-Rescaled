@@ -1,0 +1,170 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing version tag to release
+        type: string
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require a version tag
+        id: target
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          if [[ ! "$RELEASE_TAG" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo 'Supply a version tag, for example 3.0.0.' >&2
+            exit 1
+          fi
+          echo "tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          ref: refs/tags/${{ steps.target.outputs.tag }}
+          persist-credentials: false
+      - name: Allow rebuilding tags created on Windows
+        run: |
+          git config core.filemode false
+          chmod +x gradlew
+      - uses: actions/setup-java@v6.2.0
+        with:
+          java-version: '25'
+          distribution: temurin
+      - uses: gradle/actions/setup-gradle@v6.4.1
+      - name: Read release configuration
+        id: release
+        env:
+          RELEASE_TAG: ${{ steps.target.outputs.tag }}
+        run: |
+          info=$(./gradlew -q --console=plain printReleaseInfo)
+          version=$(jq -r .version <<< "$info")
+          if [[ "$version" != "${RELEASE_TAG#v}" ]]; then
+            echo "Version $version does not match tag $RELEASE_TAG." >&2
+            exit 1
+          fi
+          echo "version=$(jq -r .version <<< "$info")" >> "$GITHUB_OUTPUT"
+          echo "type=$(jq -r .type <<< "$info")" >> "$GITHUB_OUTPUT"
+          echo "maven=$(jq -r .maven <<< "$info")" >> "$GITHUB_OUTPUT"
+          echo "curseforge=$(jq -r .curseforge <<< "$info")" >> "$GITHUB_OUTPUT"
+          echo "modrinth=$(jq -r .modrinth <<< "$info")" >> "$GITHUB_OUTPUT"
+      - name: Check publication credentials
+        env:
+          PUBLISH_MAVEN: ${{ steps.release.outputs.maven }}
+          PUBLISH_CURSEFORGE: ${{ steps.release.outputs.curseforge }}
+          PUBLISH_MODRINTH: ${{ steps.release.outputs.modrinth }}
+          MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+        run: |
+          if [[ "$PUBLISH_MAVEN" == true && ( -z "$MAVEN_USERNAME" || -z "$MAVEN_PASSWORD" ) ]]; then
+            echo 'Maven enabled: set MAVEN_USERNAME and MAVEN_PASSWORD secrets.' >&2
+            exit 1
+          fi
+          if [[ "$PUBLISH_CURSEFORGE" == true && -z "$CURSEFORGE_TOKEN" ]]; then
+            echo 'CurseForge ID configured: set CURSEFORGE_TOKEN.' >&2
+            exit 1
+          fi
+          if [[ "$PUBLISH_MODRINTH" == true && -z "$MODRINTH_TOKEN" ]]; then
+            echo 'Modrinth ID configured: set MODRINTH_TOKEN.' >&2
+            exit 1
+          fi
+      - name: Prepare release notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.target.outputs.tag }}
+        run: |
+          if [[ -f CHANGELOG.md ]]; then
+            awk -v tag="$TAG" '
+              BEGIN { version = tag; sub(/^v/, "", version) }
+              NR == 1 { sub(/^\357\273\277/, "") }
+              { sub(/\r$/, "") }
+              # Ignore headings inside fenced code blocks.
+              {
+                if (match($0, /^ {0,3}(`{3,}|~{3,})/)) {
+                  marker = substr($0, RSTART, RLENGTH)
+                  sub(/^ +/, "", marker)
+                  if (fence == "") {
+                    fence = marker
+                  } else if (index(marker, fence) == 1 && substr($0, RLENGTH + 1) ~ /^[[:space:]]*$/) {
+                    fence = ""
+                  }
+                } else if (fence == "" && /^ {0,3}#{1,2}[ \t]+[^ \t]/) {
+                  heading = $0
+                  sub(/^ {0,3}#{1,2}[ \t]+/, "", heading)
+                  split(heading, words, /[[:space:]]+/)
+                  label = words[1]
+                  if (label ~ /^\[.*\]$/) label = substr(label, 2, length(label) - 2)
+                  sub(/^v/, "", label)
+                  active = (label == version)
+                  if (active) sections++
+                  next
+                }
+                if (active && $0 !~ /^ {0,3}\[[^]]+\]:[ \t]*/) notes = notes $0 "\n"
+              }
+              END {
+                if (sections != 1 || notes !~ /[^[:space:]]/) {
+                  print "CHANGELOG.md must have one nonempty section for tag " tag > "/dev/stderr"
+                  exit 1
+                }
+                sub(/^\n+/, "", notes)
+                sub(/\n+$/, "", notes)
+                print notes
+              }
+            ' CHANGELOG.md > RELEASE_NOTES.md
+          else
+            gh api --method POST "repos/$GITHUB_REPOSITORY/releases/generate-notes" \
+              -f tag_name="$TAG" --jq .body > RELEASE_NOTES.md
+          fi
+      - name: Build
+        run: ./gradlew clean :build --console=plain
+      - name: Verify dedicated server
+        timeout-minutes: 5
+        run: ./gradlew :runServer -Psmoke_test=true --no-configuration-cache --console=plain
+      - name: Verify installed distribution
+        timeout-minutes: 10
+        run: pwsh -File .github/scripts/production-smoke.ps1
+      - name: Publish Maven artifacts
+        if: steps.release.outputs.maven == 'true'
+        env:
+          MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+        run: ./gradlew publish --console=plain
+      - name: Publish Mods
+        if: steps.release.outputs.curseforge == 'true' || steps.release.outputs.modrinth == 'true'
+        env:
+          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+          CHANGELOG_FILE: RELEASE_NOTES.md
+        run: ./gradlew publishMods --console=plain
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.target.outputs.tag }}
+          VERSION: ${{ steps.release.outputs.version }}
+          RELEASE_TYPE: ${{ steps.release.outputs.type }}
+        run: |
+          args=()
+          if [[ "$RELEASE_TYPE" != stable ]]; then
+            args+=(--prerelease --latest=false)
+          fi
+          gh release create "$TAG" --title "$VERSION" --notes-file RELEASE_NOTES.md \
+            "${args[@]}" \
+            "build/libs/ProjectRed-Rescaled-$VERSION.jar" \
+            "build/libs/ProjectRed-Rescaled-$VERSION-sources.jar"
