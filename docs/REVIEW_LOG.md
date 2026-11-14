@@ -74,3 +74,9 @@ The graphical test also performed a real client/server Project Bench log-to-plan
 craft and verified server consumption/result counts before the out-of-range close.
 The item gallery now advances only after its page has rendered, and the isolated
 client fixture disables pause-on-focus-loss to prevent background verification stalls.
+
+## IDE output in subprojects
+
+The IDE generated `bin/main` bytecode directories in the new modules. The legacy
+root-only `/bin/` exclusion did not cover them. Ignore module `bin` output directories
+alongside module `build` output; no generated binaries were added to the repository.
