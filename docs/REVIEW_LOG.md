@@ -157,3 +157,16 @@ The Fabrication IC Synchronizer uses a separate register-based state machine and
 not patched as though it were the older fork's bit-state implementation.
 
 Reset and callback-feedback checks passed in development and installed-distribution servers.
+
+## Default task selection and internal archive names
+
+Reproduced Gradle implicit-dependency validation failures with the plain `runServer`
+selector used by the generated IDE configurations. Disabled child run tasks still
+resolved child native-extraction inputs into the shared directory. Child native
+extractors now delegate preparation to the root and the root run tasks declare their
+ordering; IDE configurations explicitly select root tasks. Plain `runServer` and
+distribution verification then passed together.
+
+Internal jars also used the Jar task's `name` instead of the project name in their
+archive basename. Capturing the module name outside the task receiver produces
+distinct names such as `projectred-core-internal`; public distribution names are unchanged.

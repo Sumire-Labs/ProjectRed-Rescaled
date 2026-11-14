@@ -219,11 +219,11 @@ idea {
     project {
         settings {
             runConfigurations {
-                create("1. Build", Gradle::class.java) { taskNames = listOf("build") }
-                create("2. Run Client", Gradle::class.java) { taskNames = listOf("runClient") }
-                create("3. Run Server", Gradle::class.java) { taskNames = listOf("runServer") }
+                create("1. Build", Gradle::class.java) { taskNames = listOf(":build") }
+                create("2. Run Client", Gradle::class.java) { taskNames = listOf(":runClient") }
+                create("3. Run Server", Gradle::class.java) { taskNames = listOf(":runServer") }
                 if (spotlessEnabled) {
-                    create("4. Apply Spotless", Gradle::class.java) { taskNames = listOf("spotlessApply") }
+                    create("4. Apply Spotless", Gradle::class.java) { taskNames = listOf(":spotlessApply") }
                 }
             }
         }

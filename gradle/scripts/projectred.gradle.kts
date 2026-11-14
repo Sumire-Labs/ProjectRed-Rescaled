@@ -27,6 +27,7 @@ val moduleExternalClasspath = configurations.create("moduleExternalClasspath") {
 val mainOutput = extensions.getByType<SourceSetContainer>().getByName("main").output
 val targetScalaVersion = providers.gradleProperty("scala_version").get()
 val modVersion = version.toString()
+val rootNatives = tasks.named("extractNatives")
 
 subprojects {
     apply(plugin = "java-library")
@@ -65,7 +66,17 @@ subprojects {
         options.release.set(25)
     }
     // Only the root project's universal jar is published. Internal jars are compile dependencies.
-    tasks.withType<Jar>().configureEach { archiveBaseName.set("projectred-$name-internal") }
+    val internalArchiveName = "projectred-$name-internal"
+    tasks.withType<Jar>().configureEach { archiveBaseName.set(internalArchiveName) }
+    // CleanroomGradle's default run tasks share a cached native directory. A task
+    // selector such as `runServer` still resolves disabled child tasks' inputs.
+    val moduleNatives = tasks.named("extractNatives") {
+        enabled = false
+        dependsOn(rootNatives)
+    }
+    listOf("runClient","runServer").forEach { run ->
+        rootProject.tasks.named(run) { mustRunAfter(moduleNatives) }
+    }
     tasks.matching { it.name == "runClient" || it.name == "runServer" }.configureEach {
         enabled = false
         setDependsOn(emptyList<String>())
