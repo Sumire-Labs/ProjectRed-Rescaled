@@ -27,3 +27,4 @@
 - Avoid server stalls when compiling dense IC wire networks (upstream #1747).
 - Preserve actual tool wear/NBT in crafting remainders and roll back unsuccessful crafts (upstream #1580).
 - Use numeric narrowing rather than runtime casts when restoring bundled digital signals.
+- Preserve all 16 bus channels through saves and repair legacy converter outputs after resampling.

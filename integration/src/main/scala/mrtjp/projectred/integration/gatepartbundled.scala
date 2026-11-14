@@ -242,8 +242,8 @@ class BusRandomizer(gate:BundledGatePart) extends BundledGateLogic(gate)
 
     override def load(tag:NBTTagCompound): Unit =
     {
-        mask = tag.getShort("in")
-        output = tag.getShort("out")
+        mask = tag.getShort("in")&0xFFFF
+        output = tag.getShort("out")&0xFFFF
         unpackedOut = unpackDigital(unpackedOut, output)
     }
 
@@ -349,6 +349,7 @@ class BusConverter(gate:BundledGatePart) extends BundledGateLogic(gate)
     var bIn, bOut = 0
     var rsIn, rsOut = 0
     var bOutUnpacked:Array[Byte] = null
+    private var restoreOutput = false
 
     override def bundledOutputMask(shape:Int) = if shape == 0 then 1 else 0
     override def bundledInputMask(shape:Int) = if shape == 0 then 0 else 1
@@ -366,16 +367,20 @@ class BusConverter(gate:BundledGatePart) extends BundledGateLogic(gate)
     {
         tag.setByte("in", rsIn.toByte)
         tag.setByte("out", rsOut.toByte)
-        tag.setByte("in0", bIn.toByte)
-        tag.setByte("out0", bOut.toByte)
+        tag.setShort("in0", bIn.toShort)
+        tag.setShort("out0", bOut.toShort)
+        tag.setBoolean("restoreOutput", restoreOutput)
     }
 
     override def load(tag:NBTTagCompound): Unit =
     {
         rsIn = tag.getByte("in")
         rsOut = tag.getByte("out")
-        bIn = tag.getByte("in0")
-        setBOut(tag.getByte("out0"))
+        bIn = tag.getShort("in0")&(if tag.hasKey("in0",1) then 0xFF else 0xFFFF)
+        setBOut(tag.getShort("out0")&(if tag.hasKey("out0",1) then 0xFF else 0xFFFF))
+        restoreOutput = tag.getBoolean("restoreOutput") || tag.hasKey("in0",1) || tag.hasKey("out0",1)
+        // Truncated legacy state must be resampled before executing pending output work.
+        if restoreOutput then gate.schedTime = -1L
     }
 
     override def writeDesc(packet:MCDataOutput): Unit =
@@ -414,12 +419,21 @@ class BusConverter(gate:BundledGatePart) extends BundledGateLogic(gate)
 
     override def getBundledOutput(gate:BundledGatePart, r:Int) = if gate.shape == 0 && r == 0 then bOutUnpacked else null
 
+    override def onTick(gate:BundledGatePart):Unit = {
+        if !gate.world.isRemote && restoreOutput then {
+            onChange(gate)
+            gate.scheduleTick(2)
+            restoreOutput = false
+            gate.tile.markDirty()
+        }
+    }
+
     override def onChange(gate:BundledGatePart): Unit =
     {
         var changed = false
 
         val oldRSIn = rsIn
-        rsIn = if gate.shape == 0 then gate.getRedstoneInput(2)/17 else 0
+        rsIn = if gate.shape == 0 then (gate.getRedstoneInput(2)+16)/17 else 0
         if oldRSIn != rsIn then changed = true
 
         val oldBIn = bIn
@@ -470,6 +484,7 @@ class BusConverter(gate:BundledGatePart) extends BundledGateLogic(gate)
     override def cycleShape(gate:BundledGatePart) =
     {
         gate.setShape(gate.shape^1)
+        gate.scheduleTick(2)
         true
     }
 

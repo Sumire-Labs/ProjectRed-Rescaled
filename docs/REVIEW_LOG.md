@@ -100,3 +100,18 @@ instead of numeric conversion. Replaced the port's Byte/Short numeric casts with
 explicit `toByte`/`toShort` conversions. Regression checks cover all-off, low/high and
 mixed channels, all 16 channels, packing round trips and clearing a reused buffer.
 Development and installed-distribution verification passed.
+
+## Bundled masks — GTNH PR #100
+
+Reproduced sign extension of channel 15 in BusRandomizer and byte-sized storage of
+BusConverter's 16-bit masks. Adapted the corresponding GTNH repair: unsigned short
+loads, short mask storage, unsigned legacy-byte decoding and persisted legacy-output
+resampling before pending output work. Also adopted its redwire rounding and explicit
+two-tick refresh for mode changes with zero inputs.
+
+Tests cover high/mixed/all channel masks, repeated random selection, old byte data,
+resaving before the first repair tick, a placed converter with a weak redwire input,
+the resampling delay and a zero-input mode switch. The remaining portions of PR #100
+are not represented as completed by this change.
+
+The checks passed both in development and using installed SRG distribution jars.

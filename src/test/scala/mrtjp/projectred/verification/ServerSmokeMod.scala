@@ -19,6 +19,7 @@ class ServerSmokeMod {
             ICWireNetChecks.run()
             CraftingRemainderChecks.run(server.getWorld(0))
             BundledSignalChecks.run()
+            BundledMaskChecks.run(server.getWorld(0))
             Files.writeString(Path.of(result), "PASS\n")
             println("PROJECTRED_SMOKE_PASS: all modules, payload NBT/FIFO, inventory NBT, tile actions, wire exception recovery")
         } finally server.initiateShutdown()
