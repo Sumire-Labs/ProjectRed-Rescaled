@@ -144,3 +144,16 @@ its interval comparison and markSave calls were already correct, so it was not p
 by analogy with the different older GTNH IC implementation.
 
 Development and installed-distribution server verification both passed.
+
+## Synchronizer reset and feedback — GTNH PR #100
+
+Reproduced a placed Synchronizer remaining high after reset during an active pulse.
+Retain the pulse-termination bit when clearing input latches, publish pulse state
+before output callbacks and clear it before falling-edge feedback can latch the next
+inputs. A placed-gate test covers reset during the pulse and new inputs delivered
+through the output-notification callback. The existing 1.12 two-tick start delay is
+explicitly checked and retained (the older fork's different start delay was not copied).
+The Fabrication IC Synchronizer uses a separate register-based state machine and was
+not patched as though it were the older fork's bit-state implementation.
+
+Reset and callback-feedback checks passed in development and installed-distribution servers.

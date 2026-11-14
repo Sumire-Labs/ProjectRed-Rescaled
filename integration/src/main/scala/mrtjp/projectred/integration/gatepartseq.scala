@@ -754,13 +754,13 @@ class Synchronizer(gate:SequentialGatePart) extends SequentialGateLogic(gate) wi
 
             gate.setState(gate.state&0xF0|newInput)
             gate.onInputChange()
-            if (newInput&4) != 0 then setState2(0)
+            if (newInput&4) != 0 then setState2(state2&4)
             else
             {
                 if (high&2) != 0 then setState2(state2|1) //right
                 if (high&8) != 0 then setState2(state2|2) //left
             }
-            if right && left then gate.scheduleTick(2)
+            if !pulsing && right && left then gate.scheduleTick(2)
 
             if state2 != oldValue then sendState2Update()
         }
@@ -771,16 +771,16 @@ class Synchronizer(gate:SequentialGatePart) extends SequentialGateLogic(gate) wi
         val oldValue = state2
         if !pulsing && right && left then
         {
+            setState2(state2|4) //pulsing before notifying feedback
+            gate.scheduleTick(2)
             gate.setState(gate.state|1<<4)
             gate.onOutputChange(1)
-            setState2(state2|4) //pulsing
-            gate.scheduleTick(2)
         }
         else if pulsing then
         {
+            setState2(0) //clear before feedback can latch the next inputs
             gate.setState(gate.state& ~0x10)
             gate.onOutputChange(1)
-            setState2(0) //off
         }
         if state2 != oldValue then sendState2Update()
     }
