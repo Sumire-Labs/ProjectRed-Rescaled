@@ -405,12 +405,17 @@ trait TArrayCellTopOnly extends ArrayGateLogic
     {
         super.save(tag)
         tag.setByte("signal", signal)
+        tag.setBoolean("arrayInputSnapshot",true)
     }
 
     override def load(tag:NBTTagCompound): Unit =
     {
         super.load(tag)
         signal = tag.getByte("signal")
+        if !tag.getBoolean("arrayInputSnapshot") then {
+            val mask = redwireMask(gate.shape)
+            gate.setState((gate.state& ~mask)|getRedwireInput(mask))
+        }
     }
 
     override def writeDesc(packet:MCDataOutput): Unit =
@@ -436,9 +441,37 @@ trait TArrayCellTopOnly extends ArrayGateLogic
     def sendSignalUpdate(): Unit ={ gate.getWriteStreamOf(11).writeByte(signal) }
 
     override def onSignalUpdate(): Unit ={ sendSignalUpdate() }
+
+    override def onChange(gate:ArrayGatePart):Unit = {
+        val iMask = inputMask(gate.shape)
+        val rMask = redwireMask(gate.shape)
+        val oMask = outputMask(gate.shape)
+        val newInput = getInput(gate,iMask|feedbackMask(gate.shape))|getRedwireInput(rMask)
+        if (gate.state&0xF) != newInput then {
+            gate.setState((gate.state&0xF0)|newInput)
+            gate.onInputChange()
+        }
+        val newOutput = calcOutput(gate,gate.state&(iMask|rMask))&oMask
+        if newOutput != (gate.state>>4) then gate.scheduleTick(getDelay(gate.shape))
+    }
+
+    override def scheduledTick(gate:ArrayGatePart):Unit = {
+        val mask = inputMask(gate.shape)|redwireMask(gate.shape)
+        val output = calcOutput(gate,gate.state&mask)&outputMask(gate.shape)
+        if output != (gate.state>>4) then {
+            gate.setState((gate.state&0xF)|(output<<4))
+            gate.onOutputChange(outputMask(gate.shape))
+        }
+        onChange(gate)
+    }
+
+    def getDelay(shape:Int):Int = 2
+    def feedbackMask(shape:Int):Int = 0
+    def getRedwireInput(mask:Int):Int = if getSignal(mask) != 0 then mask else 0
+    def calcOutput(gate:ArrayGatePart,input:Int):Int = 0
 }
 
-class ANDCell(gate:ArrayGatePart) extends ArrayGateLogic(gate) with TArrayCellTopOnly with TSimpleRSGateLogic[ArrayGatePart] with IGateWireRenderConnect
+class ANDCell(gate:ArrayGatePart) extends ArrayGateLogic(gate) with TArrayCellTopOnly with IGateWireRenderConnect
 {
     override def inputMask(shape:Int) = 4
     override def outputMask(shape:Int) = 1
@@ -446,18 +479,18 @@ class ANDCell(gate:ArrayGatePart) extends ArrayGateLogic(gate) with TArrayCellTo
     override def renderConnectMask = 0xA
     override def getHeight(r:Int) = 10.0D
 
-    override def calcOutput(gate:ArrayGatePart, input:Int) = if input == 4 && signal != 0 then 1 else 0
+    override def calcOutput(gate:ArrayGatePart, input:Int) = if (input&4) != 0 && (input&10) != 0 then 1 else 0
 
     override def getOcclusions(gate:ArrayGatePart) = ArrayGatePart.oBoxes(gate.side).toIndexedSeq
     override def getBounds(gate:ArrayGatePart) = ArrayGatePart.cBoxes(gate.side)
 }
 
-class StackingLatch(gate:ArrayGatePart) extends ArrayGateLogic(gate) with TArrayCellTopOnly with TSimpleRSGateLogic[ArrayGatePart]
+class StackingLatch(gate:ArrayGatePart) extends ArrayGateLogic(gate) with TArrayCellTopOnly
 {
     override def inputMask(shape:Int) = 4
     override def outputMask(shape:Int) = 1
 
     override def calcOutput(gate:ArrayGatePart, input:Int) =
-        if signal == 0 then gate.state>>4
+        if (input&10) == 0 then gate.state>>4
         else if (input&4) == 0 then 0 else 1
 }

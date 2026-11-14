@@ -30,3 +30,4 @@
 - Preserve all 16 bus channels through saves and repair legacy converter outputs after resampling.
 - Refresh and persist Counter GUI edits and honor two-tick Timer/StateCell interval reductions.
 - Finish Synchronizer pulses after reset and retain falling-edge feedback inputs.
+- Preserve boundary-tick AND Cell/Stacking Latch pulses and migrate legacy input snapshots.

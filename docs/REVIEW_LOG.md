@@ -170,3 +170,20 @@ distribution verification then passed together.
 Internal jars also used the Jar task's `name` instead of the project name in their
 archive basename. Capturing the module name outside the task receiver produces
 distinct names such as `projectred-core-internal`; public distribution names are unchanged.
+
+## Array-cell sampled pulses — GTNH PR #68 / upstream PR #1855
+
+Reproduced AND Cell dropping a top-wire pulse whose falling-edge notification arrived
+on the pending output tick. Scheduled work read the already-updated raw wire strength
+instead of the input sampled when the work was queued. AND Cell and Stacking Latch now
+evaluate the sampled redwire/input masks, then sample fresh input for subsequent work.
+Tests cover the boundary-tick pulse, termination and Stacking Latch enable/hold/clear.
+
+An `arrayInputSnapshot` NBT marker distinguishes new sampled-state saves. Legacy
+saves reconstruct the new input bits from their saved wire strength; new saves preserve
+their explicit snapshot even if raw strength differs. Both paths have regression checks.
+Only the array-gate bug fix is adapted; Smart Lamp and other features in upstream PR
+#1855 remain deferred as requested.
+
+Boundary pulses, latch behavior and both NBT formats passed in development and
+installed-distribution verification.
