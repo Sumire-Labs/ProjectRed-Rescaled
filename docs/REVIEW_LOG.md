@@ -115,3 +115,15 @@ the resampling delay and a zero-input mode switch. The remaining portions of PR 
 are not represented as completed by this change.
 
 The checks passed both in development and using installed SRG distribution jars.
+
+## Verification dependency repository isolation
+
+The fixture bootstrap published Scala 3.10 builds under the dependency projects'
+normal Maven coordinates into the user's Maven Local repository. This could affect
+other workspaces expecting those coordinates' ordinary builds. Verification now
+passes a task-local `maven.repo.local` to dependency publication, root builds and the
+standalone smoke stage. Its path is recorded in fixtures.json for manual client runs.
+
+A fresh isolated repository successfully built and passed both server modes. The
+hashes and modification times of two existing global Maven dependency jars were
+checked before/after and remained unchanged.

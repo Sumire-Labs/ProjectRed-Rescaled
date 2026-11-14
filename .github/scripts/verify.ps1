@@ -2,6 +2,7 @@ param([switch]$Production)
 $ErrorActionPreference = 'Stop'
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
 $fixtureRoot = Join-Path $repoRoot 'run/dependency-fixtures'
+$verificationMaven = Join-Path $fixtureRoot 'maven'
 New-Item -ItemType Directory -Path $fixtureRoot -Force | Out-Null
 
 function Run-Native([string]$Program, [string[]]$Arguments) {
@@ -21,11 +22,11 @@ function Checkout-Fixture([string]$Name, [string]$Repository, [string]$Commit) {
 function Invoke-Gradle([string]$ProjectPath, [string[]]$Arguments) {
     $wrapper = Join-Path $ProjectPath $(if ($IsWindows) { 'gradlew.bat' } else { 'gradlew' })
     if (!$IsWindows) { Run-Native chmod @('+x', $wrapper) }
-    Run-Native $wrapper (@('-p', $ProjectPath, '--console=plain', '--no-configuration-cache') + $Arguments)
+    Run-Native $wrapper (@('-p', $ProjectPath, '--console=plain', '--no-configuration-cache', "-Dmaven.repo.local=$verificationMaven") + $Arguments)
 }
 function Get-Version([string]$ProjectPath) {
     $wrapper = Join-Path $ProjectPath $(if ($IsWindows) { 'gradlew.bat' } else { 'gradlew' })
-    $lines = & $wrapper -p $ProjectPath -q printVersion --no-configuration-cache
+    $lines = & $wrapper -p $ProjectPath -q printVersion --no-configuration-cache "-Dmaven.repo.local=$verificationMaven"
     if ($LASTEXITCODE -ne 0) { throw 'Cannot read fixture version' }
     return ($lines | Select-Object -Last 1).Trim()
 }
@@ -45,13 +46,13 @@ Invoke-Gradle $core @('publishToMavenLocal', '-Ppublish_to_local_maven=true', '-
 Invoke-Gradle $multipart @('publishToMavenLocal', '-Ppublish_to_local_maven=true', '-Pscala_version=3.10.0')
 $coreVersion = Get-Version $core
 $multipartVersion = Get-Version $multipart
-$properties = @('-Pcg.repos.enableLocal=true', "-Ptjpcore_version=$coreVersion", "-Pfmp_version=$multipartVersion")
+$properties = @('-Pcg.repos.enableLocal=true', "-Dmaven.repo.local=$verificationMaven", "-Ptjpcore_version=$coreVersion", "-Pfmp_version=$multipartVersion")
 Invoke-Gradle $repoRoot (@(':scalarFixture', "-Pverification_scalar_source=$scalar") + $properties)
 $scalarJar = Join-Path $repoRoot 'build/verification/scalar/scalar-3.10.0-fixture.jar'
 $properties += "-Pscalar_jar=$scalarJar"
 $reportDirectory = Join-Path $repoRoot 'build/verification'
 New-Item -ItemType Directory -Path $reportDirectory -Force | Out-Null
-@{ mrtjpcore=$coreVersion; cbmultipart=$multipartVersion; scalar=$scalarJar; testDependenciesOnly=$true } |
+@{ mrtjpcore=$coreVersion; cbmultipart=$multipartVersion; scalar=$scalarJar; mavenRepository=$verificationMaven; testDependenciesOnly=$true } |
     ConvertTo-Json | Set-Content (Join-Path $reportDirectory 'fixtures.json')
 Invoke-Gradle $repoRoot (@(':build', ':runServer', '-Psmoke_test=true') + $properties)
 

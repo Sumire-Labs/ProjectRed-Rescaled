@@ -44,10 +44,12 @@ For the current Scala 3.10 integration, run PowerShell 7 (`pwsh` on Linux):
 ```
 
 This pins and builds dependency sources under `run/dependency-fixtures`, publishes
-them to Maven Local, builds a Scalar 3.10 fixture, verifies the ProjectRed distribution,
+them to an isolated Maven repository there, builds a Scalar 3.10 fixture, verifies
+the ProjectRed distribution,
 runs development server checks, then repeats those checks using SRG distribution jars
 on an independently installed Cleanroom server. It needs network access and accepts
 the Minecraft EULA for these isolated servers. CI runs this command without release credentials.
+Verification does not overwrite the normal Maven Local repository used by other projects.
 
 To run graphical client checks after that command:
 
@@ -55,7 +57,7 @@ To run graphical client checks after that command:
 $fixtures = Get-Content build/verification/fixtures.json | ConvertFrom-Json
 ./gradlew.bat :runClient -Pclient_smoke=true -Pcg.repos.enableLocal=true `
   "-Ptjpcore_version=$($fixtures.mrtjpcore)" "-Pfmp_version=$($fixtures.cbmultipart)" `
-  "-Pscalar_jar=$($fixtures.scalar)" --no-configuration-cache
+  "-Pscalar_jar=$($fixtures.scalar)" "-Dmaven.repo.local=$($fixtures.mavenRepository)" --no-configuration-cache
 ```
 
 The client check creates an isolated flat world, renders all creative item variants,
