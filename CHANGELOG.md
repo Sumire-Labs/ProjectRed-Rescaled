@@ -22,3 +22,4 @@
 - Align compatibility metadata/API with the historical `projectred-compat` ID.
 - Prevent stale Scala Mod annotation versions after Git-version changes.
 - Release temporary IC Printer renderer world/entity references.
+- Execute IC scheduled events at their deadlines and preserve callback rescheduling.

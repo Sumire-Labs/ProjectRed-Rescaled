@@ -351,12 +351,15 @@ class ICTileMapEditor(val network:IICTileEditorNetwork) extends IICSimEngineCont
     {
         //Update tiles as needed
         val t = network.getEditorWorld.getTotalWorldTime
-        var rem = Seq.newBuilder[Point]
-        for (p, st) <- scheduledTicks do if st >= t then {
-            getTile(p).scheduledTick()
-            rem += p
+        val due = scheduledTicks.iterator.filter { case (_, deadline) => deadline <= t }.toList
+        for (point, deadline) <- due do {
+            // Remove the old entry before callbacks, which may schedule this or another tile again.
+            if scheduledTicks.get(point).contains(deadline) then {
+                scheduledTicks.remove(point)
+                val tile = getTile(point)
+                if tile != null then tile.scheduledTick()
+            }
         }
-        rem.result().foreach(scheduledTicks.remove)
 
         //Tick tiles
         for tile <- tileMapContainer.tiles.values do tile.update()
@@ -387,6 +390,7 @@ class ICTileMapEditor(val network:IICTileEditorNetwork) extends IICSimEngineCont
     private def setTile_do(pos:Point, tile:ICTile): Unit =
     {
         tileMapContainer.assertCoords(pos.x, pos.y)
+        scheduledTicks.remove(pos)
         tile.bindPos(pos)
         tile.bindEditor(this)
         tileMapContainer.tiles += (pos.x, pos.y) -> tile
@@ -413,6 +417,7 @@ class ICTileMapEditor(val network:IICTileEditorNetwork) extends IICSimEngineCont
             return false
 
         tileMapContainer.tiles.remove((pos.x, pos.y))
+        scheduledTicks.remove(pos)
         tile.onRemoved()
         tile.unbind()
         true
