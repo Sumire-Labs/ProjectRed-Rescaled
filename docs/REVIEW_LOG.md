@@ -187,3 +187,15 @@ Only the array-gate bug fix is adapted; Smart Lamp and other features in upstrea
 
 Boundary pulses, latch behavior and both NBT formats passed in development and
 installed-distribution verification.
+
+## Client GUI event path
+
+The Project Bench client test now calls NodeGui's public mouse press/release entrypoints
+at the actual output-slot position, rather than invoking PlayerController.windowClick
+directly. The server accepted the craft with exactly one log consumed and four planks
+returned; leaving range still closed the window. All 472 item variants and the IC
+Workbench render/resize checks passed alongside it.
+
+The fixture also waits for the initial terrain/position handshake to close its loading
+screen before opening the item gallery, avoiding a late login screen-close packet
+interrupting the renderer assertions.

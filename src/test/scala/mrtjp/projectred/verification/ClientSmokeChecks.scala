@@ -53,7 +53,7 @@ object ClientSmokeChecks {
                     mc.gameSettings.pauseOnLostFocus = false
                     state = 1
                     mc.launchIntegratedServer("client-smoke", "ProjectRed Client Smoke", new WorldSettings(0L, GameType.CREATIVE, false, false, WorldType.FLAT))
-                case 1 if mc.player != null && mc.world != null =>
+                case 1 if mc.player != null && mc.world != null && mc.currentScreen == null =>
                     val all = NonNullList.create[ItemStack]()
                     ForgeRegistries.ITEMS.getValuesCollection.asScala.filter(i => i.getRegistryName.getNamespace.startsWith("projectred")).foreach(_.getSubItems(CreativeTabs.SEARCH, all))
                     stacks = all.asScala.toVector.filterNot(_.isEmpty)
@@ -63,7 +63,8 @@ object ClientSmokeChecks {
                     ticks = 0; state = 2
                 case 2 =>
                     ticks += 1
-                    assert(mc.currentScreen eq gallery, "Another screen interrupted the item gallery")
+                    assert(mc.currentScreen eq gallery, "Another screen interrupted the item gallery: "+
+                        Option(mc.currentScreen).map(_.getClass.getName).getOrElse("no screen"))
                     val pageDrawn = (gallery.page*60 until math.min(stacks.size,(gallery.page+1)*60)).forall(rendered.contains)
                     if ticks % 10 == 0 && pageDrawn then {
                         if gallery.page == 0 then screenshot("projectred-items.png")
@@ -126,7 +127,12 @@ object ClientSmokeChecks {
                             val result = mc.player.openContainer.getSlot(28).getStack
                             if !result.isEmpty && result.getItem == net.minecraft.item.Item.getItemFromBlock(net.minecraft.init.Blocks.PLANKS) then {
                                 screenshot("projectred-project-bench.png")
-                                mc.playerController.windowClick(mc.player.openContainer.windowId,28,0,net.minecraft.inventory.ClickType.PICKUP,mc.player)
+                                val gui = mc.currentScreen.asInstanceOf[mrtjp.projectred.expansion.GuiProjectBench]
+                                val slot = mc.player.openContainer.getSlot(28)
+                                val x = gui.position.x+slot.xPos+8
+                                val y = gui.position.y+slot.yPos+8
+                                gui.mouseClicked(x,y,0)
+                                gui.mouseReleased(x,y,0)
                                 craftSubmitted = true
                                 ticks = 0
                             } else assert(ticks < 100, "Project Bench recipe did not reach the client")
