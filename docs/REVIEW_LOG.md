@@ -30,3 +30,17 @@ callback, and cancel entries when a component is removed/replaced. Added in-game
 checks for early/on-time/late delivery, exactly-once execution, self-rescheduling and
 replacement-component isolation. Development and installed-distribution server
 verification both passed through `.github/scripts/verify.ps1 -Production`.
+
+## Tile container lifetime and distance
+
+Reproduced `Distant Project Bench inventory container remained usable`. Custom tile
+packet guards did not protect vanilla window clicks because the inherited library
+container always allowed interaction. Added a shared tile-bound container and applied
+it to the machine, Project Bench, Filtered Importer, IC Printer and IC Workbench windows.
+Portable/item containers remain independent of tile coordinates.
+
+In-game checks cover valid nearby access, leaving/returning to range and block removal.
+The client check now opens an actual server-side Project Bench, waits for block sync,
+verifies that its GUI reaches the client, then teleports the player away and checks
+that the server closes the window. That client verification passed alongside all
+472 item variants and the IC Workbench render checks.

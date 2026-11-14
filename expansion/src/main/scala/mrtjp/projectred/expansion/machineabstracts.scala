@@ -357,7 +357,7 @@ with TPoweredMachine with TGuiMachine with TInventory with ISidedInventory with 
     override def getLightValue = if isWorking && isCharged then 13 else 0
 }
 
-class ContainerPoweredMachine(tile:TPoweredMachine) extends NodeContainer
+class ContainerPoweredMachine(tile:TPoweredMachine) extends mrtjp.projectred.core.TileContainer(tile)
 {
     private var ch = -2
     private var fl = -2

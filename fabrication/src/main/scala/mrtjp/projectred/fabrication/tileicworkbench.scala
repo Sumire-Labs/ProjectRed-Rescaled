@@ -291,7 +291,7 @@ class TileICWorkbench extends TileICMachine with TICTileEditorNetwork
                 hasBP = false
                 sendHasBPUpdate()
             } else {
-                val nc = new NodeContainer
+                val nc = new mrtjp.projectred.core.TileContainer(this)
                 nc.startWatchDelegate = playerStartWatch
                 nc.stopWatchDelegate = playerStopWatch
                 GuiICWorkbench.open(player, nc, {p =>

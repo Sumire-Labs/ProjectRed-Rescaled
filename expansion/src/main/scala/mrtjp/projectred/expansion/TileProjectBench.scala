@@ -363,7 +363,7 @@ class SlotProjectCrafting(player: EntityPlayer, tile: TileProjectBench, idx: Int
     }
 }
 
-class ContainerProjectBench(player: EntityPlayer, tile: TileProjectBench) extends NodeContainer {
+class ContainerProjectBench(player: EntityPlayer, tile: TileProjectBench) extends mrtjp.projectred.core.TileContainer(tile) {
     {
         for ((x, y), i) <- GuiLib.createSlotGrid(48, 18, 3, 3, 0, 0).zipWithIndex do
             addSlotToContainer(new Slot3(tile, i, x, y))

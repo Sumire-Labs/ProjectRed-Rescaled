@@ -101,7 +101,9 @@ object RegressionChecks {
         world.setBlockState(pos, ProjectRedExpansion.machine2.getDefaultState, 3)
         world.setTileEntity(pos, bench)
         player.setPosition(0.5,80.5,0.5)
-        player.openContainer = new mrtjp.projectred.expansion.ContainerProjectBench(player, bench)
+        val benchContainer = new mrtjp.projectred.expansion.ContainerProjectBench(player, bench)
+        player.openContainer = benchContainer
+        assert(benchContainer.canInteractWith(player), "Nearby Project Bench container was rejected")
         assert(mrtjp.projectred.core.TileActions.hasOpenInventory(bench, player), "Open bench was not authorized")
         def playerIdInput(id:Int):MCDataInputWrapper =
             new MCDataInputWrapper(new java.io.ByteArrayInputStream(java.nio.ByteBuffer.allocate(4).putInt(id).array()))
@@ -114,6 +116,10 @@ object RegressionChecks {
         assert(!mrtjp.projectred.core.TileActions.hasOpenInventory(bench, player), "Closed bench was authorized")
         player.setPosition(100,80,100)
         assert(!mrtjp.projectred.core.TileActions.mayEdit(bench, player), "Distant tile action was authorized")
+        assert(!benchContainer.canInteractWith(player), "Distant Project Bench inventory container remained usable")
+        player.setPosition(0.5,80.5,0.5)
+        assert(benchContainer.canInteractWith(player), "Returning to a valid tile did not restore access")
         world.setBlockToAir(pos)
+        assert(!benchContainer.canInteractWith(player), "Removed Project Bench inventory container remained usable")
     }
 }

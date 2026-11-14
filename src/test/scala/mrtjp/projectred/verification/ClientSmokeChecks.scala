@@ -23,6 +23,8 @@ object ClientSmokeChecks {
     private var failure:Throwable = null
     private var gallery:Gallery = null
     private var rendered = Set.empty[Int]
+    private var serverAction:java.util.concurrent.Future[?] = null
+    private val benchPosition = new java.util.concurrent.atomic.AtomicReference[net.minecraft.util.math.BlockPos]()
     def start():Unit = MinecraftForge.EVENT_BUS.register(this)
     private def screenshot(name:String):Unit = {
         val mc = Minecraft.getMinecraft
@@ -37,7 +39,7 @@ object ClientSmokeChecks {
             assert(mrtjp.projectred.fabrication.RenderICPrinterItem.world == null &&
                 mrtjp.projectred.fabrication.RenderICPrinterItem.entity == null, "IC Printer renderer retained a client world or entity")
             Files.writeString(Path.of(System.getProperty("projectred.client.result")), "PASS\n")
-            println("PROJECTRED_CLIENT_PASS: "+rendered.size+" item variants rendered; IC Workbench opened and resized")
+            println("PROJECTRED_CLIENT_PASS: "+rendered.size+" item variants rendered; IC Workbench opened/resized; Project Bench opened through the server and closed out of range")
         } finally mc.shutdown()
     }
     @SubscribeEvent def tick(event:ClientTickEvent):Unit = {
@@ -76,7 +78,60 @@ object ClientSmokeChecks {
                         screenshot("projectred-ic-workbench.png")
                         mc.currentScreen.setWorldAndResolution(mc, mc.currentScreen.width+40, mc.currentScreen.height+20)
                     }
-                    if ticks >= 30 then finish()
+                    if ticks >= 30 then {
+                        val server = mc.getIntegratedServer
+                        val playerId = mc.player.getUniqueID
+                        serverAction = server.addScheduledTask(new Runnable {
+                            def run():Unit = {
+                                val player = server.getPlayerList.getPlayerByUUID(playerId)
+                                val world = player.getServerWorld
+                                val pos = player.getPosition.add(1,0,0)
+                                world.setBlockState(pos, mrtjp.projectred.ProjectRedExpansion.machine2.getStateFromMeta(10), 3)
+                                benchPosition.set(pos)
+                            }
+                        })
+                        ticks = 0; state = 4
+                    }
+                case 4 =>
+                    ticks += 1
+                    if serverAction.isDone then {
+                        serverAction.get()
+                        val pos = benchPosition.get()
+                        if pos != null && mc.world.getTileEntity(pos).isInstanceOf[mrtjp.projectred.expansion.TileProjectBench] then {
+                            val server = mc.getIntegratedServer
+                            val playerId = mc.player.getUniqueID
+                            serverAction = server.addScheduledTask(new Runnable {
+                                def run():Unit = {
+                                    val player = server.getPlayerList.getPlayerByUUID(playerId)
+                                    val tile = player.getServerWorld.getTileEntity(pos).asInstanceOf[mrtjp.projectred.expansion.TileProjectBench]
+                                    assert(tile.onBlockActivated(player, 1), "Project Bench refused to open")
+                                }
+                            })
+                            ticks = 0; state = 5
+                        } else assert(ticks < 100, "Project Bench did not synchronize to the client")
+                    }
+                case 5 =>
+                    ticks += 1
+                    if serverAction.isDone then serverAction.get()
+                    if mc.currentScreen.isInstanceOf[mrtjp.projectred.expansion.GuiProjectBench] then {
+                        screenshot("projectred-project-bench.png")
+                        val server = mc.getIntegratedServer
+                        val playerId = mc.player.getUniqueID
+                        serverAction = server.addScheduledTask(new Runnable {
+                            def run():Unit = {
+                                val player = server.getPlayerList.getPlayerByUUID(playerId)
+                                player.connection.setPlayerLocation(player.posX+20, player.posY, player.posZ, player.rotationYaw, player.rotationPitch)
+                            }
+                        })
+                        ticks = 0; state = 6
+                    } else assert(ticks < 100, "Project Bench server GUI did not reach the client")
+                case 6 =>
+                    ticks += 1
+                    if serverAction.isDone then {
+                        serverAction.get()
+                        if ticks >= 10 && !mc.currentScreen.isInstanceOf[mrtjp.projectred.expansion.GuiProjectBench] then finish()
+                        else assert(ticks < 100, "Project Bench GUI remained open after leaving its range")
+                    }
                 case _ =>
             }
         } catch { case error:Throwable => failure = error; finish() }

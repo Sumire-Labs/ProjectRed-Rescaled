@@ -123,7 +123,7 @@ class TileFilteredImporter extends TileItemImporter with TInventory with ISidedI
 
     def createContainer(player:EntityPlayer):Container =
     {
-        val cont = new NodeContainer
+        val cont = new mrtjp.projectred.core.TileContainer(this)
         var s = 0
         for (x, y) <- GuiLib.createSlotGrid(62, 18, 3, 3, 0, 0) do
         {

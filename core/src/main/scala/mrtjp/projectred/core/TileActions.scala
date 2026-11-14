@@ -7,11 +7,13 @@ import scala.jdk.CollectionConverters.*
 
 /** Additional authorization for opt-in MrTJPCore client tile actions. */
 object TileActions {
-    def mayEdit(tile:MTBlockTile, player:EntityPlayer):Boolean =
-        tile.getWorld != null && !tile.getWorld.isRemote && player.world == tile.getWorld &&
-        !player.isSpectator && !tile.isInvalid &&
+    def canAccess(tile:MTBlockTile, player:EntityPlayer):Boolean =
+        player != null && tile.getWorld != null && player.world == tile.getWorld && !tile.isInvalid &&
         player.getDistanceSq(tile.getPos.getX+0.5, tile.getPos.getY+0.5, tile.getPos.getZ+0.5) <= 64 &&
-        tile.getWorld.isBlockLoaded(tile.getPos) && tile.getWorld.getTileEntity(tile.getPos) == tile &&
+        tile.getWorld.isBlockLoaded(tile.getPos) && tile.getWorld.getTileEntity(tile.getPos) == tile
+
+    def mayEdit(tile:MTBlockTile, player:EntityPlayer):Boolean =
+        canAccess(tile, player) && !tile.getWorld.isRemote && !player.isSpectator &&
         tile.getWorld.isBlockModifiable(player, tile.getPos)
 
     def hasOpenInventory(tile:MTBlockTile & IInventory, player:EntityPlayer):Boolean =

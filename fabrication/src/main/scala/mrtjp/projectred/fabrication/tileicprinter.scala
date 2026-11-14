@@ -518,7 +518,7 @@ object TileICPrinter
     }
 }
 
-class ContainerPrinter(player:EntityPlayer, tile:TileICPrinter) extends NodeContainer
+class ContainerPrinter(player:EntityPlayer, tile:TileICPrinter) extends mrtjp.projectred.core.TileContainer(tile)
 {
     {
         var i = 0

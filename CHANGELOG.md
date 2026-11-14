@@ -23,3 +23,4 @@
 - Prevent stale Scala Mod annotation versions after Git-version changes.
 - Release temporary IC Printer renderer world/entity references.
 - Execute IC scheduled events at their deadlines and preserve callback rescheduling.
+- Close tile inventory windows when the player leaves range or the tile is removed.

@@ -310,7 +310,7 @@ object TileBlockPlacer
     }
 }
 
-class ContainerBlockPlacer(p:EntityPlayer, tile:TileBlockPlacer) extends NodeContainer
+class ContainerBlockPlacer(p:EntityPlayer, tile:TileBlockPlacer) extends mrtjp.projectred.core.TileContainer(tile)
 {
     {
         var s = 0
