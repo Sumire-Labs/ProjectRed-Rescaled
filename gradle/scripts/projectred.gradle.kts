@@ -54,6 +54,10 @@ subprojects {
     }
     tasks.withType<ScalaCompile>().configureEach {
         options.encoding = "UTF-8"
+        inputs.property("projectredVersion", modVersion)
+        // Zinc can leave stale Scala 3 annotation constants after BuildInfo changes.
+        // Keep Gradle's task/build caches, but compile the complete affected module.
+        scalaCompileOptions.isForce = true
         scalaCompileOptions.additionalParameters = listOf("-release:25", "-Ximport-suggestion-timeout:0")
     }
     tasks.withType<JavaCompile>().configureEach {

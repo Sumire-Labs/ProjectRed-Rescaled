@@ -34,9 +34,14 @@ val verifyDistribution = tasks.register("verifyDistribution") {
                 check(input.readUnsignedShort() == 69) { "Expected Java 25 bytecode in ${entry.name}" }
                 val count = input.readUnsignedShort()
                 var index = 1
+                var containsCurrentVersion = false
                 while (index < count) {
                     when (val tag = input.readUnsignedByte()) {
-                        1 -> check(!input.readUTF().contains("@{")) { "Unresolved class token in ${entry.name}" }
+                        1 -> {
+                            val text = input.readUTF()
+                            check(!text.contains("@{")) { "Unresolved class token in ${entry.name}" }
+                            if (text == inputs.properties.getValue("version")) containsCurrentVersion = true
+                        }
                         3, 4 -> input.readInt()
                         5, 6 -> { input.readLong(); index++ }
                         7, 8, 16, 19, 20 -> input.readUnsignedShort()
@@ -45,6 +50,9 @@ val verifyDistribution = tasks.register("verifyDistribution") {
                         else -> error("Unknown constant-pool tag: $tag")
                     }
                     index++
+                }
+                if (entry.name.matches(Regex("mrtjp/projectred/ProjectRed[^/$]+\\.class"))) {
+                    check(containsCurrentVersion) { "Stale Mod annotation version in ${entry.name}; metadata and class annotations must agree" }
                 }
             }
             logger.lifecycle("Verified one distribution jar: {} logical mods, {} classes.", mods.size, classes.size)

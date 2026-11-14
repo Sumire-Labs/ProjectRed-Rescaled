@@ -20,3 +20,5 @@
 - Correct Cleanroom keyboard handling, IC Printer rendering and dynamic fallback models.
 - Restore IC Workbench clipping state after tooltip errors.
 - Align compatibility metadata/API with the historical `projectred-compat` ID.
+- Prevent stale Scala Mod annotation versions after Git-version changes.
+- Release temporary IC Printer renderer world/entity references.

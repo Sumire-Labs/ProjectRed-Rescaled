@@ -33,6 +33,11 @@ agree. The bundle preserves ten mod metadata entries, Scala TASTy, MIT notices a
 `META-INF/projectred-relocation_at.cfg` with its `FMLAT` manifest attribute.
 ComputerCraft API stubs are compile inputs only, excluded from distribution and sources.
 
+An incremental build across a Git-version change exposed stale Scala 3 annotation
+constants in Zinc outputs. Scala compile tasks now track the version explicitly and
+fully compile affected modules, retaining Gradle's task and build caches. Distribution
+verification also checks the version constant in every logical mod entrypoint.
+
 The root exports only external dependencies to its children. No child depends on
 the root bundle's classes. Each module uses Cleanroom userdev and the same ATs.
 Root development runs include every module's class output.
@@ -68,7 +73,8 @@ base wrappers already contain fixes.
 - Release world/parent/caller references from pooled runs; clear pools on server stop.
 - Ignore excess crafting promises when a chip has no output item.
 - Use legacy GUI key codes and the client Shift helper on Cleanroom.
-- Adapt IC Printer overrides/rendering to current userdev API names.
+- Adapt IC Printer overrides/rendering to current userdev API names and release its
+  temporary world/entity references after rendering.
 - Restore IC Workbench scissor state even if tooltip rendering throws.
 - Add valid fallbacks for dynamically rendered machines/moving blocks and frame particles.
 
