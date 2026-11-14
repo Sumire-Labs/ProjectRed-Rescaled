@@ -80,3 +80,14 @@ client fixture disables pause-on-focus-loss to prevent background verification s
 The IDE generated `bin/main` bytecode directories in the new modules. The legacy
 root-only `/bin/` exclusion did not cover them. Ignore module `bin` output directories
 alongside module `build` output; no generated binaries were added to the repository.
+
+## Production verification launcher
+
+The standalone production test used PATH's Java even when JAVA_HOME selected a
+different JDK for Gradle, and had no process deadline. It now uses JAVA_HOME when
+set, passes arguments through ProcessStartInfo.ArgumentList, limits the server run
+to 180 seconds by default, and caches installers by Cleanroom version.
+
+A one-second timeout probe terminated its child and left no stale PASS marker. A
+normal run then passed with PATH deliberately pointing to Java 26 and JAVA_HOME to
+Java 25; the actual Cleanroom server log confirmed Java 25.0.4.1.
