@@ -25,6 +25,7 @@ object ClientSmokeChecks {
     private var rendered = Set.empty[Int]
     private var serverAction:java.util.concurrent.Future[?] = null
     private val benchPosition = new java.util.concurrent.atomic.AtomicReference[net.minecraft.util.math.BlockPos]()
+    private var craftSubmitted = false
     def start():Unit = MinecraftForge.EVENT_BUS.register(this)
     private def screenshot(name:String):Unit = {
         val mc = Minecraft.getMinecraft
@@ -35,11 +36,11 @@ object ClientSmokeChecks {
         MinecraftForge.EVENT_BUS.unregister(this)
         try {
             if failure != null then throw failure
-            assert(rendered.size == stacks.size, "Some item variants were not rendered")
+            assert(rendered.size == stacks.size, s"Some item variants were not rendered: ${rendered.size}/${stacks.size}")
             assert(mrtjp.projectred.fabrication.RenderICPrinterItem.world == null &&
                 mrtjp.projectred.fabrication.RenderICPrinterItem.entity == null, "IC Printer renderer retained a client world or entity")
             Files.writeString(Path.of(System.getProperty("projectred.client.result")), "PASS\n")
-            println("PROJECTRED_CLIENT_PASS: "+rendered.size+" item variants rendered; IC Workbench opened/resized; Project Bench opened through the server and closed out of range")
+            println("PROJECTRED_CLIENT_PASS: "+rendered.size+" item variants rendered; IC Workbench opened/resized; Project Bench opened, crafted and closed out of range through the server")
         } finally mc.shutdown()
     }
     @SubscribeEvent def tick(event:ClientTickEvent):Unit = {
@@ -49,6 +50,7 @@ object ClientSmokeChecks {
             if failure != null then { finish(); return }
             state match {
                 case 0 if mc.currentScreen.isInstanceOf[GuiMainMenu] =>
+                    mc.gameSettings.pauseOnLostFocus = false
                     state = 1
                     mc.launchIntegratedServer("client-smoke", "ProjectRed Client Smoke", new WorldSettings(0L, GameType.CREATIVE, false, false, WorldType.FLAT))
                 case 1 if mc.player != null && mc.world != null =>
@@ -61,8 +63,12 @@ object ClientSmokeChecks {
                     ticks = 0; state = 2
                 case 2 =>
                     ticks += 1
-                    if ticks == 10 then screenshot("projectred-items.png")
-                    if ticks % 10 == 0 then gallery.page += 1
+                    assert(mc.currentScreen eq gallery, "Another screen interrupted the item gallery")
+                    val pageDrawn = (gallery.page*60 until math.min(stacks.size,(gallery.page+1)*60)).forall(rendered.contains)
+                    if ticks % 10 == 0 && pageDrawn then {
+                        if gallery.page == 0 then screenshot("projectred-items.png")
+                        gallery.page += 1
+                    }
                     if gallery.page * 60 >= stacks.size then {
                         val tile = new TileICWorkbench
                         tile.setWorld(mc.world)
@@ -104,6 +110,8 @@ object ClientSmokeChecks {
                                 def run():Unit = {
                                     val player = server.getPlayerList.getPlayerByUUID(playerId)
                                     val tile = player.getServerWorld.getTileEntity(pos).asInstanceOf[mrtjp.projectred.expansion.TileProjectBench]
+                                    player.inventory.setItemStack(ItemStack.EMPTY)
+                                    tile.setInventorySlotContents(0,new ItemStack(net.minecraft.init.Blocks.LOG))
                                     assert(tile.onBlockActivated(player, 1), "Project Bench refused to open")
                                 }
                             })
@@ -114,16 +122,30 @@ object ClientSmokeChecks {
                     ticks += 1
                     if serverAction.isDone then serverAction.get()
                     if mc.currentScreen.isInstanceOf[mrtjp.projectred.expansion.GuiProjectBench] then {
-                        screenshot("projectred-project-bench.png")
-                        val server = mc.getIntegratedServer
-                        val playerId = mc.player.getUniqueID
-                        serverAction = server.addScheduledTask(new Runnable {
-                            def run():Unit = {
-                                val player = server.getPlayerList.getPlayerByUUID(playerId)
-                                player.connection.setPlayerLocation(player.posX+20, player.posY, player.posZ, player.rotationYaw, player.rotationPitch)
-                            }
-                        })
-                        ticks = 0; state = 6
+                        if !craftSubmitted then {
+                            val result = mc.player.openContainer.getSlot(28).getStack
+                            if !result.isEmpty && result.getItem == net.minecraft.item.Item.getItemFromBlock(net.minecraft.init.Blocks.PLANKS) then {
+                                screenshot("projectred-project-bench.png")
+                                mc.playerController.windowClick(mc.player.openContainer.windowId,28,0,net.minecraft.inventory.ClickType.PICKUP,mc.player)
+                                craftSubmitted = true
+                                ticks = 0
+                            } else assert(ticks < 100, "Project Bench recipe did not reach the client")
+                        } else if ticks >= 10 then {
+                            val server = mc.getIntegratedServer
+                            val playerId = mc.player.getUniqueID
+                            serverAction = server.addScheduledTask(new Runnable {
+                                def run():Unit = {
+                                    val player = server.getPlayerList.getPlayerByUUID(playerId)
+                                    val held = player.inventory.getItemStack
+                                    assert(held.getItem == net.minecraft.item.Item.getItemFromBlock(net.minecraft.init.Blocks.PLANKS) && held.getCount == 4,
+                                        "Server did not accept the Project Bench craft")
+                                    val tile = player.getServerWorld.getTileEntity(benchPosition.get()).asInstanceOf[mrtjp.projectred.expansion.TileProjectBench]
+                                    assert(tile.getStackInSlot(0).isEmpty,"Project Bench craft did not consume its log")
+                                    player.connection.setPlayerLocation(player.posX+20, player.posY, player.posZ, player.rotationYaw, player.rotationPitch)
+                                }
+                            })
+                            ticks = 0; state = 6
+                        }
                     } else assert(ticks < 100, "Project Bench server GUI did not reach the client")
                 case 6 =>
                     ticks += 1

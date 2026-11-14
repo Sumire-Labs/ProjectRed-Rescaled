@@ -58,3 +58,19 @@ Checks cover separated white/black bundled channels, crossed propagation groups,
 agreement between topology/channel searches, all 3,600 dense-network ports, complete
 input/output simulation and the same simulation after NBT save/reload. Timings describe
 this fixture, not a general performance guarantee.
+
+## Crafting remainders — upstream #1580
+
+Reproduced incorrect tool wear using a recipe whose planned tool has damage 5 and
+the actual stored tool has damage 37 plus identifying NBT. The returned tool was based
+on the plan. Ingredient matching now keeps independent copies of actual accepted
+ingredients for remainder calculation, adapting the intent of upstream d2957e7.
+Crafting restores storage/grid state when ingredients, output capacity or recipe
+evaluation fail, including shared stack references from `copy=false` storage loads.
+
+Development and installed servers passed checks for actual wear/NBT, two successive
+crafts, missing ingredients, partial output insertion and a throwing remainder recipe.
+The graphical test also performed a real client/server Project Bench log-to-planks
+craft and verified server consumption/result counts before the out-of-range close.
+The item gallery now advances only after its page has rendered, and the isolated
+client fixture disables pause-on-focus-loss to prevent background verification stalls.

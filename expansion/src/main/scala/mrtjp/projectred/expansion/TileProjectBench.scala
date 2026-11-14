@@ -243,26 +243,48 @@ class CraftingResultTestHelper
 
     def consumeAndCraft(w:World):(ItemStack, NonNullList[ItemStack]) =
     {
-        if !recipe.matches(invCrafting, w) then return (ItemStack.EMPTY, null)
+        if recipe == null || storage == null then return (ItemStack.EMPTY, null)
+        val rollback = snapshotForRollback()
+        var committed = false
+        try {
+            if !recipe.matches(invCrafting, w) then return (ItemStack.EMPTY, null)
+            val result = recipe.getCraftingResult(invCrafting)
+            if result.isEmpty then return (ItemStack.EMPTY, null)
 
-        val result = recipe.getCraftingResult(invCrafting)
-        if result.isEmpty then return (ItemStack.EMPTY, null)
-
-        val consumed = (0 until 9).forall { i =>
-            val prevInput = invCrafting.getStackInSlot(i)
-            prevInput.isEmpty || eatIngredient(0, { input =>
-                invCrafting.setInventorySlotContents(i, input)
-                val resultSame = recipe.matches(invCrafting, w) && ItemStack.areItemStacksEqual(recipe.getCraftingResult(invCrafting), result)
-                invCrafting.setInventorySlotContents(i, prevInput)
-                resultSame
-            })
+            val consumed = (0 until 9).forall { i =>
+                val prevInput = invCrafting.getStackInSlot(i)
+                prevInput.isEmpty || eatIngredient(0, { input =>
+                    // Remainders must use the actual ingredient's wear/NBT, independently
+                    // of the storage stack that eatIngredient subsequently decrements.
+                    invCrafting.setInventorySlotContents(i, input.copy())
+                    val resultSame = recipe.matches(invCrafting, w) && ItemStack.areItemStacksEqual(recipe.getCraftingResult(invCrafting), result)
+                    if !resultSame then invCrafting.setInventorySlotContents(i, prevInput)
+                    resultSame
+                })
+            }
+            if !consumed then return (ItemStack.EMPTY, null)
+            val remaining = recipe.getRemainingItems(invCrafting)
+            committed = true
+            (result, remaining)
+        } finally {
+            if !committed then rollback()
         }
-        if !consumed then (ItemStack.EMPTY, null)
-        else (result, recipe.getRemainingItems(invCrafting))
+    }
+
+    private def snapshotForRollback():() => Unit = {
+        val original = storage.clone()
+        val counts = original.map(_.getCount)
+        val inputs = Array.tabulate(9)(i => invCrafting.getStackInSlot(i).copy())
+        () => {
+            storage = original
+            for i <- original.indices do original(i).setCount(counts(i))
+            for i <- inputs.indices do invCrafting.setInventorySlotContents(i, inputs(i))
+        }
     }
 
     private def eatIngredient(startIdx:Int, matchFunc:ItemStack => Boolean):Boolean =
     {
+        if storage.isEmpty then return false
         var i = startIdx
         def increment() = {
             i = (i + 1) % storage.length; i
@@ -281,15 +303,19 @@ class CraftingResultTestHelper
 
     def consumeAndCraftToStorage(w:World, slotLimit:Int):Boolean =
     {
-        val (result, remaining) = consumeAndCraft(w)
-
-        if result.isEmpty then
-            return false
-
-        val wr = InvWrapper.wrapInternal(new ArrayWrapInventory(storage, "", slotLimit))
-
-        (Seq(result) ++ remaining.asScala.filter(!_.isEmpty)).forall { stack =>
-            wr.injectItem(ItemKey.get(stack), stack.getCount) >= stack.getCount
+        if recipe == null || storage == null then return false
+        val rollback = snapshotForRollback()
+        var committed = false
+        try {
+            val (result, remaining) = consumeAndCraft(w)
+            if result.isEmpty then return false
+            val wr = InvWrapper.wrapInternal(new ArrayWrapInventory(storage, "", slotLimit))
+            committed = (Seq(result) ++ remaining.asScala.filter(!_.isEmpty)).forall { stack =>
+                wr.injectItem(ItemKey.get(stack), stack.getCount) >= stack.getCount
+            }
+            committed
+        } finally {
+            if !committed then rollback()
         }
     }
 
