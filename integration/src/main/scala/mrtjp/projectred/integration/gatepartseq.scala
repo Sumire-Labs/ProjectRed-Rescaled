@@ -348,9 +348,10 @@ trait TTimerGateLogic extends SequentialGateLogic with ITimerGuiLogic
         var t = time
         val minTime = math.max(4, Configurator.minTimerTicks)
         if t < minTime then t = minTime
-        if t != pointer_max then
+        if t != getTimerMax then
         {
             pointer_max = t-2
+            gate.tile.markDirty()
             sendPointerMaxUpdate()
         }
     }
@@ -458,6 +459,7 @@ class Sequencer(gate:SequentialGatePart) extends SequentialGateLogic(gate) with 
         if t != pointer_max then
         {
             pointer_max = t
+            gate.tile.markDirty()
             sendPointerMaxUpdate()
         }
     }
@@ -574,6 +576,8 @@ class Counter(gate:SequentialGatePart) extends SequentialGateLogic(gate) with IC
         if value != oldVal then
         {
             tickSound()
+            gate.tile.markDirty()
+            gate.scheduleTick(2)
             sendValueUpdate()
         }
     }
@@ -585,13 +589,14 @@ class Counter(gate:SequentialGatePart) extends SequentialGateLogic(gate) with IC
         if max != oldMax then
         {
             tickSound()
+            gate.tile.markDirty()
+            gate.scheduleTick(2)
             sendMaxUpdate()
             val oldVal = value
-            value = Math.min(value, Math.max(0, i))
+            value = Math.min(value, max)
             if value != oldVal then
             {
                 sendValueUpdate()
-                gate.scheduleTick(2)
             }
         }
     }
@@ -603,6 +608,7 @@ class Counter(gate:SequentialGatePart) extends SequentialGateLogic(gate) with IC
         if incr != oldIncr then
         {
             tickSound()
+            gate.tile.markDirty()
             sendIncrUpdate()
         }
     }
@@ -614,6 +620,7 @@ class Counter(gate:SequentialGatePart) extends SequentialGateLogic(gate) with IC
         if decr != oldDecr then
         {
             tickSound()
+            gate.tile.markDirty()
             sendDecrUpdate()
         }
     }
@@ -643,7 +650,7 @@ class Counter(gate:SequentialGatePart) extends SequentialGateLogic(gate) with IC
 
     def scheduledTick(gate:SequentialGatePart): Unit =
     {
-        val oldOutput = gate.state
+        val oldOutput = gate.state>>4
         var newOutput = 0
         if value == max then newOutput = 1
         else if value == 0 then newOutput = 4

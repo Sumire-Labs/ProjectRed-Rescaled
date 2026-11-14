@@ -28,3 +28,4 @@
 - Preserve actual tool wear/NBT in crafting remainders and roll back unsuccessful crafts (upstream #1580).
 - Use numeric narrowing rather than runtime casts when restoring bundled digital signals.
 - Preserve all 16 bus channels through saves and repair legacy converter outputs after resampling.
+- Refresh and persist Counter GUI edits and honor two-tick Timer/StateCell interval reductions.

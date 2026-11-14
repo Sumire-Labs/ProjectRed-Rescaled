@@ -127,3 +127,20 @@ standalone smoke stage. Its path is recorded in fixtures.json for manual client 
 A fresh isolated repository successfully built and passed both server modes. The
 hashes and modification times of two existing global Maven dependency jars were
 checked before/after and remained unchanged.
+
+## Counter and timer settings — GTNH PR #100
+
+A placed Counter reproduced an unscheduled output after its GUI value changed.
+Adapted the relevant setting fixes: schedule output reevaluation after value/maximum
+edits, clamp against the validated maximum, mark changed settings for saving, and
+compare the output nibble rather than input/output bits together. Timer and StateCell
+compare the requested interval against their exposed interval (including the two-tick
+offset); Sequencer interval edits also mark the tile dirty.
+
+In-game checks cover output changes after two ticks, unchanged-value maximum edits,
+invalid maximum clamping, redundant notification suppression, and dirty-chunk marking
+for value/step/interval edits. The Fabrication IC timer code was inspected separately:
+its interval comparison and markSave calls were already correct, so it was not patched
+by analogy with the different older GTNH IC implementation.
+
+Development and installed-distribution server verification both passed.

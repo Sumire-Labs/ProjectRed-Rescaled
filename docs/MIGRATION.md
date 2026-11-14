@@ -94,6 +94,9 @@ The client fixture creates a flat world, renders every creative item variant,
 checks that each resolves a model, and opens/resizes the IC Workbench with screenshots.
 These checks do not establish complete saved-world or third-party modpack compatibility.
 
+Subsequent issue reproductions, repairs and expanded coverage are recorded in
+[the review log](REVIEW_LOG.md) and [issue triage](ISSUE_TRIAGE.md).
+
 Pinned dependency sources in `.github/scripts/verify.ps1` are built as Scala 3.10
 fixtures. Only the temporary CBMultipart copy adjusts its Scalar version declaration.
 The actual sibling repository is untouched. The Scalar fixture uses its pinned actual

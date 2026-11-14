@@ -61,8 +61,9 @@ $fixtures = Get-Content build/verification/fixtures.json | ConvertFrom-Json
 ```
 
 The client check creates an isolated flat world, renders all creative item variants,
-opens/resizes the IC Workbench, saves screenshots under `run/smoke-client/screenshots`,
-and exits. Reports are under `build/verification`.
+opens/resizes the IC Workbench, performs a real client/server Project Bench craft and
+checks that leaving range closes its window. Screenshots are saved under
+`run/smoke-client/screenshots`; reports are under `build/verification`.
 
 ## Modules and artifacts
 
