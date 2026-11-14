@@ -236,8 +236,8 @@ class BusRandomizer(gate:BundledGatePart) extends BundledGateLogic(gate)
 
     override def save(tag:NBTTagCompound): Unit =
     {
-        tag.setShort("in", (mask&0xFFFF).asInstanceOf[Short])
-        tag.setShort("out", (output&0xFFFF).asInstanceOf[Short])
+        tag.setShort("in", (mask&0xFFFF).toShort)
+        tag.setShort("out", (output&0xFFFF).toShort)
     }
 
     override def load(tag:NBTTagCompound): Unit =

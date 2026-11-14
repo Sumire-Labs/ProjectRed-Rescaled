@@ -380,8 +380,8 @@ class TileAirousLight extends TileEntity with ITickable
         tag.setInteger("sX", sourcePos.getX)
         tag.setInteger("sY", sourcePos.getY)
         tag.setInteger("sX", sourcePos.getZ)
-        tag.setByte("spID", sourcePartID.asInstanceOf[Byte])
-        tag.setByte("col", color.asInstanceOf[Byte])
+        tag.setByte("spID", sourcePartID.toByte)
+        tag.setByte("col", color.toByte)
         tag
     }
 

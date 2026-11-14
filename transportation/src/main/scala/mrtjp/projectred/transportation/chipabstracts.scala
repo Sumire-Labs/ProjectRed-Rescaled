@@ -148,8 +148,8 @@ trait TChipFilter extends RoutingChip
         tag.setBoolean("mm", metaMatch)
         tag.setBoolean("nbtm", nbtMatch)
         tag.setBoolean("om", oreMatch)
-        tag.setByte("grp", damageGroupMode.asInstanceOf[Byte])
-        tag.setByte("hide", hideMode.asInstanceOf[Byte])
+        tag.setByte("grp", damageGroupMode.toByte)
+        tag.setByte("hide", hideMode.toByte)
         super.save(tag)
     }
 

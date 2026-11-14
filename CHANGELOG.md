@@ -26,3 +26,4 @@
 - Close tile inventory windows when the player leaves range or the tile is removed.
 - Avoid server stalls when compiling dense IC wire networks (upstream #1747).
 - Preserve actual tool wear/NBT in crafting remainders and roll back unsuccessful crafts (upstream #1580).
+- Use numeric narrowing rather than runtime casts when restoring bundled digital signals.

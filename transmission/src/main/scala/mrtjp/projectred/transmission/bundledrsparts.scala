@@ -48,7 +48,7 @@ object BundledCommons
         var dropped = false
         for i <- 0 until 16 do if (fromThat(i)&0xFF) < (inThis(i)&0xFF) then
         {
-            inThis(i) = 0.asInstanceOf[Byte]
+            inThis(i) = 0.toByte
             dropped = true
         }
         dropped
@@ -91,7 +91,7 @@ object BundledCommons
     {
         if packed == 0 then return null
         val sig = if signal == null then new Array[Byte](16) else signal
-        for i <- 0 until 16 do sig(i) = (if (packed&1<<i) == 0 then 0 else 255).asInstanceOf[Byte]
+        for i <- 0 until 16 do sig(i) = (if (packed&1<<i) == 0 then 0 else 255).toByte
         sig
     }
 

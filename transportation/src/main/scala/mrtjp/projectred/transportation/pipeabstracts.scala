@@ -25,7 +25,7 @@ abstract class SubcorePipePart extends TMultiPart with TCenterConnectable with T
 
     def preparePlacement(side:Int, meta:Int): Unit =
     {
-        this.meta = meta.asInstanceOf[Byte]
+        this.meta = meta.toByte
     }
 
     override def save(tag:NBTTagCompound): Unit =

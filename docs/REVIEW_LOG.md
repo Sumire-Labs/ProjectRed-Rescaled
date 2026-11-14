@@ -91,3 +91,12 @@ to 180 seconds by default, and caches installers by Cleanroom version.
 A one-second timeout probe terminated its child and left no stale PASS marker. A
 normal run then passed with PATH deliberately pointing to Java 26 and JAVA_HOME to
 Java 25; the actual Cleanroom server log confirmed Java 25.0.4.1.
+
+## Numeric narrowing in the Scala 3 port
+
+A bundled-gate reload reproduced Integer-to-Byte ClassCastException in
+`BundledCommons.unpackDigital`. The conditional integer expression used a type cast
+instead of numeric conversion. Replaced the port's Byte/Short numeric casts with
+explicit `toByte`/`toShort` conversions. Regression checks cover all-off, low/high and
+mixed channels, all 16 channels, packing round trips and clearing a reused buffer.
+Development and installed-distribution verification passed.
