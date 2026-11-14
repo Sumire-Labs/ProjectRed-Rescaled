@@ -1075,7 +1075,7 @@ class Counter(gate:SequentialGateICTile) extends SequentialGateTileLogic(gate) w
             sendMaxUpdate()
 
             val oldVal = value
-            value = math.min(value, math.max(0, i))
+            value = math.min(value, max)
             if value != oldVal then
                 sendValueUpdate()
 

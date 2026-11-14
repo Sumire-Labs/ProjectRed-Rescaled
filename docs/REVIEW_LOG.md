@@ -199,3 +199,20 @@ Workbench render/resize checks passed alongside it.
 The fixture also waits for the initial terrain/position handshake to close its loading
 screen before opening the item gallery, avoiding a late login screen-close packet
 interrupting the renderer assertions.
+
+## Clean checkout verification
+
+A separate checkout at `6a5b325e` passed development-server, installed-distribution
+and graphical client verification with the ProjectRed Gradle build cache disabled.
+The checkout had fresh build output, test worlds and its own Maven fixture repository.
+The client rendered all 472 variants and passed the IC Workbench and Project Bench
+GUI checks. External dependency downloads and dependency build caches were reused.
+
+## IC Counter maximum edits
+
+Reviewing the separate Fabrication implementation found the same raw-maximum clamp
+in its Counter starting-value setting. A regression test reproduced a start value of
+7 becoming 0 when a requested maximum of -3 was validated to 1. Clamp the start value
+against that validated maximum, preserving a start value of 1. The test also checks
+save/recompile notifications, the 32767 upper bound and settings saved through NBT.
+Development and installed-distribution server verification passed.

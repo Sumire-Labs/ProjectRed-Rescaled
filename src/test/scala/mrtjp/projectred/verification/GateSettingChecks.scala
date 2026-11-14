@@ -8,6 +8,7 @@ import net.minecraft.world.{World,WorldServer}
 
 object GateSettingChecks {
     def run(world:WorldServer):Unit = {
+        checkICCounter(world)
         val clock:World = world
         val originalTime = clock.getTotalWorldTime
         val pos = new BlockPos(8,80,8)
@@ -84,5 +85,45 @@ object GateSettingChecks {
             world.setBlockToAir(pos.down())
             clock.getWorldInfo.setWorldTotalTime(originalTime)
         }
+    }
+
+    private def checkICCounter(world:WorldServer):Unit = {
+        import codechicken.lib.data.{MCDataOutput, MCDataOutputWrapper}
+        import mrtjp.core.vec.{Point, Size}
+        import mrtjp.projectred.fabrication.{ICTileMapEditor, IICTileEditorNetwork, SequentialGateICTile, ICGateDefinition}
+        var editor:ICTileMapEditor = null
+        var saves = 0
+        val network = new IICTileEditorNetwork {
+            def getIC:ICTileMapEditor = editor
+            def getEditorWorld:World = world
+            def getICStreamOf(key:Int):MCDataOutput = new MCDataOutputWrapper(new java.io.ByteArrayOutputStream)
+            def getTileStream(pos:Point):MCDataOutput = new MCDataOutputWrapper(new java.io.ByteArrayOutputStream)
+            def isRemote:Boolean = false
+            def markSave():Unit = { saves += 1 }
+        }
+        editor = new ICTileMapEditor(network)
+        editor.tileMapContainer.size = Size(16,16)
+        val gate = new SequentialGateICTile
+        gate.preparePlacement(0,ICGateDefinition.Counter.ordinal)
+        gate.bindEditor(editor)
+        gate.bindPos(Point(2,2))
+        editor.tileMapContainer.tiles += ((2,2) -> gate)
+        val counter = gate.getLogic[mrtjp.projectred.fabrication.Counter]
+        counter.value = 7
+        editor.simNeedsRefresh = false
+        counter.setCounterMax(gate,-3)
+        assert(counter.max == 1 && counter.value == 1,
+            "IC Counter start value was clamped against raw rather than validated maximum")
+        assert(saves == 1 && editor.simNeedsRefresh, "IC Counter edit was not saved/recompiled")
+        counter.setCounterMax(gate,32768)
+        counter.setCounterStart(gate,32768)
+        assert(counter.max == 32767 && counter.value == 32767, "IC Counter upper bounds changed")
+        val tag = new NBTTagCompound
+        counter.save(tag)
+        val restoredGate = new SequentialGateICTile
+        restoredGate.preparePlacement(0,ICGateDefinition.Counter.ordinal)
+        val restored = restoredGate.getLogic[mrtjp.projectred.fabrication.Counter]
+        restored.load(tag)
+        assert(restored.max == 32767 && restored.value == 32767, "IC Counter settings did not survive NBT")
     }
 }
