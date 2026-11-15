@@ -35,6 +35,19 @@ adapter is still needed to consume this new positional colour. Pulsar is not req
 Server checks cover all six orientations, bundled input, colour-only changes, NBT and
 description packets. Client checks render the item and six placed lamps with mixed halos.
 
+Plotting, Lithography and Packaging Tables use the same pinned 1.12 reference and
+the upstream 1.21.1 basic production chain. Existing IC Printer and crafting routes
+remain available. The tables share the native power system, preserve processing
+progress through NBT and use tile-bound containers. Client inventory synchronization
+never runs server work cancellation or sends server-only chunk updates.
+Production validates a design with the existing IC linker, caches unchanged snapshots
+and checks again before completion. Saved error flags alone do not authorize a design.
+Photomasks and dies use the large-IC transport envelope, and design copies own their NBT.
+The basic 64nm rough-wafer process uses actual board sizes, with a 64-die output cap
+and a 50% defect rate at 64x64. Advanced nodes, wafer grades and a new IC engine are
+outside this backport. Tests cover the complete powered chain, pause/cancel/reload,
+ingredient accounting, interface plates, design rejection and all three server-opened GUIs.
+
 ## Architecture
 
 Eleven internal Gradle projects compile in dependency order. The root collects their
@@ -131,7 +144,5 @@ language adapter with Scala 3.10 libraries. Release workflows never publish fixt
 - Exercise copied real saves containing active logistics, ICs, moving frames, barrel
   contents and retrogen flags; check third-party inventory capability behavior.
 - Exercise gate timing and larger logistics/IC networks beyond smoke coverage.
-- Select later feature backports separately. Smart Lamp, new pneumatic routing and
-  Plotting/Lithography/Packaging Tables are not included in the baseline migration.
-  Old Pressure/Resistance Tube registrations, the IC Printer and the single-step IC
-  recipe are preserved.
+- New pneumatic routing remains the next feature backport. Old Pressure/Resistance
+  Tube registrations, the IC Printer and the single-step IC recipe are preserved.

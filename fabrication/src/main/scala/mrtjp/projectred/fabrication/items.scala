@@ -134,7 +134,7 @@ object ItemICBlueprint
 
         val totag = to.getTagCompound
         val fromtag = from.getTagCompound
-        totag.setTag("tilemap", fromtag.getCompoundTag("tilemap"))
+        totag.setTag("tilemap", fromtag.getCompoundTag("tilemap").copy())
         totag.setString("icname", fromtag.getString("icname"))
         totag.setByte("icw", fromtag.getByte("icw"))
         totag.setByte("ich", fromtag.getByte("ich"))

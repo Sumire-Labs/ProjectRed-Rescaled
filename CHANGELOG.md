@@ -5,6 +5,7 @@
 ### Added
 
 - Add Illumar Smart Lamps with mixed bundled-channel colours, variable brightness and six placement orientations.
+- Add Plotting, Lithography and Packaging Tables for IC production, with photomasks, rough silicon wafers and dies.
 
 ### Changed
 

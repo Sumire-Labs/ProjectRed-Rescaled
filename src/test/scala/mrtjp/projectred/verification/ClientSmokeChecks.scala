@@ -167,7 +167,11 @@ object ClientSmokeChecks {
                     SmartLampClientChecks.start()
                     state = 8
                 }
-                case 8 => if SmartLampClientChecks.tick() then finish()
+                case 8 => if SmartLampClientChecks.tick() then {
+                    FabricationClientChecks.start()
+                    state = 9
+                }
+                case 9 => if FabricationClientChecks.tick() then finish()
                 case _ =>
             }
         } catch { case error:Throwable => failure = error; finish() }

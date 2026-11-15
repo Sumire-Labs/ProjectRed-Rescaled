@@ -504,3 +504,12 @@ tile.projectred.fabrication.icMachine|1.name=IC Printer
 
 tile.projectred.relocation.frame.name=Frame
 tile.projectred.illumination.illumarSmartLamp.name=Illumar Smart Lamp
+
+tile.projectred.fabrication.fabricationMachine|0.name=Plotting Table
+tile.projectred.fabrication.fabricationMachine|1.name=Lithography Table
+tile.projectred.fabrication.fabricationMachine|2.name=Packaging Table
+item.projectred.fabrication.roughSiliconWafer.name=Rough Silicon Wafer
+item.projectred.fabrication.blankPhotomask.name=Blank Photomask
+item.projectred.fabrication.photomaskSet.name=Photomask Set
+item.projectred.fabrication.validDie.name=Valid Die
+item.projectred.fabrication.invalidDie.name=Invalid Die

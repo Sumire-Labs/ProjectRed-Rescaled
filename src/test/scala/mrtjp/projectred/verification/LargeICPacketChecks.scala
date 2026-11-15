@@ -66,10 +66,14 @@ object LargeICPacketChecks {
         val gateStack = mrtjp.projectred.integration.GateDefinition.ICGate.makeStack
         val blueprint = new net.minecraft.item.ItemStack(mrtjp.projectred.ProjectRedFabrication.itemICBlueprint)
         val chip = new net.minecraft.item.ItemStack(mrtjp.projectred.ProjectRedFabrication.itemICChip)
+        val mask = new net.minecraft.item.ItemStack(mrtjp.projectred.ProjectRedFabrication.itemPhotomaskSet)
+        val die = new net.minecraft.item.ItemStack(mrtjp.projectred.ProjectRedFabrication.itemValidDie)
         ItemICBlueprint.saveICToGate(source.tileMapContainer,gateStack)
         ItemICBlueprint.saveTileMap(source.tileMapContainer,blueprint)
         ItemICBlueprint.copyIC(blueprint,chip)
-        for stack <- Seq(gateStack,blueprint,chip) do {
+        ItemICBlueprint.copyIC(blueprint,mask)
+        ItemICBlueprint.copyIC(blueprint,die)
+        for stack <- Seq(gateStack,blueprint,chip,mask,die) do {
             val original = stack.getTagCompound.copy()
             val buffer = new PacketBuffer(Unpooled.buffer())
             try {

@@ -563,3 +563,12 @@ tile.projectred.fabrication.icMachine|0.name=IC作業台
 tile.projectred.fabrication.icMachine|1.name=IC印刷機
 
 tile.projectred.illumination.illumarSmartLamp.name=イルマースマートランプ
+
+tile.projectred.fabrication.fabricationMachine|0.name=プロッティングテーブル
+tile.projectred.fabrication.fabricationMachine|1.name=リソグラフィーテーブル
+tile.projectred.fabrication.fabricationMachine|2.name=パッケージングテーブル
+item.projectred.fabrication.roughSiliconWafer.name=粗いシリコンウェハー
+item.projectred.fabrication.blankPhotomask.name=空のフォトマスク
+item.projectred.fabrication.photomaskSet.name=フォトマスクセット
+item.projectred.fabrication.validDie.name=良品ダイ
+item.projectred.fabrication.invalidDie.name=不良ダイ
