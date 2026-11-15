@@ -33,15 +33,9 @@ function Get-Version([string]$ProjectPath) {
 
 # Pinned sources make CI independent of unreleased Scala 3.10 dependency publications.
 # These copies are fixtures only; no changes are made to adjacent developer checkouts.
-$core = Checkout-Fixture 'mrtjpcore' 'Sumire-Labs/MrTJPCore-Rescaled' '9563657719ed3deb9c72895517902caf84ec9244'
-$multipart = Checkout-Fixture 'cbmultipart' 'Sumire-Labs/CBMultipart-Rescaled' '84bf6b7b1a56801ff093425cde5bdf051ed1e9a6'
+$core = Checkout-Fixture 'mrtjpcore' 'Sumire-Labs/MrTJPCore-Rescaled' 'ff920de16d5c7a790ef44048cb5e4f8dc0766a33'
+$multipart = Checkout-Fixture 'cbmultipart' 'Sumire-Labs/CBMultipart-Rescaled' 'd2e34dd80112b39a2af30aa1abe35e69e802b646'
 $scalar = Checkout-Fixture 'scalar' 'CleanroomMC/Scalar' 'd5f7c8fad448d7a3d0ce6674e236038ea4eab7ef'
-$multipartMod = Join-Path $multipart 'src/main/scala/codechicken/multipart/handler/MultipartMod.scala'
-$multipartText = [IO.File]::ReadAllText($multipartMod)
-if (!$multipartText.Contains('scalar@[3.9.0,3.10.0)') -and !$multipartText.Contains('scalar@[3.10.0,3.11.0)')) {
-    throw 'The fixture dependency declaration changed; review its Scala compatibility before proceeding.'
-}
-[IO.File]::WriteAllText($multipartMod, $multipartText.Replace('scalar@[3.9.0,3.10.0)', 'scalar@[3.10.0,3.11.0)'))
 Invoke-Gradle $core @('publishToMavenLocal', '-Ppublish_to_local_maven=true', '-Pscala_version=3.10.0')
 Invoke-Gradle $multipart @('publishToMavenLocal', '-Ppublish_to_local_maven=true', '-Pscala_version=3.10.0')
 $coreVersion = Get-Version $core
