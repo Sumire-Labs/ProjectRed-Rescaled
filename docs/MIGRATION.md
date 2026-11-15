@@ -72,6 +72,33 @@ The graphical client confirms an importer moving an NBT-bearing item through fiv
 into a chest with synchronized item flow and particles. Full newer-version backstuff
 graph semantics and newer tube model/UV adaptation remain outside this basic backport.
 
+## Direct 1.21.1 comparison
+
+The next phase compares against `origin/1.21.1` at
+`e631f983c9b31c79f04deffa92ae5e68468326a0`, also verified against the remote branch.
+Matching names or renamed registrations alone do not establish a missing feature.
+
+| Area | Finding | Approach |
+| --- | --- | --- |
+| Integration gates | The registered gate set largely corresponds to existing 1.12 gates. | Compare behavior and fixes before adding duplicate types. |
+| Exploration walls | All nine material variants already exist, but the legacy custom block is not recognized as a vanilla wall. | Restore standard wall recognition and sided connection rules without replacing `stone_wall` or its metadata. |
+| Exploration ores | Raw tin/silver and deepslate variants add real progression/world-generation changes. | Evaluate drop recipes, ore dictionary integration and generation policy separately. |
+| Fabrication editor | The newer editor uses data components and the external fabrication-engine library. | Treat engine/editor replacement and old-blueprint conversion as a separate migration. |
+| Pneumatic transport | Basic transport is present; broader backstuff routing and newer models remain different. | Add functionality in tested stages while keeping old networks readable. |
+
+Upstream PR #2004's redwire flag restoration is already covered by the earlier repair.
+PR #1991's positioned CraftingInput/optional component codecs and #1993's trimmed-grid
+slot mapping address newer crafting APIs; their patches are not directly applicable
+to this version's fixed 3x3 InventoryCrafting path.
+
+The first direct behavior backport makes decorative walls inherit the vanilla wall
+contract, as the newer registrations do. An auxiliary vanilla `VARIANT` property
+satisfies its constructor; saved metadata continues to encode only the original nine
+stone variants. Mining/blast settings, drop metadata, collision height and existing
+model keys are retained. Checks cover mutual wall connections, gate orientation,
+state-ID round trips and client rendering of all nine variants. Modern tall-wall
+geometry and new ore/progression changes are not part of this repair.
+
 ## Architecture
 
 Eleven internal Gradle projects compile in dependency order. The root collects their

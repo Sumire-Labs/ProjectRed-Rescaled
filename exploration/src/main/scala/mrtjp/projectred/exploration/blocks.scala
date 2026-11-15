@@ -18,7 +18,7 @@ import net.minecraft.block.{Block, BlockFenceGate, BlockWall}
 import net.minecraft.creativetab.CreativeTabs
 import net.minecraft.entity.Entity
 import net.minecraft.init.Blocks
-import net.minecraft.item.{Item, ItemStack}
+import net.minecraft.item.{Item, ItemBlock, ItemStack}
 import net.minecraft.nbt.NBTTagCompound
 import net.minecraft.util.{EnumFacing, NonNullList}
 import net.minecraft.util.math.{AxisAlignedBB, BlockPos}
@@ -192,14 +192,18 @@ object DecorativeStoneDefs extends BlockDefinition
     }
 }
 
-//Sadly we cant subclass BlockWall anymore, there is too much hardcoded in to the constructor we cant override.. notibly setDefaultState..
-class BlockDecorativeWall extends BlockCore(Material.ROCK) with TSimplePropertyString
+class BlockDecorativeWall extends BlockWall(Blocks.COBBLESTONE) with TSimplePropertyString
 {
     import net.minecraft.block.BlockWall.*
     import java.lang.{Boolean  as JBool}
 
     setCreativeTab(ProjectRedExploration.tabExploration)
+    // Retain the legacy break properties; this backport changes wall connections.
+    setHardness(0.0F)
+    setResistance(0.0F)
     setDefaultState(getDefaultState.withProperty(UP, JBool.FALSE).withProperty(NORTH, JBool.FALSE).withProperty(SOUTH, JBool.FALSE).withProperty(EAST, JBool.FALSE).withProperty(WEST, JBool.FALSE).withProperty(getTypeProperty, "marble"))
+
+    def getItemBlockClass:Class[? <: ItemBlock] = classOf[ItemBlockCore]
 
     override def getSubBlocks(tab:CreativeTabs, list:NonNullList[ItemStack]): Unit =
     {
@@ -221,23 +225,17 @@ class BlockDecorativeWall extends BlockCore(Material.ROCK) with TSimplePropertyS
         i
     }
 
-    //The method in vanilla was moved purely to BlockWall so we need to do what the wall does, we may need to inject stuff to make those walls connect to ours.
+    // Retained for callers of the legacy helper; actual connections use vanilla's sided rules.
     def canConnectTo(w:IBlockAccess, pos:BlockPos) =
     {
         val state = w.getBlockState(pos)
         val b = state.getBlock
-        if b != this && !b.isInstanceOf[BlockFenceGate] then b != null && state.getMaterial.isOpaque && state.isFullCube && state.getMaterial != Material.GROUND
+        if !b.isInstanceOf[BlockWall] && !b.isInstanceOf[BlockFenceGate] then b != null && state.getMaterial.isOpaque && state.isFullCube && state.getMaterial != Material.GROUND
         else true
     }
 
-    override def getActualState(state: IBlockState, worldIn: IBlockAccess, pos: BlockPos): IBlockState = {
-        val northCon = this.canConnectTo(worldIn, pos.north)
-        val eastCon = this.canConnectTo(worldIn, pos.east)
-        val southCon = this.canConnectTo(worldIn, pos.south)
-        val westCon = this.canConnectTo(worldIn, pos.west)
-        val hozCon = northCon && !eastCon && southCon && !westCon || !northCon && eastCon && !southCon && westCon
-        state.withProperty(UP, JBool.valueOf(!hozCon || !worldIn.isAirBlock(pos.up))).withProperty(NORTH, JBool.valueOf(northCon)).withProperty(EAST, JBool.valueOf(eastCon)).withProperty(SOUTH, JBool.valueOf(southCon)).withProperty(WEST, JBool.valueOf(westCon))
-    }
+    override def getActualState(state:IBlockState, world:IBlockAccess, pos:BlockPos):IBlockState =
+        super.getActualState(state,world,pos)
 
     override def isFullCube(state: IBlockState) = false
     override def isPassable(worldIn: IBlockAccess, pos: BlockPos) = false
@@ -247,7 +245,8 @@ class BlockDecorativeWall extends BlockCore(Material.ROCK) with TSimplePropertyS
     override def canPlaceTorchOnTop(state:IBlockState, w:IBlockAccess, pos:BlockPos) =
         super.canPlaceTorchOnTop(state, w, pos) || state.getBlock == this
 
-    override def createBlockState(): BlockStateContainer = new BlockStateContainer(this, getTypeProperty, UP, NORTH, SOUTH, EAST, WEST)
+    // BlockWall's constructor needs VARIANT; persistent metadata still uses only STONE_TYPES.
+    override def createBlockState(): BlockStateContainer = new BlockStateContainer(this, getTypeProperty, VARIANT, UP, NORTH, SOUTH, EAST, WEST)
 
     override def getTypeProperty = STONE_TYPES
 }

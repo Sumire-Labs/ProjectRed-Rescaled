@@ -18,6 +18,8 @@
 
 ### Fixed
 
+- Let decorative walls join vanilla walls and fence gates while retaining their existing variants and save IDs.
+
 - Preserve machine payload NBT, counts and queue order when loading.
 - Recover wire flags after exceptions and release pooled world references on shutdown.
 - Handle crafting chips without output items.

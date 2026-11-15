@@ -175,7 +175,11 @@ object ClientSmokeChecks {
                     PneumaticClientChecks.start()
                     state = 10
                 }
-                case 10 => if PneumaticClientChecks.tick() then finish()
+                case 10 => if PneumaticClientChecks.tick() then {
+                    DecorativeWallClientChecks.start()
+                    state = 11
+                }
+                case 11 => if DecorativeWallClientChecks.tick() then finish()
                 case _ =>
             }
         } catch { case error:Throwable => failure = error; finish() }
