@@ -11,7 +11,7 @@ val moduleDependencies = mapOf(
     "transmission" to listOf("api", "core"),
     "integration" to listOf("api", "core", "transmission"),
     "fabrication" to listOf("api", "core", "transmission", "integration"),
-    "illumination" to listOf("api", "core"),
+    "illumination" to listOf("api", "core", "transmission"),
     "transportation" to listOf("api", "core"),
     "expansion" to listOf("api", "core", "transportation"),
     "relocation" to listOf("api", "core"),

@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Add Illumar Smart Lamps with mixed bundled-channel colours, variable brightness and six placement orientations.
+
 ### Changed
 
 - Migrate Minecraft 1.12.2 ProjectRed to Cleanroom, Java 25 and Scala 3.10.

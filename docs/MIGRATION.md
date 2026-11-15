@@ -6,11 +6,13 @@
 - The source migration uses kappa-maintainer/ProjectRed at
   `3a7b284b336df13bbc71858e061248154f5b300c` as a syntax and mapping reference.
   This predates its pneumatic replacement, Smart Lamp and Fabrication production chain.
+  Subsequent feature backports are recorded below and use pinned reference `f55e7aab`.
 - Dependencies and tooling use the Sumire Labs forks and CleanroomDevEnv.
   There is no dependency on kappa's Maven endpoints or Unimined build.
 - Template-derived build support comes from Sumire-Labs/MrTJPCore-Rescaled at
   `9563657719ed3deb9c72895517902caf84ec9244` (CleanroomDevEnv-derived).
 - Dynamic model fallbacks follow kappa-maintainer/ProjectRed `fd83f325371aec527c19de4c69a26cc7e2f7e3fc`.
+
 - Payload NBT type correction follows GTNewHorizons/ProjectRed
   `904cceb6a57e8941d0ae2527baea12f1f2392aac`.
 - Crafting-chip null-output handling follows GTNewHorizons/ProjectRed
@@ -19,6 +21,19 @@
   `e631f983c9b31c79f04deffa92ae5e68468326a0`, preserving nested previous states.
 - Propagation reference cleanup follows the applicable 1.12 portion of
   GTNewHorizons/ProjectRed `fc69ec35274a4e2e2cd61e0e79cf52d32a7e08e3`.
+
+## Feature backports
+
+Illumar Smart Lamp follows the 1.12 reference at
+`f55e7aab200dd5fe6ed66e758208ecb8e6480e5d` and upstream PR #1855.
+It adds a separate block and preserves existing lamp registrations and getters.
+The mixed-colour helper is shared between client halos and `TileSmartLamp.getRgbColour`,
+which returns display RGB for optional lighting integrations without loading client classes.
+Signal changes notify lighting even when the scalar brightness remains unchanged.
+Pulsar's existing fixed-colour integration remains applicable; a Pulsar-side Smart Lamp
+adapter is still needed to consume this new positional colour. Pulsar is not required.
+Server checks cover all six orientations, bundled input, colour-only changes, NBT and
+description packets. Client checks render the item and six placed lamps with mixed halos.
 
 ## Architecture
 
@@ -117,6 +132,6 @@ language adapter with Scala 3.10 libraries. Release workflows never publish fixt
   contents and retrogen flags; check third-party inventory capability behavior.
 - Exercise gate timing and larger logistics/IC networks beyond smoke coverage.
 - Select later feature backports separately. Smart Lamp, new pneumatic routing and
-  Plotting/Lithography/Packaging Tables are not included in this baseline migration.
+  Plotting/Lithography/Packaging Tables are not included in the baseline migration.
   Old Pressure/Resistance Tube registrations, the IC Printer and the single-step IC
   recipe are preserved.

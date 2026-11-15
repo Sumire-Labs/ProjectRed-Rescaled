@@ -18,7 +18,8 @@ object RenderHalo
     private val renderEntityPos = new Vector3
     private val vec = new Vector3
 
-    private class LightCache(val pos:BlockPos, val color:Int, val cube:Cuboid6) extends Ordered[LightCache]
+    private class LightCache(val pos:BlockPos, val color:Int, val cube:Cuboid6,
+        val rgba:Option[Int] = None, val alpha:Int = 128) extends Ordered[LightCache]
     {
         def this(x:Int, y:Int, z:Int, c:Int, cube:Cuboid6) = this(new BlockPos(x, y, z), c, cube)
 
@@ -35,6 +36,22 @@ object RenderHalo
     def addLight(pos:BlockPos, color:Int, box:Cuboid6): Unit =
     {
         renderList :+= new LightCache(pos, color, box)
+    }
+
+    def addMultiLight(pos:BlockPos, box:Cuboid6, signal:Array[Byte]):Unit = {
+        val colour = BundledLightColour.blend(signal)
+        if colour != 0 then renderList :+= new LightCache(pos,0,box,Some(colour),multiAlpha(signal))
+    }
+
+    private def multiAlpha(signal:Array[Byte]):Int = 24+BundledLightColour.maximum(signal)*104/255
+
+    def renderInventoryMultiHalo(box:Cuboid6, signal:Array[Byte], transform:Transformation):Unit = {
+        val colour = BundledLightColour.blend(signal)
+        if colour != 0 then {
+            prepareRenderState()
+            try renderRgbaHalo(box,colour,multiAlpha(signal),transform)
+            finally restoreRenderState()
+        }
     }
 
     @SubscribeEvent
@@ -102,17 +119,20 @@ object RenderHalo
         CCRenderState.instance().setBrightness(world, cc.pos)
         // Make sure to use camera coordinates for the halo transformation.
         val entity = Minecraft.getMinecraft.getRenderViewEntity
-        renderHalo(cc.cube, cc.color,
+        renderRgbaHalo(cc.cube,cc.rgba.getOrElse(EnumColour.values()(cc.color).rgba),cc.alpha,
             new Translation(cc.pos.getX-entity.posX, cc.pos.getY-entity.posY, cc.pos.getZ-entity.posZ))
     }
 
     def renderHalo(cuboid:Cuboid6, colour:Int, t:Transformation): Unit =
+        renderRgbaHalo(cuboid,EnumColour.values()(colour).rgba,128,t)
+
+    private def renderRgbaHalo(cuboid:Cuboid6, colour:Int, alpha:Int, t:Transformation):Unit =
     {
         val rs = CCRenderState.instance()
         rs.reset()
         rs.setPipeline(t)
-        rs.baseColour = EnumColour.values()(colour).rgba
-        rs.alphaOverride = 128
+        rs.baseColour = colour
+        rs.alphaOverride = alpha
         BlockRenderer.renderCuboid(rs, cuboid, 0)
     }
 }

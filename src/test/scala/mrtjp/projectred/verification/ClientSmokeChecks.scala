@@ -163,7 +163,11 @@ object ClientSmokeChecks {
                         }
                         else assert(ticks < 100, "Project Bench GUI remained open after leaving its range")
                     }
-                case 7 => if LargeICClientChecks.tick() then finish()
+                case 7 => if LargeICClientChecks.tick() then {
+                    SmartLampClientChecks.start()
+                    state = 8
+                }
+                case 8 => if SmartLampClientChecks.tick() then finish()
                 case _ =>
             }
         } catch { case error:Throwable => failure = error; finish() }

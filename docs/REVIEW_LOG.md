@@ -2,6 +2,10 @@
 
 ## User direction
 
+This review phase ended when the user returned. They then authorized Smart Lamp,
+the Fabrication production chain and pneumatic transport backports. Feature work
+continues from this reviewed baseline and is documented in MIGRATION.md.
+
 New feature backports are deferred until the user returns and says they are home.
 Discuss Smart Lamp, the pneumatic replacement, Fabrication production machines and
 newer-version module changes then. Until that message, review the implemented migration,

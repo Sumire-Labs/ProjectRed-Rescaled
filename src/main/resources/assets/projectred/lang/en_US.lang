@@ -503,3 +503,4 @@ tile.projectred.fabrication.icMachine|0.name=IC Workbench
 tile.projectred.fabrication.icMachine|1.name=IC Printer
 
 tile.projectred.relocation.frame.name=Frame
+tile.projectred.illumination.illumarSmartLamp.name=Illumar Smart Lamp
