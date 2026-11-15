@@ -56,6 +56,7 @@ class ButtonICTile extends ICTile with TICTileAcquisitions with IRedwireICGate w
 
     override def readClientPacket(in:MCDataInput): Unit =
     {
+        if !editor.canInteractSimulation then return
         press()
     }
 

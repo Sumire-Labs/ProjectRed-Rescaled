@@ -2,7 +2,7 @@ package mrtjp.projectred.verification
 
 import java.util.concurrent.atomic.AtomicReference
 import mrtjp.projectred.{ProjectRedExpansion,ProjectRedExploration}
-import mrtjp.projectred.expansion.{TileMachine,TileBlockPlacer,TileChargingBench}
+import mrtjp.projectred.expansion.{TileMachine,TileBlockPlacer,TileChargingBench,TileAutoCrafter,GuiAutoCrafter}
 import net.minecraft.client.Minecraft
 import net.minecraft.init.Blocks
 import net.minecraft.item.{Item,ItemStack}
@@ -36,7 +36,7 @@ object TextureBackportClientChecks {
                 val world = player.getServerWorld
                 world.getWorldInfo.setWorldTime(6000L)
                 val start = new BlockPos(player.getPosition.getX+24,4,player.getPosition.getZ+8)
-                for (meta,row) <- Seq(2,6,11).zipWithIndex; column <- 0 until 2 do {
+                for (meta,row) <- Seq(2,6,11).zipWithIndex; column <- 0 until (if meta == 11 then 3 else 2) do {
                     val pos = start.add((row*2+column)*2,0,0)
                     world.setBlockState(pos,ProjectRedExpansion.machine2.getStateFromMeta(meta),3)
                     val tile = world.getTileEntity(pos).asInstanceOf[TileMachine]
@@ -47,6 +47,12 @@ object TextureBackportClientChecks {
                             placer.onNeighborBlockChange()
                         case charger:TileChargingBench =>
                             if column == 1 then charger.cond.Vloc = 200
+                        case crafter:TileAutoCrafter =>
+                            if column >= 1 then crafter.cond.Vloc = 200
+                            if column == 2 then {
+                                crafter.setInventorySlotContents(0,AutoCrafterVisualChecks.plan())
+                                crafter.setInventorySlotContents(9,new ItemStack(Blocks.LOG,64))
+                            }
                         case _ =>
                     }
                     tile.markDescUpdate()
@@ -92,8 +98,50 @@ object TextureBackportClientChecks {
                     case charger:TileChargingBench if charger.isCharged =>
                     case _ => return false
                 }
+                if !(0 until 3).forall { column =>
+                    mc.world.getTileEntity(start.add(8+column*2,0,0)) match {
+                        case crafter:TileAutoCrafter => crafter.visualState == column
+                        case _ => false
+                    }
+                } then return false
                 if ticks < 30 then return false
                 ScreenShotHelper.saveScreenshot(mc.gameDir,"projectred-texture-machines.png",mc.displayWidth,mc.displayHeight,mc.getFramebuffer)
+                val server = mc.getIntegratedServer
+                val id = mc.player.getUniqueID
+                action = server.addScheduledTask(new Runnable {
+                    def run():Unit = {
+                        val player = server.getPlayerList.getPlayerByUUID(id)
+                        val pos = start.add(12,0,0)
+                        player.connection.setPlayerLocation(pos.getX+0.5,pos.getY+1,pos.getZ-3.5,0,0)
+                        val tile = player.getServerWorld.getTileEntity(pos).asInstanceOf[TileAutoCrafter]
+                        tile.setInventorySlotContents(1,AutoCrafterVisualChecks.plan())
+                        assert(tile.onBlockActivated(player,1),"Auto Crafter refused to open")
+                    }
+                })
+                ticks = 0; phase = 3
+            case 3 =>
+                if !mc.currentScreen.isInstanceOf[GuiAutoCrafter] || ticks < 5 then return false
+                val gui = mc.currentScreen.asInstanceOf[GuiAutoCrafter]
+                val tile = mc.world.getTileEntity(origin.get().add(12,0,0)).asInstanceOf[TileAutoCrafter]
+                assert(tile.workMax == 100 && tile.workRemaining > 0,"Auto Crafter progress did not reach the GUI")
+                ScreenShotHelper.saveScreenshot(mc.gameDir,"projectred-auto-crafter.png",mc.displayWidth,mc.displayHeight,mc.getFramebuffer)
+                gui.mouseClicked(gui.position.x+133,gui.position.y+30,0)
+                gui.mouseReleased(gui.position.x+133,gui.position.y+30,0)
+                ticks = 0; phase = 4
+            case 4 =>
+                if ticks < 5 then return false
+                val server = mc.getIntegratedServer
+                val id = mc.player.getUniqueID
+                action = server.addScheduledTask(new Runnable {
+                    def run():Unit = {
+                        val tile = server.getPlayerList.getPlayerByUUID(id).getServerWorld
+                            .getTileEntity(origin.get().add(12,0,0)).asInstanceOf[TileAutoCrafter]
+                        assert(tile.planSlot == 1,"Auto Crafter cycle button did not reach the server")
+                    }
+                })
+                ticks = 0; phase = 5
+            case 5 =>
+                mc.player.closeScreen()
                 equip(); phase = 1
             case 1 =>
                 if !(0 until 4).forall(i => mc.player.inventory.armorInventory.get(i).getItem == outfits(armorIndex)(i)) then return false

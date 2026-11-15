@@ -17,6 +17,7 @@ object Configurator extends ModConfig("projectred-core")
     /** General Settings **/
     var logicGateSounds = true
     var minTimerTicks = 4
+    var autoCompileTileLimit = 20
     var simpleFramedWireRecipe = false
     var unbreakableScrewdriver = false
 
@@ -91,6 +92,8 @@ object Configurator extends ModConfig("projectred-core")
         maxPipesWandered = general.put("Routed Pipes: Max Wander Distance", maxPipesWandered, "Maximum distance an item may aimlessly wander in a pipe before being erased. 0 for unlimited.")
 
         val machines = new BaseCategory("Machine Settings", "Contains settings related to machines and devices.")
+        autoCompileTileLimit = math.max(-1,machines.put("Auto Compile Tile Limit",autoCompileTileLimit,
+            "Maximum IC component count for automatic compilation. -1 is unlimited; 0 disables it."))
         enableDiamondBlockBreaker = machines.put("Enable the Diamond Block Breaker", enableDiamondBlockBreaker, "Allow the Diamond Block Breaker to be crafted.")
 
         val rendering = new BaseCategory("Render Settings", "Contains settings related to how things render in-game.")

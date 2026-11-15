@@ -11,6 +11,12 @@ object LargeICClientChecks {
     private var ticks = 0
     private var action:java.util.concurrent.Future[?] = null
     private val position = new AtomicReference[BlockPos]()
+    private var originalWidth = 0
+    private var originalHeight = 0
+    private def click(gui:GuiICWorkbench,x:Int,y:Int):Unit = {
+        gui.mouseClicked(gui.position.x+x,gui.position.y+y,0)
+        gui.mouseReleased(gui.position.x+x,gui.position.y+y,0)
+    }
 
     def start():Unit = {
         val mc = Minecraft.getMinecraft
@@ -70,13 +76,51 @@ object LargeICClientChecks {
                     assert(gui.tile.editor.tileMapContainer.tiles.size == 3844,
                         "Large IC Workbench description did not reach the client")
                     ScreenShotHelper.saveScreenshot(mc.gameDir,"projectred-large-ic.png",mc.displayWidth,mc.displayHeight,mc.getFramebuffer)
+                    click(gui,8,15)
+                    assert(gui.activeTab == 0,"Workbench information tab did not respond to the mouse")
+                    ticks = 0; phase = 10
+                }
+            case 10 if ticks >= 5 =>
+                val gui = mc.currentScreen.asInstanceOf[GuiICWorkbench]
+                ScreenShotHelper.saveScreenshot(mc.gameDir,"projectred-workbench-info.png",mc.displayWidth,mc.displayHeight,mc.getFramebuffer)
+                click(gui,8,65)
+                assert(gui.activeTab == 2,"Workbench diagnostics tab did not respond to the mouse")
+                ticks = 0; phase = 11
+            case 11 if ticks >= 5 =>
+                val gui = mc.currentScreen.asInstanceOf[GuiICWorkbench]
+                ScreenShotHelper.saveScreenshot(mc.gameDir,"projectred-workbench-compile.png",mc.displayWidth,mc.displayHeight,mc.getFramebuffer)
+                click(gui,8,40)
+                ticks = 0; phase = 12
+            case 12 if ticks >= 5 =>
+                val gui = mc.currentScreen.asInstanceOf[GuiICWorkbench]
+                gui.pref.showTooltips = false
+                val group = gui.toolSets(3)
+                val screen = group.convertPointToScreen(mrtjp.core.vec.Point(8,8))
+                gui.mouseClicked(screen.x,screen.y,0); gui.mouseReleased(screen.x,screen.y,0)
+                assert(group.isPopupOpen,"Workbench tool group did not open its palette")
+                originalWidth = gui.width; originalHeight = gui.height
+                ticks = 0; phase = 14
+            case 14 if ticks >= 3 =>
+                val gui = mc.currentScreen.asInstanceOf[GuiICWorkbench]
+                ScreenShotHelper.saveScreenshot(mc.gameDir,"projectred-workbench-tools.png",mc.displayWidth,mc.displayHeight,mc.getFramebuffer)
+                val group = gui.toolSets(3)
+                val option = group.children.collect { case b:mrtjp.core.gui.ButtonNode if !b.hidden && b.position.x < 0 => b }(1)
+                val point = option.convertPointToScreen(mrtjp.core.vec.Point(8,8))
+                gui.mouseClicked(point.x,point.y,0); gui.mouseReleased(point.x,point.y,0)
+                assert(!group.isPopupOpen && gui.pref.currentOp.id == group.opSet(1).id,
+                    "Workbench palette option was occluded or did not select its tool")
+                gui.setWorldAndResolution(mc,320,240)
+                ticks = 0; phase = 13
+            case 13 if ticks >= 5 =>
+                    val gui = mc.currentScreen.asInstanceOf[GuiICWorkbench]
+                    assert(gui.size.width <= 312 && gui.pref.size.width > 0,"Workbench did not fit the minimum GUI width")
+                    gui.setWorldAndResolution(mc,originalWidth,originalHeight)
                     mc.player.closeScreen()
                     val gatePos = position.get().add(2,0,0)
                     val result = mc.playerController.processRightClickBlock(mc.player,mc.world,gatePos.down(),EnumFacing.UP,
                         new Vec3d(gatePos.getX+0.5,gatePos.getY,gatePos.getZ+0.5),EnumHand.MAIN_HAND)
                     assert(result == EnumActionResult.SUCCESS,"Large IC gate placement was rejected")
                     ticks = 0; phase = 2
-                }
             case 2 =>
                 val gatePos = position.get().add(2,0,0)
                 mc.world.getTileEntity(gatePos) match {

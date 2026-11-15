@@ -10,7 +10,7 @@ import mrtjp.core.item.ItemKey
 import mrtjp.projectred.api.IConnectable
 import mrtjp.projectred.core.{TCenterConnectable, TSwitchPacket}
 import mrtjp.projectred.ProjectRedCore
-import mrtjp.projectred.transportation.{PipeBoxes, PneumaticSounds, RenderPipe, SubcorePipePart}
+import mrtjp.projectred.transportation.{PipeBoxes, PneumaticSounds, PneumaticTubeRenderer, RenderPipe, SubcorePipePart}
 import mrtjp.projectred.transportation.pneumatics.{ClientLink, ClientLinkCache, GraphContainer, GraphNode, PneumaticExitPathfinder, PneumaticGraph, PneumaticTransport, PneumaticTransportContainer, PneumaticTransportDevice, PneumaticTransportMode}
 import net.minecraft.client.renderer.texture.TextureAtlasSprite
 import net.minecraft.entity.player.EntityPlayer
@@ -130,7 +130,7 @@ class PneumaticTubePart extends SubcorePipePart with TCenterConnectable with TSw
 
     @SideOnly(Side.CLIENT)
     override def doStaticTessellation(pos:Vector3, ccrs:CCRenderState): Unit =
-        RenderPipe.renderPipe(this, pos, ccrs)
+        PneumaticTubeRenderer.render(clientConnMap,getIcon(0),pos.translation(),ccrs)
 
     @SideOnly(Side.CLIENT)
     override def doDynamicTessellation(pos:Vector3, frame:Float, ccrs:CCRenderState): Unit =

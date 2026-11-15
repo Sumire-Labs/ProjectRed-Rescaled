@@ -115,7 +115,7 @@ class TileMapEditorNode(editor:ICTileMapEditor) extends TNode
             enableBlend()
             blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA)
             prepairRender(ccrs)
-            TextureUtils.changeTexture(GuiICWorkbench.background)
+            TextureUtils.changeTexture(GuiICWorkbench.controls)
 
             val mousePoint = toGridPoint(mouse)
             val logger = editor.simEngineContainer.logger
@@ -315,6 +315,10 @@ class ICToolsetNode extends TNode
     var opSelectDelegate = {(_:TileEditorOp) => ()}
 
     private var focused = false
+    private var popupOpen = false
+    private var popupOrigin = Point(0,-18)
+    def isPopupOpen:Boolean = popupOpen
+    def closePopup():Unit = hideSubTools()
     private var buttonOpMap = ListMap.empty[ButtonNode, TileEditorOp]
 
     private var leadingButton:ButtonNode = null
@@ -330,10 +334,7 @@ class ICToolsetNode extends TNode
             buttonOpMap += b -> op
         }
 
-        val delta = opSet.size*(buttonSize.width+buttonGap)
-        val firstPoint = Point(-delta/2+buttonSize.width/2, -buttonSize.height-buttonGap)
-        for (b, i) <- buttonOpMap.keys.zipWithIndex do
-            b.position = firstPoint.add(i*(buttonSize.width+buttonGap), 0)
+        placePopup(popupOrigin)
 
         leadingButton = buttonOpMap.head._1
 
@@ -345,7 +346,11 @@ class ICToolsetNode extends TNode
         }
         groupButton.size = buttonSize
         groupButton.tooltipBuilder = {_ += buttonOpMap(leadingButton).getOpName}
-        groupButton.clickDelegate = {() => leadingButton.clickDelegate() }
+        groupButton.clickDelegate = {() =>
+            val wasOpen = popupOpen
+            leadingButton.clickDelegate()
+            if !wasOpen then unhideSubTools()
+        }
         addChild(groupButton)
     }
 
@@ -359,6 +364,7 @@ class ICToolsetNode extends TNode
         leadingButton.mouseoverLock = false
         leadingButton = button
         leadingButton.mouseoverLock = true
+        hideSubTools()
     }
 
     def setUnfocused(): Unit =
@@ -370,21 +376,37 @@ class ICToolsetNode extends TNode
 
     def setFocused(): Unit =
     {
-        if !focused then unhideSubTools()
         focused = true
         groupButton.mouseoverLock = true
     }
 
     private def unhideSubTools(): Unit =
     {
+        popupOpen = buttonOpMap.size > 1
+        pushZTo(if popupOpen then 2 else 0)
         if buttonOpMap.size > 1 then for b <- buttonOpMap.keys do
             b.hidden = false
     }
 
     private def hideSubTools(): Unit =
     {
+        popupOpen = false
+        pushZTo(0)
         if buttonOpMap.size > 1 then for b <- buttonOpMap.keys do
             b.hidden = true
+    }
+
+    def placePopup(origin:Point):Unit = {
+        popupOrigin = origin
+        for (button,i) <- buttonOpMap.keys.zipWithIndex do
+            button.position = origin+Point(i%4*(buttonSize.width+buttonGap),i/4*(buttonSize.height+buttonGap))
+    }
+
+    override def drawBack_Impl(mouse:Point,frame:Float):Unit = if popupOpen then {
+        val columns = math.min(4,buttonOpMap.size)
+        val rows = (buttonOpMap.size+3)/4
+        GuiLib.drawGuiBox(position.x+popupOrigin.x-2,position.y+popupOrigin.y-2,
+            columns*(buttonSize.width+buttonGap)+3,rows*(buttonSize.height+buttonGap)+3,0)
     }
 
     private def createButtonFor(op:TileEditorOp) =
@@ -647,7 +669,7 @@ class InfoNode extends TNode
 
     override def drawBack_Impl(mouse:Point, rframe:Float): Unit =
     {
-        TextureUtils.changeTexture(GuiICWorkbench.background)
+        TextureUtils.changeTexture(GuiICWorkbench.controls)
 
         if !getTile.hasBP || getTile.getIC.isEmpty then
             Gui.drawModalRectWithCustomSizedTexture(position.x, position.y, 330, 0, size.width, size.height, 512, 512)
@@ -667,172 +689,6 @@ class InfoNode extends TNode
             import scala.jdk.CollectionConverters.*
             GuiDraw.drawMultiLineTip(mx+12, my-12, Seq(text).asJava)
             translateFromScreen()
-        }
-    }
-}
-
-class GuiICWorkbench(val tile:TileICWorkbench) extends NodeGui(330, 256)
-{
-    var pref:TileMapEditorNode = null
-    var toolSets = Seq[ICToolsetNode]()
-
-    override def onAddedToParent_Impl(): Unit =
-    {
-        val clip = new ClipNode
-        clip.position = Point(7, 18)
-        clip.size = Size(252, 197)
-        addChild(clip)
-
-        val pan = new PanNode
-        pan.size = Size(252, 197)
-        pan.clampSlack = 35
-        pan.dragTestFunction = {() => net.minecraft.client.gui.GuiScreen.isShiftKeyDown}
-        clip.addChild(pan)
-
-        pref = new TileMapEditorNode(tile.editor)
-        pref.position = Point(pan.size/2-pref.size/2)
-        pref.zPosition = -0.01//Must be below pan/clip nodes
-        pref.opPickDelegate = {op =>
-            if op == null then pref.currentOp = null
-            toolSets.foreach(_.pickOp(op))
-        }
-        pan.addChild(pref)
-
-        val toolbar = new TNode {}
-
-        {
-            import TileEditorOpDefs.*
-            def addToolsetRange(name:String, from:OpDef, to:OpDef): Unit =
-            {
-                addToolset(name, (from.getID to to.getID).map(TileEditorOpDefs(_)))
-            }
-            def addToolset(name:String, opset:Seq[OpDef]): Unit =
-            {
-                val toolset = new ICToolsetNode
-                toolset.position = Point(17, 0)*toolbar.children.size
-                toolset.title = name
-                toolset.opSet = opset.map(_.getOp)
-                toolset.setup()
-                toolset.opSelectDelegate = {op => pref.currentOp = op }
-                toolbar.addChild(toolset)
-                toolSets :+= toolset
-            }
-
-            addToolset("", Seq(Erase))
-            addToolset("Debug", Seq(/*Torch,*/ Lever, Button))
-            addToolset("", Seq(AlloyWire))
-            addToolsetRange("Insulated wires", WhiteInsulatedWire, BlackInsulatedWire)
-            addToolsetRange("Bundled cables", NeutralBundledCable, BlackBundledCable)
-            addToolset("IOs", Seq(SimpleIO, BundledIO, AnalogIO))
-            addToolset("Primatives", Seq(ORGate, NORGate, NOTGate, ANDGate, NANDGate, XORGate, XNORGate, BufferGate, MultiplexerGate))
-            addToolset("Timing and Clocks", Seq(PulseFormerGate, RepeaterGate, TimerGate, SequencerGate, StateCellGate))
-            addToolset("Latches", Seq(SRLatchGate, ToggleLatchGate, TransparentLatchGate))
-            addToolset("Cells", Seq(NullCellGate))//, InvertCellGate, BufferCellGate))
-            addToolset("Misc", Seq(RandomizerGate, CounterGate, SynchronizerGate))//, DecRandomizerGate))
-        }
-
-        addChild(toolbar)
-        toolbar.position = Point(size.width/2-toolbar.calculateAccumulatedFrame.width/2, 235)
-
-        val details = new CheckBoxNode
-        details.position = Point(269, 175)
-        details.state = true
-        details.clickDelegate = { () =>
-            pref.showTooltips = details.state
-        }
-        addChild(details)
-
-        val sminus = new MCButtonNode
-        sminus.position = Point(269, 207)
-        sminus.size = Size(10, 10)
-        sminus.text = "-"
-        sminus.clickDelegate = {() => pref.decScale()}
-        addChild(sminus)
-
-        val splus = new MCButtonNode
-        splus.position = Point(309, 207)
-        splus.size = Size(10, 10)
-        splus.text = "+"
-        splus.clickDelegate = {() => pref.incScale()}
-        addChild(splus)
-
-        val reqNew = new MCButtonNode
-        reqNew.position = Point(272, 133)
-        reqNew.size = Size(44, 12)
-        reqNew.text = "redraw"
-        reqNew.clickDelegate = {() =>
-            if tile.hasBP then {
-                val nic = new NewICNode
-                nic.position = Point(size/2)-Point(nic.size/2)
-                nic.completionDelegate = {() =>
-                    val ic = new ICTileMapEditor(null)
-                    ic.tileMapContainer.name = nic.getName
-                    ic.tileMapContainer.size = nic.selectedBoardSize*16
-                    tile.sendNewICToServer(ic)
-                }
-                addChild(nic)
-                nic.pushZTo(5)
-            }
-        }
-        addChild(reqNew)
-
-        val rename = new MCButtonNode
-        rename.position = Point(272, 116)
-        rename.size = Size(44, 12)
-        rename.text = "rename"
-        rename.clickDelegate = {() =>
-            if tile.hasBP then {
-                val rn = new RenameICNode(tile.editor.tileMapContainer.name)
-                rn.position = Point(size/2)-Point(rn.size/2)
-                rn.completionDelegate = {() =>
-                    tile.editor.tileMapContainer.name = rn.getName
-                    tile.sendICNameToServer()
-                }
-                addChild(rn)
-                rn.pushZTo(5)
-            }
-        }
-        addChild(rename)
-
-        val info = new InfoNode
-        info.position = Point(241, 18)
-        info.zPosition = 1
-        addChild(info)
-    }
-
-    override def drawBack_Impl(mouse:Point, frame:Float): Unit =
-    {
-        color(1, 1, 1, 1)
-
-        TextureUtils.changeTexture(GuiICWorkbench.background)
-        Gui.drawModalRectWithCustomSizedTexture(0, 0, 0, 0, size.width, size.height, 512, 512)
-
-        val title = "IC Workbench" + (if tile.hasBP then " - "+tile.editor.tileMapContainer.name else "")
-        GuiDraw.drawString(title, 8, 6, EnumColour.GRAY.argb, false)
-
-        GuiDraw.drawStringC("show", 290, 172, 30, 10, EnumColour.GRAY.argb, false)
-        GuiDraw.drawStringC("tooltips", 290, 182, 30, 10, EnumColour.GRAY.argb, false)
-
-        GuiDraw.drawStringC("scale", 273, 193, 42, 14, EnumColour.GRAY.argb, false)
-        GuiDraw.drawStringC(BigDecimal(pref.scale, new MathContext(2)).toString(), 279, 207, 30, 10, EnumColour.GRAY.argb, false)
-    }
-}
-
-object GuiICWorkbench extends TGuiFactory
-{
-    val background = new ResourceLocation("projectred", "textures/gui/ic_workbench.png")
-
-    override def getID = FabricationProxy.icWorkbenchGui
-
-    @SideOnly(Side.CLIENT)
-    override def buildGui(player:EntityPlayer, data:MCDataInput) =
-    {
-        player.world.getTileEntity(data.readPos()) match {
-            case t:TileICWorkbench =>
-                t.editor.readDesc(data)
-                t.editor.worldTimeOffset = player.world.getTotalWorldTime-data.readLong()
-                new GuiICWorkbench(t)
-            case _ => null
         }
     }
 }

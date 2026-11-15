@@ -2,6 +2,13 @@
 
 ## Baseline and provenance
 
+The current project policy is behavioral and specification parity with ProjectRed
+1.21.1, including existing content and future backports. Earlier choices to retain
+legacy operating behavior are superseded. IDs and old saves should be handled by
+compatibility readers/migrations instead of preserving conflicting mechanics.
+Remaining deviations must be recorded; a visual-only adaptation is not full parity.
+The current scope and unresolved differences are tracked in [SPEC_PARITY.md](SPEC_PARITY.md).
+
 - ProjectRed baseline: `11da8db1` on the legacy Minecraft 1.12 branch.
 - The source migration uses kappa-maintainer/ProjectRed at
   `3a7b284b336df13bbc71858e061248154f5b300c` as a syntax and mapping reference.
@@ -43,9 +50,11 @@ never runs server work cancellation or sends server-only chunk updates.
 Production validates a design with the existing IC linker, caches unchanged snapshots
 and checks again before completion. Saved error flags alone do not authorize a design.
 Photomasks and dies use the large-IC transport envelope, and design copies own their NBT.
-The basic 64nm rough-wafer process uses actual board sizes, with a 64-die output cap
-and a 50% defect rate at 64x64. Advanced nodes, wafer grades and a new IC engine are
-outside this backport. Tests cover the complete powered chain, pause/cancel/reload,
+The basic 64nm rough-wafer process now follows 1.21.1's 4096nm wafer and fixed
+16x16 manufacturing footprint: 16 dies with a 50% defect probability. The earlier
+12288nm/64x64 calibration has been removed. The GUI uses actual design dimensions
+for estimates, as upstream does; manufacturing still has upstream's fixed-size TODO.
+Advanced nodes, wafer grades and a new IC engine remain unfinished here. Tests cover the powered chain, pause/cancel/reload,
 ingredient accounting, interface plates, design rejection and all three server-opened GUIs.
 
 Pneumatic transport follows the same reference's basic graph-routing implementation.
@@ -62,15 +71,16 @@ payload mutations mark chunks dirty, and stack counts are saved as integers. CCL
 MCData item serialization bypasses Forge share-tag hooks, so payload descriptions
 explicitly apply the large-NBT transport envelope. External inventory access uses
 normal wrappers; `wrapInternal` in the reference bypassed Sumire's sided/item restrictions.
-Graph debug logging is disabled at normal log levels. Pipe geometry and its pressure-tube
-texture are retained; link smoke and pressure/depressure sounds are included.
+Graph debug logging is disabled at normal log levels. New tubes now use the newer
+OBJ geometry and pneumatic atlas; legacy tubes retain their models. Link smoke
+and pressure/depressure sounds are included.
 
 Tests cover nearest and equal-distance exits, round-robin state, partial insertion,
 full-output bounce/recovery, sided rejection, importer handoff, legacy queue reload,
 world re-entry, 300-payload descriptions, oversized stack counts and large IC carriage.
 The graphical client confirms an importer moving an NBT-bearing item through five tubes
-into a chest with synchronized item flow and particles. Newer tube model/UV adaptation
-remains separate from this routing implementation.
+into a chest with synchronized item flow and particles. All 64 connection meshes
+are checked for bounds and atlas coordinates.
 
 The 1.21.1 in-flight route selector now checks ordinary destinations first and then
 backstuff buffers. This fixes blocked deliveries bouncing indefinitely instead of
@@ -90,7 +100,7 @@ Matching names or renamed registrations alone do not establish a missing feature
 | Exploration walls | All nine material variants already exist, but the legacy custom block is not recognized as a vanilla wall. | Restore standard wall recognition and sided connection rules without replacing `stone_wall` or its metadata. |
 | Exploration ores | Raw tin/silver and deepslate variants add real progression/world-generation changes. | Evaluate drop recipes, ore dictionary integration and generation policy separately. |
 | Fabrication editor | The newer editor uses data components and the external fabrication-engine library. | Treat engine/editor replacement and old-blueprint conversion as a separate migration. |
-| Pneumatic transport | Ordinary/backstuff destination priority is ported; newer models remain different. | Adapt model geometry and UVs separately while keeping old networks readable. |
+| Pneumatic transport | Ordinary/backstuff destination priority, newer geometry and atlas are ported. | Continue the behavior audit and legacy-network migration. |
 
 Upstream PR #2004's redwire flag restoration is already covered by the earlier repair.
 PR #1991's positioned CraftingInput/optional component codecs and #1993's trimmed-grid
@@ -107,7 +117,7 @@ geometry and new ore/progression changes are not part of this repair.
 
 ## Texture backports
 
-The texture pass replaces 71 existing PNGs under their legacy resource paths.
+The first texture pass replaced 71 existing PNGs under their legacy resource paths.
 Sixty-nine are copied byte-for-byte from the pinned ProjectRed 1.21.1 reference;
 the copper ore and ingot come from Mojang's official Minecraft 1.21.1 client archive,
 verified against its published SHA-1. Source paths, blob hashes and old/new dimensions
@@ -128,10 +138,12 @@ the full sprite UV range. Armor model sheets keep their dimensions. Client check
 render every creative variant, placed idle/active machines and all three equipped
 gem armor sets. Block/item registrations and gameplay data are preserved.
 
-The IC Workbench GUI atlas needs an editor/layout port even though its dimensions
-match. The newer pneumatic atlas needs its matching model and UV mapping. New
-Auto Crafter charged/working front sprites also need renderer-state support; the
-existing renderer uses the updated idle front. These are separate rendering changes.
+The follow-up adds seven upstream PNGs: three Workbench tab atlases, the Auto
+Crafter GUI, two charged/working front sprites and the Pneumatic Tube atlas.
+The matching tube OBJ changes only object declarations to groups for CCL's parser.
+The Workbench's legacy glyph atlas is retained separately for controls that still
+use the native editor. Its newer compiler/editor is still an open migration.
+Auto Crafter rendering includes charge/work state and rotation in its model key.
 Textures for new raw-ore/deepslate content are part of the corresponding content port.
 
 ## Architecture
@@ -230,5 +242,5 @@ language adapter with Scala 3.10 libraries. Release workflows never publish fixt
 - Exercise copied real saves containing active logistics, ICs, moving frames, barrel
   contents and retrogen flags; check third-party inventory capability behavior.
 - Exercise gate timing and larger logistics/IC networks beyond smoke coverage.
-- Evaluate advanced fabrication processes and newer tube models separately.
-  Existing legacy content remains available alongside these additions.
+- Complete the behavior comparisons and compatibility migrations in
+  [SPEC_PARITY.md](SPEC_PARITY.md), including the newer IC engine/editor.

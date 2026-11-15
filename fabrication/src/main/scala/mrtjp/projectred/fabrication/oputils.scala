@@ -40,7 +40,7 @@ class TileEditorOpErase extends TileEditorOp
         val t = orthoGridT(width, height) `with` new Translation(x, y, 0)
 
         prepairRender(ccrs)
-        TextureUtils.changeTexture(GuiICWorkbench.background)
+        TextureUtils.changeTexture(GuiICWorkbench.controls)
         faceModels(dynamicIdx(0, true)).render(ccrs, t, new UVScale(16) `with` new UVTranslation(330, 18) `with` new UVScale(1/512D))
         finishRender(ccrs)
     }

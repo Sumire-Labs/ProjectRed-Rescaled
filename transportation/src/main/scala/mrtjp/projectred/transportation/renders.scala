@@ -499,7 +499,9 @@ object PipeItemRenderer extends IItemRenderer
         ccrs.pullLightmap()
         ccrs.startDrawing(GL11.GL_QUADS, DefaultVertexFormats.ITEM)
 
-        RenderPipe.renderInv(ccrs, new Scale(scale).`with`(new Translation(x, y, z)), new IconTransformation(pdef.sprites(0)))
+        val transform = new Scale(scale).`with`(new Translation(x,y,z))
+        if pdef == PipeDefs.PNEUMATICTUBE then PneumaticTubeRenderer.render(3,pdef.sprites(0),transform,ccrs)
+        else RenderPipe.renderInv(ccrs,transform,new IconTransformation(pdef.sprites(0)))
 
         ccrs.draw()
     }

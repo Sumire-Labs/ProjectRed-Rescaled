@@ -52,6 +52,7 @@ class LeverICTile extends ICTile with TICTileAcquisitions with IRedwireICGate wi
 
     override def readClientPacket(in:MCDataInput): Unit =
     {
+        if !editor.canInteractSimulation then return
         on = !on
         pushToRegisters()
         sendStateUpdate()

@@ -281,7 +281,15 @@ class ExpansionProxy_client extends ExpansionProxy_server
             }
         })
         machine2Bakery.registerSubBakery(10, RenderProjectBench)
-        machine2Bakery.registerSubBakery(11, RenderAutoCrafter)
+        machine2Bakery.registerSubBakery(11, RenderAutoCrafter, new IBlockStateKeyGenerator {
+            override def generateKey(state:IExtendedBlockState):String = {
+                val meta = state.getBlock.getMetaFromState(state)
+                val charged = state.getValue(UNLISTED_CHARGED_PROPERTY)
+                val working = state.getValue(UNLISTED_WORKING_PROPERTY)
+                val rotation = state.getValue(UNLISTED_ROTATION_PROPERTY)
+                state.getBlock.getRegistryName.toString+s",meta=$meta,c=$charged,w=$working,r=$rotation"
+            }
+        })
         machine2Bakery.registerSubBakery(12, RenderDiamondBlockBreaker, new IBlockStateKeyGenerator {
             override def generateKey(state: IExtendedBlockState):String = {
                 val side = state.getValue(UNLISTED_SIDE_PROPERTY)

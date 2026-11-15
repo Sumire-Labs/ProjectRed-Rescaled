@@ -72,7 +72,7 @@ object PipeDefs extends ItemDefinition
 
     val PRESSURETUBE = new PipeVal(64, new ResourceLocation("projectred-transporation:pressure_tube"), Seq("pressuretube")++(0 to 15 map{"colour/colour_"+_})*)
     val RESISTANCETUBE = new PipeVal(65, new ResourceLocation("projectred-transporation:resustance_tube"), "resistancetube")
-    val PNEUMATICTUBE = new PipeVal(66,new ResourceLocation("projectred-transporation:pneumatic_tube"),"pressuretube")
+    val PNEUMATICTUBE = new PipeVal(66,new ResourceLocation("projectred-transporation:pneumatic_tube"),"pneumatic_tube")
 
     class PipeVal(override val meta:Int, val partname:ResourceLocation, val textures:String*) extends ItemDef(partname.toString)
     {

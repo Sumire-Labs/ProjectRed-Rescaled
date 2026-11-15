@@ -574,6 +574,71 @@
       "blobSha1": "3774bab4d43fb4fa8570843620c2ff3c193740aa",
       "oldSize": "16x16",
       "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/blocks/mechanical/autobench/front_charged.png",
+      "source": "expansion/src/main/resources/assets/projectred_expansion/textures/block/auto_crafter_front_1.png",
+      "sourceKind": "projectred",
+      "blobSha1": "82bdd555b74f42cdf421b08eb3432b935309aed0",
+      "oldSize": null,
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/blocks/mechanical/autobench/front_working.png",
+      "source": "expansion/src/main/resources/assets/projectred_expansion/textures/block/auto_crafter_front_2.png",
+      "sourceKind": "projectred",
+      "blobSha1": "229826c0747817a42bfef3edc1a012ab9dc8113b",
+      "oldSize": null,
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/gui/auto_bench.png",
+      "source": "expansion/src/main/resources/assets/projectred_expansion/textures/gui/auto_crafter.png",
+      "sourceKind": "projectred",
+      "blobSha1": "1fc86a20a050b53e124a7386345dcab240bae340",
+      "oldSize": "256x256",
+      "newSize": "256x256"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/gui/ic_workbench.png",
+      "source": "fabrication/src/main/resources/assets/projectred_fabrication/textures/gui/ic_workbench.png",
+      "sourceKind": "projectred",
+      "blobSha1": "29e205d6f765a1b3e1c4f971c223833c0234d9e5",
+      "oldSize": "512x512",
+      "newSize": "512x512"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/gui/ic_workbench_info.png",
+      "source": "fabrication/src/main/resources/assets/projectred_fabrication/textures/gui/info_tab.png",
+      "sourceKind": "projectred",
+      "blobSha1": "6f38483e1d8dbce62aaf1cd578b07c4825e13f2a",
+      "oldSize": null,
+      "newSize": "512x512"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/gui/ic_workbench_compile.png",
+      "source": "fabrication/src/main/resources/assets/projectred_fabrication/textures/gui/compile_tab.png",
+      "sourceKind": "projectred",
+      "blobSha1": "6aa7ca8b54e3246adc5f6b49d8a07e31d7f66866",
+      "oldSize": null,
+      "newSize": "512x512"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/blocks/mechanical/pipes/pneumatic_tube.png",
+      "source": "expansion/src/main/resources/assets/projectred_expansion/textures/block/pneumatic_tube.png",
+      "sourceKind": "projectred",
+      "blobSha1": "958f4fff1ca827800d91b6fb48b1cdaa95027fc3",
+      "oldSize": null,
+      "newSize": "32x32"
+    }
+  ],
+  "models": [
+    {
+      "target": "src/main/resources/assets/projectred/obj/pneumatic_tube.obj",
+      "source": "expansion/src/main/resources/assets/projectred_expansion/obj/tube.obj",
+      "sourceKind": "projectred",
+      "sourceBlobSha1": "043c81f44d208fe1b1578c3a385b05e07d14aa43",
+      "transformation": "Convert OBJ object declarations (o) to groups (g) for the 1.12 CCL parser; preserve vertices, faces and UVs."
     }
   ]
 }

@@ -20,6 +20,7 @@ trait IICTileEditorNetwork
     def getTileStream(pos:Point):MCDataOutput
 
     def isRemote:Boolean
+    def isSimulationRunning:Boolean = true
     def markSave(): Unit
 }
 
@@ -344,11 +345,17 @@ class ICTileMapEditor(val network:IICTileEditorNetwork) extends IICSimEngineCont
 
     def getTotalSimTimeClient = network.getEditorWorld.getTotalWorldTime-worldTimeOffset
 
+    def canInteractSimulation:Boolean = network.isSimulationRunning && !simNeedsRefresh &&
+        simEngineContainer.simEngine != null && simEngineContainer.logger.getErrors.isEmpty
+
     def isEmpty = tileMapContainer.isEmpty
     def nonEmpty = tileMapContainer.nonEmpty
 
-    def tick(): Unit =
+    def tick():Unit = tick(autoCompile=true)
+
+    def tick(autoCompile:Boolean): Unit =
     {
+        if simNeedsRefresh && !autoCompile then return
         //Update tiles as needed
         val t = network.getEditorWorld.getTotalWorldTime
         val due = scheduledTicks.iterator.filter { case (_, deadline) => deadline <= t }.toList
@@ -366,6 +373,7 @@ class ICTileMapEditor(val network:IICTileEditorNetwork) extends IICSimEngineCont
 
         //Rebuild circuit if needed
         if simNeedsRefresh then {
+            if !autoCompile then return
             recompileSchematic()
             worldTimeOffset = network.getEditorWorld.getTotalWorldTime
             sendWorldTimeOffset()

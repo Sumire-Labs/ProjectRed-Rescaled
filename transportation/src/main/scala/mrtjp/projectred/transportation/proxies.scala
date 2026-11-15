@@ -76,6 +76,7 @@ class TransportationProxy_client extends TransportationProxy_server
     override def preinit(): Unit =
     {
         super.preinit()
+        PneumaticTubeRenderer.prepare()
 
         ModelRegistryHelper.registerItemRenderer(itemPartPipe, PipeItemRenderer)
 

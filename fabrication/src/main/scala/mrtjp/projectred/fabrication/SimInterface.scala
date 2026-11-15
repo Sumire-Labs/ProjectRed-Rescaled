@@ -113,6 +113,8 @@ class ICSimEngineContainer extends ISEICDelegate
         val ioParts = map.tiles.collect {
             case (pos, io:IIOGateTile) => (pos, io)
         }
+        if !ioParts.values.exists(_.getIOMode == IIOGateTile.Input) then logger.logError(Seq.empty,"IC has no inputs")
+        if !ioParts.values.exists(_.getIOMode == IIOGateTile.Output) then logger.logError(Seq.empty,"IC has no outputs")
         for s <- 0 until 4 do {
             val sio = ioParts.filter(_._2.getIOSide == s)
             if sio.size > 1 then {

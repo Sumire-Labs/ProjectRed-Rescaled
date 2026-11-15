@@ -80,7 +80,7 @@ abstract class GateICTile extends ICTile with TConnectableICTile with TICTileOri
     {
         case 0 => rotate()
         case 1 => configure()
-        case 2 => getLogicPrimitive.activate(this)
+        case 2 if editor.canInteractSimulation => getLogicPrimitive.activate(this)
         case _ =>
     }
 

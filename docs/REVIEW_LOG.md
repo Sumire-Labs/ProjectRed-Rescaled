@@ -246,3 +246,42 @@ path and received its multipart description. The server confirmed all 3,844 circ
 tiles after placement. The 472-item gallery and existing GUI checks passed alongside it.
 
 The original #1257 save was not available. Its exact failure remains unconfirmed.
+
+## 1.21.1 behavior policy and visual follow-up
+
+The user extended the newer-version behavior/specification target to all existing
+content and future backports. Earlier decisions to retain conflicting legacy
+mechanics are superseded; the current differences are tracked in SPEC_PARITY.md.
+This pass does not establish full conformance for the whole mod.
+
+Auto Crafter now uses 100-tick powered jobs, the newer work cost, unpowered pause,
+ingredient/output cancellation and idle plan cycling. Charge/work state and rotation
+are included in rendering and the bakery key. Its newer GUI synchronizes work
+progress and accepts plan-cycle clicks through the tile-bound container. Old cycle
+timer NBT is accepted without losing plans or storage; partial new jobs resume.
+
+Workbench now uses the newer information/edit/compile atlases with a responsive
+layout and grouped tool palette. Manual/automatic compilation, the default
+20-component automatic limit, compiler state and missing-input/output diagnostics
+are connected to the native compiler. Simulation input is rejected while the
+circuit is uncompiled, stale or failed. The new staged engine/compiler and complete
+newer editor still need a separate implementation and old-circuit migration.
+
+The Pneumatic Tube renderer uses the newer OBJ/atlas for placed tubes and items.
+The old CCL parser needs OBJ groups instead of object declarations; vertices,
+faces and UV coordinates are otherwise unchanged. Checks cover bounds and UVs
+for every one of the 64 connection masks and render actual synchronized item flow.
+
+Basic lithography now uses the newer 4096nm wafer, standard 16x16 defect calibration
+and fixed 16x16 production footprint. The old independent yield calibration is gone.
+The newer GUI estimate can be negative for oversized designs; manufacturing uses
+the fixed footprint, matching the pinned upstream implementation and its TODO.
+
+Verification passed in development and in an installed Cleanroom server without
+JEI. Tests cover full work duration, cancellation, idle plan selection, unpowered
+pause, NBT conversion/resume, manual/automatic compilation, size limits, failed
+designs and description packets. The graphical client renders all 482 creative
+variants, opens/resizes the actual Workbench, switches all tabs and selects a tool
+through its palette, shows three Auto Crafter states and clicks its plan-cycle
+button. Screenshots were inspected. This caught and fixed a missing rotation state
+and a popup background that covered its own child buttons.

@@ -24,13 +24,9 @@ import net.minecraftforge.fml.relauncher.{Side, SideOnly}
   * High-version equivalent: `LithographyTableBlockEntity`, 60 seconds of work
   * using the shared native power cost.
   *
-  * One deliberate improvement on the high version: it hard-codes the design
-  * size to 16x16 tiles with a `TODO Source from photomask itemstack instead of
-  * assuming 16x16`. The design size is available here (see
-  * [[ICData.getDesignSize]]), so the real size is used instead. Boards span
-  * 16x16 .. 64x64 tiles (`selectedBoardSize * 16`, not the 1x1..4x4 the sizer
-  * grid suggests), so assuming 16x16 would misjudge every board but the
-  * smallest. See MIGRATION.md.
+  * Production uses the fixed 16x16 footprint of the pinned 1.21.1 implementation,
+  * including its current TODO to read dimensions from the photomask. The GUI's
+  * design-size estimate is separate, as it is upstream.
   */
 class TileLithographyTable extends TGuiFabricationMachine with TInventory with TInventoryCapablilityTile:
 
@@ -71,7 +67,7 @@ class TileLithographyTable extends TGuiFabricationMachine with TInventory with T
         val photomask = storage(0)
         val wafer = storage(1).getItem.asInstanceOf[ItemRoughSiliconWafer]
 
-        val calc = new YieldCalculator(ICData.getDesignSize(photomask), ProcessNode.PROCESS_64NM, wafer.getWaferType)
+        val calc = new YieldCalculator(mrtjp.core.vec.Size(16,16), ProcessNode.PROCESS_64NM, wafer.getWaferType)
         val total = calc.getCappedDieCount
         val defectChance = calc.getDefectChancePerDie
 

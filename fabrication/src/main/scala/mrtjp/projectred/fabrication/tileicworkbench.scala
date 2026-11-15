@@ -129,6 +129,7 @@ abstract class TileICMachine extends MTBlockTile with TTileOrient
 class TileICWorkbench extends TileICMachine with TICTileEditorNetwork
 {
     val editor = new ICTileMapEditor(this)
+    val controller = new WorkbenchController(this)
 
     var hasBP = false
     var watchers = MSet[EntityPlayer]()
@@ -140,6 +141,7 @@ class TileICWorkbench extends TileICMachine with TICTileEditorNetwork
         editor.save(ictag)
         tag.setTag("ictag", ictag)
         tag.setBoolean("bp", hasBP)
+        controller.save(tag)
     }
 
     override def load(tag:NBTTagCompound): Unit =
@@ -147,18 +149,22 @@ class TileICWorkbench extends TileICMachine with TICTileEditorNetwork
         super.load(tag)
         editor.load(tag.getCompoundTag("ictag"))
         hasBP = tag.getBoolean("bp")
+        if hasBP && editor.isEmpty then editor.tileMapContainer.size = mrtjp.core.vec.Size(16,16)
+        controller.load(tag)
     }
 
     override def writeDesc(out:MCDataOutput): Unit =
     {
         super.writeDesc(out)
         out.writeBoolean(hasBP)
+        controller.writeDesc(out)
     }
 
     override def readDesc(in:MCDataInput): Unit =
     {
         super.readDesc(in)
         hasBP = in.readBoolean()
+        controller.readDesc(in)
     }
 
     override def read(in:MCDataInput, key:Int) = key match
@@ -166,7 +172,10 @@ class TileICWorkbench extends TileICMachine with TICTileEditorNetwork
         case 1 =>
             hasBP = in.readBoolean()
             markRender()
-        case 2 => editor.readDesc(in)
+        case 2 =>
+            editor.readDesc(in)
+            controller.readDesc(in)
+        case 7 => controller.readDesc(in)
         case 3 => readTileStream(in)
         case 4 => readICStream(in)
         case _ => super.read(in, key)
@@ -177,6 +186,7 @@ class TileICWorkbench extends TileICMachine with TICTileEditorNetwork
         key match {
             case 4 if hasBP =>
                 readClientICStream(in)
+                if editor.simNeedsRefresh then controller.markEdited()
                 markDirty()
             case 5 if hasBP =>
                 val name = in.readString().take(64)
@@ -186,6 +196,7 @@ class TileICWorkbench extends TileICMachine with TICTileEditorNetwork
                     editor.clear()
                     editor.tileMapContainer.name = name
                     editor.tileMapContainer.size = mrtjp.core.vec.Size(width, height)
+                    controller.markEdited()
                     markDirty()
                     sendICDesc()
                 }
@@ -193,6 +204,8 @@ class TileICWorkbench extends TileICMachine with TICTileEditorNetwork
                 editor.tileMapContainer.name = in.readString().take(64)
                 markDirty()
                 sendICDesc()
+            case 7 if hasBP => controller.requestCompile()
+            case 8 if hasBP => controller.toggleAutomatic()
             case _ =>
         }
     }
@@ -210,6 +223,7 @@ class TileICWorkbench extends TileICMachine with TICTileEditorNetwork
         {
             val out = writeStream(2)
             editor.writeDesc(out)
+            controller.writeDesc(out)
             for p <- players do
                 out.sendToPlayer(p)
         }
@@ -227,9 +241,13 @@ class TileICWorkbench extends TileICMachine with TICTileEditorNetwork
         writeStream(6).writeString(editor.tileMapContainer.name).sendToServer()
     }
 
+    def sendCompileToServer():Unit = writeStream(7).sendToServer()
+    def sendAutoCompileToggle():Unit = writeStream(8).sendToServer()
+
     override def getIC = editor
     override def getEditorWorld = world
     override def isRemote = world.isRemote
+    override def isSimulationRunning = controller.state == 3
     override def markSave(): Unit ={markDirty()}
 
     override def createTileStream() = writeStream(3)
@@ -249,7 +267,7 @@ class TileICWorkbench extends TileICMachine with TICTileEditorNetwork
         super.updateServer()
         flushICStream()
         flushTileStream()
-        editor.tick()
+        controller.tick()
     }
     override def updateClient(): Unit =
     {
@@ -268,9 +286,13 @@ class TileICWorkbench extends TileICMachine with TICTileEditorNetwork
                     editor.clear()
                     loadTileMap(editor.tileMapContainer, held)
                     sendICDesc()
+                } else {
+                    editor.clear()
+                    editor.tileMapContainer.size = mrtjp.core.vec.Size(16,16)
                 }
                 held.shrink(1)
                 hasBP = true
+                controller.markEdited()
                 sendHasBPUpdate()
             }
             else if hasBP && player.isSneaking then {
@@ -297,7 +319,9 @@ class TileICWorkbench extends TileICMachine with TICTileEditorNetwork
                 GuiICWorkbench.open(player, nc, {p =>
                     p.writePos(pos)
                     editor.writeDesc(p)
-                    p.writeLong(editor.simEngineContainer.simEngine.getRegVal[Long](SEIntegratedCircuit.REG_SYSTIME))
+                    val simulation = editor.simEngineContainer.simEngine
+                    p.writeLong(if simulation == null then 0L else simulation.getRegVal[Long](SEIntegratedCircuit.REG_SYSTIME))
+                    controller.writeDesc(p)
                 })
             }
         }

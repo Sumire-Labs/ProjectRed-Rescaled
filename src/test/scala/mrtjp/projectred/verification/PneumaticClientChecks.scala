@@ -3,7 +3,7 @@ package mrtjp.projectred.verification
 import java.util.concurrent.atomic.AtomicReference
 import codechicken.multipart.TileMultipart
 import mrtjp.projectred.expansion.TileItemImporter
-import mrtjp.projectred.transportation.PipeDefs
+import mrtjp.projectred.transportation.{PipeDefs,PneumaticTubeRenderer}
 import mrtjp.projectred.transportation.pneumatics.part.PneumaticTubePart
 import net.minecraft.client.Minecraft
 import net.minecraft.init.{Blocks,Items}
@@ -25,6 +25,23 @@ object PneumaticClientChecks {
             case _ => None
         }
     def start():Unit = {
+        for mask <- 0 until 64 do {
+            val model = PneumaticTubeRenderer.modelFor(mask)
+            assert(model eq PneumaticTubeRenderer.modelFor(mask),"Tube mesh was not cached")
+            assert(model.verts.nonEmpty && model.verts.length%4 == 0)
+            for vertex <- model.verts do {
+                val p = vertex.vec
+                assert(Seq(p.x,p.y,p.z).forall(v => v >= -0.00001 && v <= 1.00001),s"Tube mesh $mask escaped its block: $p")
+                assert(vertex.uv.u >= 0 && vertex.uv.u <= 1 && vertex.uv.v >= 0 && vertex.uv.v <= 1,
+                    s"Tube mesh $mask has an invalid UV")
+            }
+            val b = model.bounds()
+            val expected = Seq((b.min.y,b.max.y,0),(b.min.z,b.max.z,2),(b.min.x,b.max.x,4))
+            for (min,max,side) <- expected do {
+                assert(math.abs(min-(if (mask&(1<<side)) != 0 then 0 else 0.25)) < 0.001,s"Tube mesh $mask has wrong negative side $side: $min")
+                assert(math.abs(max-(if (mask&(2<<side)) != 0 then 1 else 0.75)) < 0.001,s"Tube mesh $mask has wrong positive side $side: $max")
+            }
+        }
         val mc = Minecraft.getMinecraft
         val server = mc.getIntegratedServer
         val id = mc.player.getUniqueID

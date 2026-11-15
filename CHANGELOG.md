@@ -10,6 +10,11 @@
 
 ### Changed
 
+- Align Auto Crafter work time, power consumption, plan cycling, GUI and appearance states with 1.21.1.
+- Adapt the newer IC Workbench tabs and tool palette, with manual/automatic compilation and compile diagnostics.
+- Use the newer Pneumatic Tube geometry and atlas for all connection shapes.
+- Align basic lithography with the newer 4096nm wafer and fixed 16x16 production footprint.
+
 - Backport 71 updated 1.21.1 textures for machines, mineral blocks, materials, tools, gem armor, backpacks and the IC perfboard.
 
 - Migrate Minecraft 1.12.2 ProjectRed to Cleanroom, Java 25 and Scala 3.10.

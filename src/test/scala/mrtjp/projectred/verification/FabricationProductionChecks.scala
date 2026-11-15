@@ -107,6 +107,7 @@ object FabricationProductionChecks {
             lithography.setInventorySlotContents(0,mask)
             lithography.setInventorySlotContents(1,new ItemStack(itemRoughSiliconWafer))
             lithography.cond.Vloc = 200
+            world.rand.setSeed(0L)
             ticks(lithography,1201)
             val valid = lithography.getStackInSlot(2).copy()
             val rejected = lithography.getStackInSlot(3)
@@ -114,7 +115,8 @@ object FabricationProductionChecks {
             assert(valid.getCount+rejected.getCount == count && valid.getCount <= 64 && rejected.getCount <= 64,
                 "Lithography lost dies or exceeded slot capacity")
             assert(!valid.isEmpty && lithography.getStackInSlot(0).getCount == 1 && lithography.getStackInSlot(1).isEmpty)
-            assert(new YieldCalculator(Size(64,64),ProcessNode.PROCESS_64NM,WaferType.ROUGH_WAFER).getDefectChancePerDie == 0.5)
+            assert(count == 16 && WaferType.ROUGH_WAFER.getWaferWidth == 4096,"Basic production differs from 1.21.1")
+            assert(new YieldCalculator(Size(16,16),ProcessNode.PROCESS_64NM,WaferType.ROUGH_WAFER).getDefectChancePerDie == 0.5)
 
             val packaging = place(2).asInstanceOf[TilePackagingTable]
             valid.setCount(1)
