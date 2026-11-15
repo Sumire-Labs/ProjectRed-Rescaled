@@ -136,6 +136,31 @@ object PneumaticChecks {
             assert(reloadedImporter.itemStorage.poll().getItemStack.getCount == 9 && reloadedImporter.itemStorage.isEmpty,
                 "Pneumatic device adapter changed the existing queue format")
 
+            val returnStart = new BlockPos(80,80,8)
+            val (_,returnPipes,returnDestination) = line(returnStart)
+            world.setBlockState(returnStart,mrtjp.projectred.ProjectRedExpansion.machine2.getStateFromMeta(1),3)
+            val returnImporter = world.getTileEntity(returnStart).asInstanceOf[mrtjp.projectred.expansion.TileItemImporter]
+            returnImporter.setSide(5)
+            val alternate = chest(returnStart.add(1,0,1))
+            returnPipes.foreach(_.onNeighborChanged())
+            val returning = new PneumaticTubePayload(new ItemStack(Items.IRON_INGOT))
+            returning.setInputSide(4)
+            returnPipes.head.setOutputDirection(returning)
+            assert(returning.getOutputSide == 3,"Backstuff was preferred over an available ordinary destination")
+            fill(alternate)
+            returnPipes.head.setOutputDirection(returning)
+            assert(returning.getOutputSide == 4,"Returning payload was not routed into an available backstuff buffer")
+            returnImporter.itemStorage.add(new ItemStack(Items.IRON_INGOT,5))
+            returnImporter.exportBuffer()
+            assert(returnImporter.itemStorage.isEmpty)
+            fill(returnDestination)
+            tick(returnPipes,240)
+            assert(!returnImporter.itemStorage.isEmpty && returnImporter.itemStorage.peek.getItemStack.getCount == 5 &&
+                returnImporter.itemStorage.backlogged && returnPipes.forall(_.getPneumaticTransport.getPayloads.isEmpty),
+                "Blocked delivery did not return intact to its importer")
+            assert(!returnPipes.head.insertPayload(5,new PneumaticTubePayload(new ItemStack(Items.IRON_INGOT))),
+                "New input was accepted with only backstuff destinations available")
+
             val sidedStart = new BlockPos(64,80,8)
             val (sidedSource,sidedPipes,_) = line(sidedStart)
             fill(sidedSource)

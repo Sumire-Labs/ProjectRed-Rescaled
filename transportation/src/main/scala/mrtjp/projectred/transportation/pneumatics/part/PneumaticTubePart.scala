@@ -173,7 +173,8 @@ class PneumaticTubePart extends SubcorePipePart with TCenterConnectable with TSw
             payload.setOutputSide(input ^ 1)
             return
 
-        val routes = new PneumaticExitPathfinder(this, graphNode.getRouteTable, payload, exits, Seq(PneumaticTransportMode.PASSIVE_NORMAL)).result()
+        // In-flight items may return to a backstuff buffer after ordinary destinations fail.
+        val routes = new PneumaticExitPathfinder(this, graphNode.getRouteTable, payload, exits).result()
         val routeMask = routes.exitDirMask
         val transitMask = exits & (0 until 6).foldLeft(0) { (mask, side) =>
             if (exits & (1 << side)) != 0 && getStraight(side).isInstanceOf[PneumaticTubePart] then mask | (1 << side) else mask

@@ -69,8 +69,14 @@ Tests cover nearest and equal-distance exits, round-robin state, partial inserti
 full-output bounce/recovery, sided rejection, importer handoff, legacy queue reload,
 world re-entry, 300-payload descriptions, oversized stack counts and large IC carriage.
 The graphical client confirms an importer moving an NBT-bearing item through five tubes
-into a chest with synchronized item flow and particles. Full newer-version backstuff
-graph semantics and newer tube model/UV adaptation remain outside this basic backport.
+into a chest with synchronized item flow and particles. Newer tube model/UV adaptation
+remains separate from this routing implementation.
+
+The 1.21.1 in-flight route selector now checks ordinary destinations first and then
+backstuff buffers. This fixes blocked deliveries bouncing indefinitely instead of
+returning to an available importer. New input still requires an ordinary destination,
+as in the newer implementation. Tests cover destination priority, complete return
+to the importer and preservation of item count/NBT through client synchronization.
 
 ## Direct 1.21.1 comparison
 
@@ -84,7 +90,7 @@ Matching names or renamed registrations alone do not establish a missing feature
 | Exploration walls | All nine material variants already exist, but the legacy custom block is not recognized as a vanilla wall. | Restore standard wall recognition and sided connection rules without replacing `stone_wall` or its metadata. |
 | Exploration ores | Raw tin/silver and deepslate variants add real progression/world-generation changes. | Evaluate drop recipes, ore dictionary integration and generation policy separately. |
 | Fabrication editor | The newer editor uses data components and the external fabrication-engine library. | Treat engine/editor replacement and old-blueprint conversion as a separate migration. |
-| Pneumatic transport | Basic transport is present; broader backstuff routing and newer models remain different. | Add functionality in tested stages while keeping old networks readable. |
+| Pneumatic transport | Ordinary/backstuff destination priority is ported; newer models remain different. | Adapt model geometry and UVs separately while keeping old networks readable. |
 
 Upstream PR #2004's redwire flag restoration is already covered by the earlier repair.
 PR #1991's positioned CraftingInput/optional component codecs and #1993's trimmed-grid
@@ -195,5 +201,5 @@ language adapter with Scala 3.10 libraries. Release workflows never publish fixt
 - Exercise copied real saves containing active logistics, ICs, moving frames, barrel
   contents and retrogen flags; check third-party inventory capability behavior.
 - Exercise gate timing and larger logistics/IC networks beyond smoke coverage.
-- Evaluate advanced fabrication processes, newer tube models and broader backstuff
-  routing separately. Existing legacy content remains available alongside these additions.
+- Evaluate advanced fabrication processes and newer tube models separately.
+  Existing legacy content remains available alongside these additions.

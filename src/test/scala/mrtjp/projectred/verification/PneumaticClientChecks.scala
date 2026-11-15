@@ -95,12 +95,45 @@ object PneumaticClientChecks {
                             assert(result.getItem == Items.GOLD_INGOT && result.getCount == 9 &&
                                 result.getTagCompound.getString("marker") == "client-pneumatic",
                                 "Server destination did not receive the synchronized pneumatic payload")
+                            for i <- 1 until inventory.getSizeInventory do inventory.setInventorySlotContents(i,new ItemStack(Blocks.STONE,64))
+                            inventory.setInventorySlotContents(0,ItemStack.EMPTY)
+                            val importer = world.getTileEntity(start).asInstanceOf[TileItemImporter]
+                            val returned = new ItemStack(Items.IRON_INGOT,7)
+                            val tag = new NBTTagCompound
+                            tag.setString("marker","client-backstuff")
+                            returned.setTagCompound(tag)
+                            importer.itemStorage.add(returned)
+                            importer.exportBuffer()
+                            assert(importer.itemStorage.isEmpty)
+                            inventory.setInventorySlotContents(0,new ItemStack(Blocks.STONE,64))
                         }
                     })
                     phase = 2
                 }
             case 2 =>
-                println("PROJECTRED_PNEUMATIC_CLIENT_PASS: importer, five multipart tubes, item-flow packets, particles and destination NBT")
+                sawPayload = false
+                ticks = 0; phase = 3
+            case 3 =>
+                val moving = tubes.exists(_.getPneumaticTransport.getPayloads.nonEmpty)
+                if moving && !sawPayload then { sawPayload = true; ticks = 0 }
+                if sawPayload && !moving && ticks > 10 then {
+                    val server = mc.getIntegratedServer
+                    val id = mc.player.getUniqueID
+                    action = server.addScheduledTask(new Runnable {
+                        def run():Unit = {
+                            val world = server.getPlayerList.getPlayerByUUID(id).getServerWorld
+                            val importer = world.getTileEntity(start).asInstanceOf[TileItemImporter]
+                            assert(!importer.itemStorage.isEmpty && importer.itemStorage.backlogged)
+                            val returned = importer.itemStorage.peek.getItemStack
+                            assert(returned.getItem == Items.IRON_INGOT && returned.getCount == 7 &&
+                                returned.getTagCompound.getString("marker") == "client-backstuff",
+                                "Blocked client delivery did not return intact to the importer")
+                        }
+                    })
+                    phase = 4
+                }
+            case 4 =>
+                println("PROJECTRED_PNEUMATIC_CLIENT_PASS: item flow, destination NBT and intact backstuff return through five tubes")
                 return true
             case _ =>
         }
