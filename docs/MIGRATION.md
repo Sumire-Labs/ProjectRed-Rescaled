@@ -48,6 +48,30 @@ and a 50% defect rate at 64x64. Advanced nodes, wafer grades and a new IC engine
 outside this backport. Tests cover the complete powered chain, pause/cancel/reload,
 ingredient accounting, interface plates, design rejection and all three server-opened GUIs.
 
+Pneumatic transport follows the same reference's basic graph-routing implementation.
+It is added at pipe metadata 66 with the new `pneumatic_tube` multipart registration.
+Pressure Tube metadata 64, Resistance Tube metadata 65 and routed-pipe registrations
+remain unchanged. The new shapeless upgrade recipe consumes a Pressure Tube and an
+iron nugget, avoiding a recipe collision with the existing pressure-tube recipe.
+New tubes use their own network; existing importers and breakers implement its device
+contract through an adapter that preserves the original queue NBT and filtering logic.
+
+Routing caches invalidate on world separation and re-entry; neighbor lookups do not
+load missing chunks. Initial descriptions include link state, payload counts use VarInt,
+payload mutations mark chunks dirty, and stack counts are saved as integers. CCL's
+MCData item serialization bypasses Forge share-tag hooks, so payload descriptions
+explicitly apply the large-NBT transport envelope. External inventory access uses
+normal wrappers; `wrapInternal` in the reference bypassed Sumire's sided/item restrictions.
+Graph debug logging is disabled at normal log levels. Pipe geometry and its pressure-tube
+texture are retained; link smoke and pressure/depressure sounds are included.
+
+Tests cover nearest and equal-distance exits, round-robin state, partial insertion,
+full-output bounce/recovery, sided rejection, importer handoff, legacy queue reload,
+world re-entry, 300-payload descriptions, oversized stack counts and large IC carriage.
+The graphical client confirms an importer moving an NBT-bearing item through five tubes
+into a chest with synchronized item flow and particles. Full newer-version backstuff
+graph semantics and newer tube model/UV adaptation remain outside this basic backport.
+
 ## Architecture
 
 Eleven internal Gradle projects compile in dependency order. The root collects their
@@ -144,5 +168,5 @@ language adapter with Scala 3.10 libraries. Release workflows never publish fixt
 - Exercise copied real saves containing active logistics, ICs, moving frames, barrel
   contents and retrogen flags; check third-party inventory capability behavior.
 - Exercise gate timing and larger logistics/IC networks beyond smoke coverage.
-- New pneumatic routing remains the next feature backport. Old Pressure/Resistance
-  Tube registrations, the IC Printer and the single-step IC recipe are preserved.
+- Evaluate advanced fabrication processes, newer tube models and broader backstuff
+  routing separately. Existing legacy content remains available alongside these additions.

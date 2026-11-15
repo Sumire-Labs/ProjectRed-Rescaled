@@ -143,6 +143,30 @@ object RenderPipe extends IIconRegister
         for s <- 0 to 1 do sideModels(s).render(ccrs, ops*)
     }
 
+    def renderPneumaticItemFlow(p:mrtjp.projectred.transportation.pneumatics.part.PneumaticTubePart, pos:Vector3, frame:Float, ccrs:CCRenderState):Unit = {
+        pushMatrix()
+        disableLighting()
+        try {
+            for payload <- p.getPneumaticTransport.getPayloads do {
+                val direction = payload.getCurrentSide
+                val progress = (payload.getProgress+payload.getSpeed*frame).toDouble/payload.MAX_PROGRESS
+                var x = pos.x+0.5D
+                var y = pos.y+0.25D
+                var z = pos.z+0.5D
+                direction match {
+                    case 0 => y = pos.y-0.25D+1.0D-progress
+                    case 1 => y = pos.y-0.25D+progress
+                    case 2 => z = pos.z+1.0D-progress
+                    case 3 => z = pos.z+progress
+                    case 4 => x = pos.x+1.0D-progress
+                    case 5 => x = pos.x+progress
+                    case _ =>
+                }
+                doRenderItem(payload.getItemStack,x,y,z)
+            }
+        } finally { enableLighting(); popMatrix() }
+    }
+
     def renderItemFlow[T <: AbstractPipePayload](p:PayloadPipePart[T], pos:Vector3, frame:Float, ccrs:CCRenderState): Unit =
     {
         pushMatrix()
@@ -180,19 +204,20 @@ object RenderPipe extends IIconRegister
     }
 
     private def doRenderItem(r:AbstractPipePayload, x:Double, y:Double, z:Double): Unit =
+        if r != null then doRenderItem(r.getItemStack,x,y,z)
+
+    private def doRenderItem(itemstack:ItemStack, x:Double, y:Double, z:Double):Unit =
     {
-        if r == null || r.getItemStack == null then return
+        if itemstack == null || itemstack.isEmpty then return
         val renderScale = 0.7f
-        val itemstack = r.getItemStack
 
         pushMatrix()
-        translate(x, y, z)
-        translate(0, 0.125f, 0)
-        scale(renderScale, renderScale, renderScale)
-
-        customRenderItem.renderItem(itemstack, TransformType.FIXED)
-
-        popMatrix()
+        try {
+            translate(x,y,z)
+            translate(0,0.125f,0)
+            scale(renderScale,renderScale,renderScale)
+            customRenderItem.renderItem(itemstack,TransformType.FIXED)
+        } finally popMatrix()
     }
 
     private def renderPayloadColour(colour:Int, x:Double, y:Double, z:Double, ccrs:CCRenderState): Unit =

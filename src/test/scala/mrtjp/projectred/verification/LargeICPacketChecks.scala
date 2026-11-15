@@ -85,6 +85,15 @@ object LargeICPacketChecks {
                     "Network encoding changed persistent IC item NBT")
                 assert(ItemICBlueprint.loadTileMap(decoded).tiles.size == 3844,"Received IC item lost its tile map")
             } finally buffer.release()
+            val carried = new mrtjp.projectred.transportation.pneumatics.part.PneumaticTubePayload(stack)
+            val carrierPacket = new PacketCustom("PRVerification",3)
+            carried.writeDesc(carrierPacket)
+            val carrierInput = new PacketCustom(carrierPacket.copy())
+            val received = new mrtjp.projectred.transportation.pneumatics.part.PneumaticTubePayload
+            received.readDesc(carrierInput)
+            assert(net.minecraft.item.ItemStack.areItemStacksEqual(stack,received.getItemStack),
+                "Pneumatic payload description lost large IC data")
+            carrierInput.release(); carrierPacket.release()
         }
         val player = net.minecraftforge.common.util.FakePlayerFactory.getMinecraft(world)
         val held = player.getHeldItemMainhand

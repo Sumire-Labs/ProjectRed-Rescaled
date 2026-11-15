@@ -5,6 +5,11 @@ All ten logical mods are distributed in **one ProjectRed jar**. Existing `mrtjp.
 packages, registry names and module IDs are retained. Do not install the original split
 ProjectRed jars alongside this distribution.
 
+The backports add Illumar Smart Lamps, the Plotting/Lithography/Packaging IC production
+line and Pneumatic Tubes. The existing IC Printer and crafting route remain available.
+Craft a Pneumatic Tube from one Pressure Tube and one iron nugget. Existing pressure,
+resistance and routed pipes retain their registrations; the new tube is a separate network.
+
 ## Runtime dependencies
 
 - Java 25 and Cleanroom 0.7.14-alpha or newer

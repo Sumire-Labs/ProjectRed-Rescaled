@@ -6,6 +6,7 @@
 
 - Add Illumar Smart Lamps with mixed bundled-channel colours, variable brightness and six placement orientations.
 - Add Plotting, Lithography and Packaging Tables for IC production, with photomasks, rough silicon wafers and dies.
+- Add Pneumatic Tubes with cached graph routing, item-flow rendering, link particles and sounds. Existing Pressure/Resistance Tubes remain available.
 
 ### Changed
 

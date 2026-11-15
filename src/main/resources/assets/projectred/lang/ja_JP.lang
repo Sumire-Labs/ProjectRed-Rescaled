@@ -572,3 +572,5 @@ item.projectred.fabrication.blankPhotomask.name=空のフォトマスク
 item.projectred.fabrication.photomaskSet.name=フォトマスクセット
 item.projectred.fabrication.validDie.name=良品ダイ
 item.projectred.fabrication.invalidDie.name=不良ダイ
+
+item.projectred.transportation.pipe|66.name=空気輸送チューブ

@@ -8,6 +8,7 @@ package mrtjp.projectred.expansion
 import codechicken.lib.data.{MCDataInput, MCDataOutput}
 import codechicken.multipart.BlockMultipart
 import mrtjp.core.inventory.InvWrapper
+import mrtjp.core.item.ItemKey
 import mrtjp.core.world.WorldLib
 import mrtjp.projectred.core.PRLib
 import mrtjp.projectred.transportation.*
@@ -187,6 +188,8 @@ trait TActiveDevice extends TileMachine
             case pipe:TPressureTube if pipe.hasDestination(r, side^1) =>
                 pipe.injectPayload(r, side)
                 true
+            case pipe:mrtjp.projectred.transportation.pneumatics.PneumaticTransportContainer =>
+                pipe.insertPayload(side,new mrtjp.projectred.transportation.pneumatics.part.PneumaticTubePayload(r.payload.makeStack.copy()))
             case _ => false
         }
     }
@@ -220,8 +223,27 @@ trait TActiveDevice extends TileMachine
     }
 }
 
-trait TPressureActiveDevice extends TActiveDevice with TPressureDevice
+trait TPressureActiveDevice extends TActiveDevice with TPressureDevice with mrtjp.projectred.transportation.pneumatics.PneumaticTransportDevice
 {
+    override def canConnectTube(side:Int):Boolean = canConnectSide(side)
+
+    override def canAcceptPayload(side:Int, item:mrtjp.projectred.transportation.pneumatics.part.PneumaticTubePayload,
+        mode:mrtjp.projectred.transportation.pneumatics.PneumaticTransportMode):Boolean = {
+        if !canConnectSide(side) then return false
+        val key = ItemKey.get(item.getItemStack)
+        mode match {
+            case mrtjp.projectred.transportation.pneumatics.PneumaticTransportMode.PASSIVE_NORMAL => canAcceptInput(key,side) && shouldAcceptInput
+            case mrtjp.projectred.transportation.pneumatics.PneumaticTransportMode.PASSIVE_BACKSTUFF => canAcceptBacklog(key,side) && shouldAcceptBacklog
+        }
+    }
+
+    override def insertPayload(side:Int, item:mrtjp.projectred.transportation.pneumatics.part.PneumaticTubePayload):Boolean = {
+        if item.isCorrupted then return false
+        val legacy = new PressurePayload(AbstractPipePayload.claimID())
+        legacy.setItemStack(item.getItemStack.copy())
+        acceptItem(legacy,side)
+    }
+
     override def acceptItem(item:PressurePayload, side:Int):Boolean =
     {
         if !canConnectSide(side) then return false

@@ -513,3 +513,5 @@ item.projectred.fabrication.blankPhotomask.name=Blank Photomask
 item.projectred.fabrication.photomaskSet.name=Photomask Set
 item.projectred.fabrication.validDie.name=Valid Die
 item.projectred.fabrication.invalidDie.name=Invalid Die
+
+item.projectred.transportation.pipe|66.name=Pneumatic Tube

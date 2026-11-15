@@ -9,6 +9,7 @@ import codechicken.multipart.api.IPartFactory
 import mrtjp.core.gui.GuiHandler
 import mrtjp.projectred.ProjectRedTransportation.*
 import mrtjp.projectred.core.{Configurator, IProxy}
+import mrtjp.projectred.transportation.pneumatics.part.PneumaticTubePart
 import net.minecraft.client.renderer.block.model.ModelResourceLocation
 import net.minecraft.util.ResourceLocation
 import net.minecraftforge.client.model.ModelLoader
@@ -38,6 +39,7 @@ class TransportationProxy_server extends IProxy with IPartFactory
 
         MultiPartRegistry.registerParts(this, PipeDefs.values.map{_.partname}.toArray)
         MinecraftForge.EVENT_BUS.register(ChipResetRecipe)
+        MinecraftForge.EVENT_BUS.register(PneumaticSounds)
     }
 
     override def init(): Unit =
@@ -61,6 +63,7 @@ class TransportationProxy_server extends IProxy with IPartFactory
         case ROUTEDFIREWALL.partname => new RoutedFirewallPipe
         case PRESSURETUBE.partname => new PressureTube
         case RESISTANCETUBE.partname => new ResistanceTube
+        case PNEUMATICTUBE.partname => new PneumaticTubePart
         case NETWORKVALVE.partname => new NetworkValvePipePart
         case NETWORKLATENCY.partname => new NetworkLatencyPipePart
         case _ => null
