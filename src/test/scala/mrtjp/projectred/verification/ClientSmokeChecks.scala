@@ -179,7 +179,11 @@ object ClientSmokeChecks {
                     DecorativeWallClientChecks.start()
                     state = 11
                 }
-                case 11 => if DecorativeWallClientChecks.tick() then finish()
+                case 11 => if DecorativeWallClientChecks.tick() then {
+                    TextureBackportClientChecks.start()
+                    state = 12
+                }
+                case 12 => if TextureBackportClientChecks.tick() then finish()
                 case _ =>
             }
         } catch { case error:Throwable => failure = error; finish() }

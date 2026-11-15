@@ -10,6 +10,8 @@
 
 ### Changed
 
+- Backport 71 updated 1.21.1 textures for machines, mineral blocks, materials, tools, gem armor, backpacks and the IC perfboard.
+
 - Migrate Minecraft 1.12.2 ProjectRed to Cleanroom, Java 25 and Scala 3.10.
 - Use CleanroomDevEnv-derived builds and Cleanroom userdev mappings.
 - Compile modules as Gradle subprojects and distribute one runtime jar.

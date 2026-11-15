@@ -1,0 +1,579 @@
+{
+  "projectredReference": "e631f983c9b31c79f04deffa92ae5e68468326a0",
+  "legacyPathMappingReference": "f55e7aab200dd5fe6ed66e758208ecb8e6480e5d",
+  "minecraftReference": {
+    "clientUrl": "https://piston-data.mojang.com/v1/objects/30c73b1c5da787909b2f73340419fdf13b9def88/client.jar",
+    "version": "1.21.1",
+    "clientSha1": "30c73b1c5da787909b2f73340419fdf13b9def88"
+  },
+  "assets": [
+    {
+      "target": "src/main/resources/assets/projectred/textures/blocks/fabrication/prefboard.png",
+      "source": "fabrication/src/main/resources/assets/projectred_fabrication/textures/block/workbench_ui/perfboard.png",
+      "sourceKind": "projectred",
+      "blobSha1": "d3006bcf374cc087c7a4e130aa9238d5965ab864",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/blocks/mechanical/autobench/bottom.png",
+      "source": "expansion/src/main/resources/assets/projectred_expansion/textures/block/auto_crafter_bottom.png",
+      "sourceKind": "projectred",
+      "blobSha1": "7bc49eed2bd827e14cb6cdad1b8096e4d470dfcf",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/blocks/mechanical/autobench/side1.png",
+      "source": "expansion/src/main/resources/assets/projectred_expansion/textures/block/auto_crafter_front_0.png",
+      "sourceKind": "projectred",
+      "blobSha1": "e88543c8414ab887dacfb8167c41bd3e87269b28",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/blocks/mechanical/autobench/side2.png",
+      "source": "expansion/src/main/resources/assets/projectred_expansion/textures/block/auto_crafter_side.png",
+      "sourceKind": "projectred",
+      "blobSha1": "6dbdab9d1678291ff09391d8b8084eb87a286376",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/blocks/mechanical/autobench/top.png",
+      "source": "expansion/src/main/resources/assets/projectred_expansion/textures/block/auto_crafter_top.png",
+      "sourceKind": "projectred",
+      "blobSha1": "9402d54c213fc9dfc13fb7539fcb6d56b289e2cf",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/blocks/mechanical/charger/bottom.png",
+      "source": "expansion/src/main/resources/assets/projectred_expansion/textures/block/charging_bench_bottom.png",
+      "sourceKind": "projectred",
+      "blobSha1": "e24f889fe28c19eccb37881eaaefaf0c204e1b0b",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/blocks/mechanical/charger/side1.png",
+      "source": "expansion/src/main/resources/assets/projectred_expansion/textures/block/charging_bench_side_0.png",
+      "sourceKind": "projectred",
+      "blobSha1": "e8d28d60e3740f31db6870ffb8e149caed6d8c49",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/blocks/mechanical/charger/side2.png",
+      "source": "expansion/src/main/resources/assets/projectred_expansion/textures/block/charging_bench_side_1.png",
+      "sourceKind": "projectred",
+      "blobSha1": "56b9b03e95dd7094d1903e5eaa94b26aba84d212",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/blocks/mechanical/charger/top1.png",
+      "source": "expansion/src/main/resources/assets/projectred_expansion/textures/block/charging_bench_top_0.png",
+      "sourceKind": "projectred",
+      "blobSha1": "4d8693c87798e3de99ad65d0a75e3bc9ebe939a9",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/blocks/mechanical/charger/top2.png",
+      "source": "expansion/src/main/resources/assets/projectred_expansion/textures/block/charging_bench_top_1.png",
+      "sourceKind": "projectred",
+      "blobSha1": "0b1dafa67363b067e5dfc343f5e4ab3738ce4bc1",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/blocks/mechanical/placer/bottom.png",
+      "source": "expansion/src/main/resources/assets/projectred_expansion/textures/block/deployer_bottom.png",
+      "sourceKind": "projectred",
+      "blobSha1": "ac13392122e07dc605d69e6226d6d76e9e03a106",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/blocks/mechanical/placer/side1a.png",
+      "source": "expansion/src/main/resources/assets/projectred_expansion/textures/block/deployer_front_back.png",
+      "sourceKind": "projectred",
+      "blobSha1": "3cb323cb2709992f47700f1ed27d12ca9737ad73",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/blocks/mechanical/placer/side1b.png",
+      "source": "expansion/src/main/resources/assets/projectred_expansion/textures/block/deployer_front_back_active.png",
+      "sourceKind": "projectred",
+      "blobSha1": "9eb130e477971716259c72de8bb5b0a91d360a9c",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/blocks/mechanical/placer/side2a.png",
+      "source": "expansion/src/main/resources/assets/projectred_expansion/textures/block/deployer_left_right.png",
+      "sourceKind": "projectred",
+      "blobSha1": "188e421acd2fbb206bd235c8f0ee5978c9fc93dd",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/blocks/mechanical/placer/side2b.png",
+      "source": "expansion/src/main/resources/assets/projectred_expansion/textures/block/deployer_left_right_active.png",
+      "sourceKind": "projectred",
+      "blobSha1": "1ab05d7b9fc31f86ed0b86e69028c65196bf12c7",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/blocks/mechanical/placer/topa.png",
+      "source": "expansion/src/main/resources/assets/projectred_expansion/textures/block/deployer_top.png",
+      "sourceKind": "projectred",
+      "blobSha1": "4452db7afc77fd890f9d70064562a5c2f25f9e30",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/blocks/mechanical/placer/topb.png",
+      "source": "expansion/src/main/resources/assets/projectred_expansion/textures/block/deployer_top_active.png",
+      "sourceKind": "projectred",
+      "blobSha1": "7e1b34d4e3d7ce0828f070026508a5c16b5c083b",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/blocks/world/electrotine_block.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/block/electrotine_block.png",
+      "sourceKind": "projectred",
+      "blobSha1": "9084ab1c661617235e6795a23260c6a1a7911067",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/blocks/world/electrotine_ore.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/block/electrotine_ore.png",
+      "sourceKind": "projectred",
+      "blobSha1": "a802c5098aab0ccc44505d1e7cd8355b28804ef2",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/blocks/world/peridot_ore.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/block/peridot_ore.png",
+      "sourceKind": "projectred",
+      "blobSha1": "5054b0b90af6007d146d7d73850ea715c4835b49",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/blocks/world/ruby_ore.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/block/ruby_ore.png",
+      "sourceKind": "projectred",
+      "blobSha1": "e8b214bacf77634a0b9dc45cb63b4aa3cae3198f",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/blocks/world/sapphire_ore.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/block/sapphire_ore.png",
+      "sourceKind": "projectred",
+      "blobSha1": "2d27c59355c7f3b9550cbc5fd2b0893de9fa5c80",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/blocks/world/silver_ore.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/block/silver_ore.png",
+      "sourceKind": "projectred",
+      "blobSha1": "627797c5742226fa128215c45fc3c8546f464958",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/blocks/world/tin_ore.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/block/tin_ore.png",
+      "sourceKind": "projectred",
+      "blobSha1": "9920aec8844dfb1c52ad79122abe9a1b6528b0ff",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/base/draw_plate.png",
+      "source": "core/src/main/resources/assets/projectred_core/textures/item/draw_plate.png",
+      "sourceKind": "projectred",
+      "blobSha1": "d0b70a2173e4b46965398a3c8a274cb55ac3a858",
+      "oldSize": "32x32",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/base/electrotine_dust.png",
+      "source": "core/src/main/resources/assets/projectred_core/textures/item/electrotine_dust.png",
+      "sourceKind": "projectred",
+      "blobSha1": "92dda75e2502bea63c6816c332a29f709c499a31",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/base/electrotine_ingot.png",
+      "source": "core/src/main/resources/assets/projectred_core/textures/item/electrotine_ingot.png",
+      "sourceKind": "projectred",
+      "blobSha1": "2604c9018d63840faf57e71dc0ac4211bbb4fd61",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/base/multimeter.png",
+      "source": "core/src/main/resources/assets/projectred_core/textures/item/multimeter.png",
+      "sourceKind": "projectred",
+      "blobSha1": "d6019119c38b718027049d73851cc9d1f793e641",
+      "oldSize": "32x32",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/base/peridot.png",
+      "source": "core/src/main/resources/assets/projectred_core/textures/item/peridot.png",
+      "sourceKind": "projectred",
+      "blobSha1": "9658b9d327cfe9d8edf6466958291d59c1222f0b",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/base/red_ingot.png",
+      "source": "core/src/main/resources/assets/projectred_core/textures/item/red_ingot.png",
+      "sourceKind": "projectred",
+      "blobSha1": "a43eaacec54a6ddc402aea848a85985a28557c0d",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/base/ruby.png",
+      "source": "core/src/main/resources/assets/projectred_core/textures/item/ruby.png",
+      "sourceKind": "projectred",
+      "blobSha1": "554255e69f26780654660abc9cad1ae020182bfd",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/base/sapphire.png",
+      "source": "core/src/main/resources/assets/projectred_core/textures/item/sapphire.png",
+      "sourceKind": "projectred",
+      "blobSha1": "3a93231ee6fc2b7cc0d2cac9fcf8d89d2043b223",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/base/screwdriver.png",
+      "source": "core/src/main/resources/assets/projectred_core/textures/item/screwdriver.png",
+      "sourceKind": "projectred",
+      "blobSha1": "efe2d9403a74555119dab9bd97ed27bbbdc9f29d",
+      "oldSize": "32x32",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/base/silver_ingot.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/item/silver_ingot.png",
+      "sourceKind": "projectred",
+      "blobSha1": "1f2651e16227dca1c2ced7fb6566715f7bfeea8d",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/base/tin_ingot.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/item/tin_ingot.png",
+      "sourceKind": "projectred",
+      "blobSha1": "ff863c4887c565cebe59c9a5b3ce1d8f691f8e75",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/backpack_0.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/item/white_backpack.png",
+      "sourceKind": "projectred",
+      "blobSha1": "fe2c086543f6171836bc88aee2dc3712c493c802",
+      "oldSize": "32x32",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/backpack_1.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/item/orange_backpack.png",
+      "sourceKind": "projectred",
+      "blobSha1": "ede7102b70e76b9262fcf403e72c257cac7b08d0",
+      "oldSize": "32x32",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/backpack_10.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/item/purple_backpack.png",
+      "sourceKind": "projectred",
+      "blobSha1": "b70d0d5d7abf5f6f691b527ace30f0b6eeeec359",
+      "oldSize": "32x32",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/backpack_11.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/item/blue_backpack.png",
+      "sourceKind": "projectred",
+      "blobSha1": "62665cdbddc5107ff8950425f0f20f2a98ed9feb",
+      "oldSize": "32x32",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/backpack_12.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/item/brown_backpack.png",
+      "sourceKind": "projectred",
+      "blobSha1": "96c03571d57a3093f05a9f9b4fc86721814d6394",
+      "oldSize": "32x32",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/backpack_13.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/item/green_backpack.png",
+      "sourceKind": "projectred",
+      "blobSha1": "71d36f1a0bbf32a5eb5f8c65728df4404f873e2c",
+      "oldSize": "32x32",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/backpack_14.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/item/red_backpack.png",
+      "sourceKind": "projectred",
+      "blobSha1": "d7cf806ee7209b97391b3ff7c361d0018390761b",
+      "oldSize": "32x32",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/backpack_15.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/item/black_backpack.png",
+      "sourceKind": "projectred",
+      "blobSha1": "59a67f257449f34560f8fad30ac51e0e69c0dbcf",
+      "oldSize": "32x32",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/backpack_2.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/item/magenta_backpack.png",
+      "sourceKind": "projectred",
+      "blobSha1": "5430606c76bf5f4d06bebac161260ad34fb5aac3",
+      "oldSize": "32x32",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/backpack_3.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/item/light_blue_backpack.png",
+      "sourceKind": "projectred",
+      "blobSha1": "f8787206fd638b7bf5f89ab59d074172509f034c",
+      "oldSize": "32x32",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/backpack_4.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/item/yellow_backpack.png",
+      "sourceKind": "projectred",
+      "blobSha1": "f9e4f556fd47a41d3d130c607efe2aaf911d0a00",
+      "oldSize": "32x32",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/backpack_5.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/item/lime_backpack.png",
+      "sourceKind": "projectred",
+      "blobSha1": "2be13946389d6b20731996fa09c8014b55b475fa",
+      "oldSize": "32x32",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/backpack_6.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/item/pink_backpack.png",
+      "sourceKind": "projectred",
+      "blobSha1": "ebb58194a9761794c5e3f23f2169d158ec5479e2",
+      "oldSize": "32x32",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/backpack_7.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/item/gray_backpack.png",
+      "sourceKind": "projectred",
+      "blobSha1": "bbf52c2ffb4449690c3753fc7551d0582b2cf220",
+      "oldSize": "32x32",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/backpack_8.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/item/light_gray_backpack.png",
+      "sourceKind": "projectred",
+      "blobSha1": "944b5827be6b2796d1eec9b0e62d7d612e97c09b",
+      "oldSize": "32x32",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/backpack_9.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/item/cyan_backpack.png",
+      "sourceKind": "projectred",
+      "blobSha1": "44ff96b2c37f0b55cb721eb914944034b592f72f",
+      "oldSize": "32x32",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/peridot_1.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/models/armor/peridot_layer_1.png",
+      "sourceKind": "projectred",
+      "blobSha1": "a64b11a0fd4c258af9b98808d71d658ade895ab1",
+      "oldSize": "64x32",
+      "newSize": "64x32"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/peridot_2.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/models/armor/peridot_layer_2.png",
+      "sourceKind": "projectred",
+      "blobSha1": "258fd80509f623a4902ae2611520ff5af381ecc2",
+      "oldSize": "64x32",
+      "newSize": "64x32"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/peridotboots.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/item/peridot_boots.png",
+      "sourceKind": "projectred",
+      "blobSha1": "19435754ae4c0e0103dc099a0e981afda8441289",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/peridotchestplate.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/item/peridot_chestplate.png",
+      "sourceKind": "projectred",
+      "blobSha1": "788cf3120b7150df37cdd3798733f033b2c0f10b",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/peridothelmet.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/item/peridot_helmet.png",
+      "sourceKind": "projectred",
+      "blobSha1": "03a94f0af03198500bbbb753cb1563321e01b3bf",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/peridotleggings.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/item/peridot_leggings.png",
+      "sourceKind": "projectred",
+      "blobSha1": "ce23d7641acc114157f432d4c9c9456f6283be84",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/ruby_1.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/models/armor/ruby_layer_1.png",
+      "sourceKind": "projectred",
+      "blobSha1": "ca84c8d733d6fde92b002b6adbb7d469ba50abb9",
+      "oldSize": "64x32",
+      "newSize": "64x32"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/ruby_2.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/models/armor/ruby_layer_2.png",
+      "sourceKind": "projectred",
+      "blobSha1": "94afbb313e39918c08985b493f873d1d6d9326a3",
+      "oldSize": "64x32",
+      "newSize": "64x32"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/rubyboots.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/item/ruby_boots.png",
+      "sourceKind": "projectred",
+      "blobSha1": "5830a1a8e4a9c11eb7f859859fdeae3cdfa4e90d",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/rubychestplate.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/item/ruby_chestplate.png",
+      "sourceKind": "projectred",
+      "blobSha1": "b0aa9bf7cc06ee60a53d6fe75bfa94633802fb1c",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/rubyhelmet.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/item/ruby_helmet.png",
+      "sourceKind": "projectred",
+      "blobSha1": "efa80ec57277af78b6edaee5599a5926dd1385a6",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/rubyleggings.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/item/ruby_leggings.png",
+      "sourceKind": "projectred",
+      "blobSha1": "99db1138609d789bfd8d0cc8a8426811deaaf437",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/sapphire_1.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/models/armor/sapphire_layer_1.png",
+      "sourceKind": "projectred",
+      "blobSha1": "e7fd99e8cdd872761e220ca204a6a532f1428b60",
+      "oldSize": "64x32",
+      "newSize": "64x32"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/sapphire_2.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/models/armor/sapphire_layer_2.png",
+      "sourceKind": "projectred",
+      "blobSha1": "075063b878ba29252106d17d7ec78cd43909485e",
+      "oldSize": "64x32",
+      "newSize": "64x32"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/sapphireboots.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/item/sapphire_boots.png",
+      "sourceKind": "projectred",
+      "blobSha1": "e9e9d0de9f8f1bbf5f488500d45ff664ed78d531",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/sapphirechestplate.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/item/sapphire_chestplate.png",
+      "sourceKind": "projectred",
+      "blobSha1": "b3643f99c0049af2972242cc1ed3de39bf27177b",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/sapphirehelmet.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/item/sapphire_helmet.png",
+      "sourceKind": "projectred",
+      "blobSha1": "f10280972125d3d8677d69398e8728e8bf4ec869",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/world/sapphireleggings.png",
+      "source": "exploration/src/main/resources/assets/projectred_exploration/textures/item/sapphire_leggings.png",
+      "sourceKind": "projectred",
+      "blobSha1": "7abbca86a9d9cf422ab3803842901f168c441966",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/blocks/world/copper_ore.png",
+      "source": "assets/minecraft/textures/block/copper_ore.png",
+      "sourceKind": "minecraft",
+      "blobSha1": "adf0900c2e74b4b4480e50daad84bf9d5385f433",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/items/base/copper_ingot.png",
+      "source": "assets/minecraft/textures/item/copper_ingot.png",
+      "sourceKind": "minecraft",
+      "blobSha1": "3774bab4d43fb4fa8570843620c2ff3c193740aa",
+      "oldSize": "16x16",
+      "newSize": "16x16"
+    }
+  ]
+}

@@ -105,6 +105,35 @@ model keys are retained. Checks cover mutual wall connections, gate orientation,
 state-ID round trips and client rendering of all nine variants. Modern tall-wall
 geometry and new ore/progression changes are not part of this repair.
 
+## Texture backports
+
+The texture pass replaces 71 existing PNGs under their legacy resource paths.
+Sixty-nine are copied byte-for-byte from the pinned ProjectRed 1.21.1 reference;
+the copper ore and ingot come from Mojang's official Minecraft 1.21.1 client archive,
+verified against its published SHA-1. Source paths, blob hashes and old/new dimensions
+are recorded in [TEXTURE_BACKPORTS.json](TEXTURE_BACKPORTS.json). The legacy-path
+mapping was checked against the pinned 1.12 reference; no image re-encoding was used.
+
+| Group | Updated PNGs |
+| --- | ---: |
+| Auto Crafter, Charging Bench and Block Placer faces | 16 |
+| Ores and the electrotine storage block | 8 |
+| Materials, tools and gems | 12 |
+| Gem armor item icons and model layers | 18 |
+| Sixteen backpack colours | 16 |
+| IC perfboard | 1 |
+
+Nineteen complete item sprites change from 32x32 to 16x16; their generated models use
+the full sprite UV range. Armor model sheets keep their dimensions. Client checks
+render every creative variant, placed idle/active machines and all three equipped
+gem armor sets. Block/item registrations and gameplay data are preserved.
+
+The IC Workbench GUI atlas needs an editor/layout port even though its dimensions
+match. The newer pneumatic atlas needs its matching model and UV mapping. New
+Auto Crafter charged/working front sprites also need renderer-state support; the
+existing renderer uses the updated idle front. These are separate rendering changes.
+Textures for new raw-ore/deepslate content are part of the corresponding content port.
+
 ## Architecture
 
 Eleven internal Gradle projects compile in dependency order. The root collects their

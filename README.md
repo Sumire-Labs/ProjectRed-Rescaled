@@ -9,6 +9,8 @@ The backports add Illumar Smart Lamps, the Plotting/Lithography/Packaging IC pro
 line and Pneumatic Tubes. The existing IC Printer and crafting route remain available.
 Craft a Pneumatic Tube from one Pressure Tube and one iron nugget. Existing pressure,
 resistance and routed pipes retain their registrations; the new tube is a separate network.
+Updated 1.21.1 textures cover existing machines, minerals, tools, gem armor and backpacks.
+See [the texture manifest](docs/TEXTURE_BACKPORTS.json) for the source of each changed PNG.
 
 ## Runtime dependencies
 
