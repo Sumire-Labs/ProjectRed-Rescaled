@@ -33,6 +33,8 @@ class GuiICWorkbench(val tile:TileICWorkbench) extends NodeGui(408,222) {
     private val hints = new CheckBoxNode
     private val minus = new MCButtonNode
     private val plus = new MCButtonNode
+    private val logMode = new MCButtonNode
+    var showCompileTree = false
     private var boardSize = Size.zeroSize
     private def bodyX = 19
     private def bodyWidth = size.width-bodyX-85
@@ -80,15 +82,15 @@ class GuiICWorkbench(val tile:TileICWorkbench) extends NodeGui(408,222) {
         def range(title:String,first:TileEditorOpDefs.OpDef,last:TileEditorOpDefs.OpDef):Unit =
             tools(title,(first.getID to last.getID).map(TileEditorOpDefs(_)))
         tools(tr("erase"),Seq(Erase))
-        tools(tr("inputs"),Seq(Lever,Button))
+        tools(tr("inputs"),Seq(SimpleIO))
         tools(tr("wire"),Seq(AlloyWire))
         range(tr("insulated"),WhiteInsulatedWire,BlackInsulatedWire)
         range(tr("bundled"),NeutralBundledCable,BlackBundledCable)
-        tools(tr("io"),Seq(SimpleIO,BundledIO,AnalogIO))
+        tools(tr("io"),Seq(BundledIO,AnalogIO))
         tools(tr("logic"),Seq(ORGate,NORGate,NOTGate,ANDGate,NANDGate,XORGate,XNORGate,BufferGate,MultiplexerGate))
         tools(tr("timing"),Seq(PulseFormerGate,RepeaterGate,TimerGate,SequencerGate,StateCellGate))
         tools(tr("latches"),Seq(SRLatchGate,ToggleLatchGate,TransparentLatchGate))
-        tools(tr("cells"),Seq(NullCellGate))
+        tools(tr("bus"),Seq(BundledBusIO))
         tools(tr("other"),Seq(RandomizerGate,CounterGate,SynchronizerGate))
 
         for (uv,index) <- Seq((420,1),(420,16),(420,31)).zipWithIndex do {
@@ -121,6 +123,8 @@ class GuiICWorkbench(val tile:TileICWorkbench) extends NodeGui(408,222) {
         addChild(compileButton)
         automaticButton.clickDelegate = {() => if tile.controller.autoCompileAvailable then tile.sendAutoCompileToggle()}
         addChild(automaticButton)
+        logMode.clickDelegate = {() => showCompileTree = !showCompileTree}
+        addChild(logMode)
         hints.state = true
         hints.clickDelegate = {() => pref.showTooltips = hints.state}
         addChild(hints)
@@ -155,12 +159,15 @@ class GuiICWorkbench(val tile:TileICWorkbench) extends NodeGui(408,222) {
         compileButton.size = Size(bodyWidth-diagnosticWidth-22,16)
         automaticButton.position = Point(bodyX+diagnosticWidth+14,132)
         automaticButton.size = compileButton.size
+        logMode.position = Point(bodyX+diagnosticWidth+14,184)
+        logMode.size = compileButton.size
     }
 
     override def frameUpdate_Impl(mouse:Point,frame:Float):Unit = {
         if size.width != math.min(408,math.max(260,width-8)) then relayout()
         val active = tile.hasBP && tile.editor.nonEmpty
         clip.hidden = !active || activeTab != 1
+        pref.navigationEnabled = !clip.hidden
         palette.hidden = clip.hidden
         interact.hidden = clip.hidden
         hints.hidden = clip.hidden; minus.hidden = clip.hidden; plus.hidden = clip.hidden
@@ -168,6 +175,8 @@ class GuiICWorkbench(val tile:TileICWorkbench) extends NodeGui(408,222) {
         if !nameBox.focused && nameBox.text != tile.editor.name then nameBox.text = tile.editor.name
         compileButton.hidden = !active || activeTab != 2
         automaticButton.hidden = compileButton.hidden
+        logMode.hidden = compileButton.hidden
+        logMode.text = tr(if showCompileTree then "problems" else "compile_tree")
         automaticButton.text = tr(if tile.controller.autoCompileEnabled then "auto_on" else "auto_off")
         for (tab,index) <- tabs.zipWithIndex do tab.mouseoverLock = activeTab == index
         if boardSize != tile.editor.size then {
@@ -210,6 +219,8 @@ class GuiICWorkbench(val tile:TileICWorkbench) extends NodeGui(408,222) {
             text(tr("errors",Int.box(logger.getErrors.size)),x,32,w,EnumColour.GRAY.argb)
             text(tr("warnings",Int.box(logger.getWarnings.size)),x,49,w,EnumColour.GRAY.argb)
             text(tr("state_"+tile.controller.state),x,73,w,EnumColour.GRAY.argb)
+            val progress=if tile.controller.totalSteps == 0 then 0 else tile.controller.completedSteps*100/tile.controller.totalSteps
+            text(tr("progress",Int.box(progress)),x,89,w,EnumColour.GRAY.argb)
             if !tile.controller.autoCompileAvailable then text(tr("auto_limit"),x,158,w,EnumColour.GRAY.argb)
         }
         if !clip.hidden then {
@@ -245,11 +256,22 @@ class GuiICWorkbench(val tile:TileICWorkbench) extends NodeGui(408,222) {
                 logger.getWarnings.iterator.map((p,s) => (p,s,EnumColour.YELLOW.argb)) ++
                 logger.getRuntimeFlags.iterator.map((p,s) => (p,s,EnumColour.MAGENTA.argb))
         }
+        private def treeEntries:Iterator[(Seq[Point],String,Int)] = {
+            def nodes(children:java.util.List[engine.log.ICCompilerLog.CompileTreeNode],depth:Int):Iterator[(Seq[Point],String,Int)] =
+                children.asScala.iterator.flatMap { node =>
+                    val points=node.tileCoords.asScala.toSeq.map(p => Point(p.x+tile.editor.size.width/2,p.z+tile.editor.size.height/2))
+                    val label=tr("step_"+node.step.name().toLowerCase(java.util.Locale.ROOT))
+                    val message="  "*depth+label+s" (${node.registerIds.size()} / ${node.gateIds.size()})"
+                    Iterator((points,message,EnumColour.WHITE.argb)) ++ nodes(node.children,depth+1)
+                }
+            nodes(tile.controller.compilerLog.getRootNodes,0)
+        }
         override def drawBack_Impl(mouse:Point,partial:Float):Unit = {
             val logger = tile.editor.simEngineContainer.logger
-            val count = logger.getErrors.size+logger.getWarnings.size+logger.getRuntimeFlags.size
+            val count = if showCompileTree then tile.controller.compilerLog.getTotalSteps
+                else logger.getErrors.size+logger.getWarnings.size+logger.getRuntimeFlags.size
             scroll = math.max(0,math.min(scroll,math.max(0,count-13)))
-            visible = entries.drop(scroll).take(13).toVector
+            visible = (if showCompileTree then treeEntries else entries).drop(scroll).take(13).toVector
             if visible.isEmpty then text(tr("no_problems"),frame.x+4,frame.y+4,frame.width-8,EnumColour.WHITE.argb)
             for ((points,message,colour),i) <- visible.zipWithIndex do {
                 val prefix = points.headOption.map(p => s"${p.x},${p.y}: ").getOrElse("")

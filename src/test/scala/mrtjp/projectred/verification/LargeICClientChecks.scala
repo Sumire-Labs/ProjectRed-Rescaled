@@ -11,6 +11,7 @@ object LargeICClientChecks {
     private var ticks = 0
     private var action:java.util.concurrent.Future[?] = null
     private val position = new AtomicReference[BlockPos]()
+    private val savedGate = new AtomicReference[net.minecraft.item.ItemStack]()
     private var originalWidth = 0
     private var originalHeight = 0
     private def click(gui:GuiICWorkbench,x:Int,y:Int):Unit = {
@@ -35,6 +36,7 @@ object LargeICClientChecks {
                 tile.editor.recompileSchematic()
                 val gate = mrtjp.projectred.integration.GateDefinition.ICGate.makeStack
                 ItemICBlueprint.saveICToGate(tile.editor.tileMapContainer,gate)
+                savedGate.set(gate.copy())
                 player.inventory.setItemStack(net.minecraft.item.ItemStack.EMPTY)
                 player.inventory.currentItem = 0
                 player.inventory.setInventorySlotContents(0,gate)
@@ -51,7 +53,7 @@ object LargeICClientChecks {
         val server = mc.getIntegratedServer
         val playerId = mc.player.getUniqueID
         ticks += 1
-        assert(ticks < 200,s"Large IC client verification timed out in phase $phase")
+        assert(ticks < (if phase == 15 then 2400 else 200),s"Large IC client verification timed out in phase $phase")
         phase match {
             case 0 if action.isDone =>
                 action.get()
@@ -64,6 +66,7 @@ object LargeICClientChecks {
                         def run():Unit = {
                             val player = server.getPlayerList.getPlayerByUUID(playerId)
                             val tile = player.getServerWorld.getTileEntity(pos).asInstanceOf[TileICWorkbench]
+                            player.inventory.setInventorySlotContents(0,net.minecraft.item.ItemStack.EMPTY)
                             assert(tile.onBlockActivated(player,1),"Large IC Workbench refused to open")
                         }
                     })
@@ -88,7 +91,29 @@ object LargeICClientChecks {
                 ticks = 0; phase = 11
             case 11 if ticks >= 5 =>
                 val gui = mc.currentScreen.asInstanceOf[GuiICWorkbench]
+                println(s"MODERN_WORKBENCH_CLICK: state=${gui.tile.controller.state}, bp=${gui.tile.hasBP}, tab=${gui.activeTab}")
+                click(gui,273,116)
+                action = server.addScheduledTask(new Runnable {
+                    def run():Unit = {
+                        val player=server.getPlayerList.getPlayerByUUID(playerId)
+                        val tile=player.getServerWorld.getTileEntity(position.get()).asInstanceOf[TileICWorkbench]
+                        println(s"MODERN_WORKBENCH_SERVER: state=${tile.controller.state}, watching=${tile.watchers.contains(player)}, window=${player.openContainer.windowId}")
+                    }
+                })
+                ticks=0;phase=15
+            case 15 =>
+                val gui = mc.currentScreen.asInstanceOf[GuiICWorkbench]
+                if ticks%200 == 0 then println(s"MODERN_WORKBENCH_PROGRESS: state=${gui.tile.controller.state}, steps=${gui.tile.controller.completedSteps}/${gui.tile.controller.totalSteps}, received=${gui.tile.controller.compilerLog.getCompletedSteps}")
+                if gui.tile.controller.state != 4 then return false
+                assert(gui.tile.controller.completedSteps > 20000,"Large IC bypassed the staged compiler")
+                if gui.tile.controller.compilerLog.getCompletedSteps != gui.tile.controller.completedSteps then return false
                 ScreenShotHelper.saveScreenshot(mc.gameDir,"projectred-workbench-compile.png",mc.displayWidth,mc.displayHeight,mc.getFramebuffer)
+                click(gui,273,192)
+                assert(gui.showCompileTree,"Compile-tree toggle did not respond")
+                ticks=0;phase=16
+            case 16 if ticks >= 5 =>
+                val gui=mc.currentScreen.asInstanceOf[GuiICWorkbench]
+                ScreenShotHelper.saveScreenshot(mc.gameDir,"projectred-workbench-tree.png",mc.displayWidth,mc.displayHeight,mc.getFramebuffer)
                 click(gui,8,40)
                 ticks = 0; phase = 12
             case 12 if ticks >= 5 =>
@@ -116,6 +141,12 @@ object LargeICClientChecks {
                     assert(gui.size.width <= 312 && gui.pref.size.width > 0,"Workbench did not fit the minimum GUI width")
                     gui.setWorldAndResolution(mc,originalWidth,originalHeight)
                     mc.player.closeScreen()
+                    action=server.addScheduledTask(new Runnable {
+                        def run():Unit = server.getPlayerList.getPlayerByUUID(playerId).inventory.setInventorySlotContents(0,savedGate.get())
+                    })
+                    ticks=0;phase=17
+            case 17 if action.isDone && ItemICBlueprint.hasICInside(mc.player.getHeldItemMainhand) =>
+                    action.get()
                     val gatePos = position.get().add(2,0,0)
                     val result = mc.playerController.processRightClickBlock(mc.player,mc.world,gatePos.down(),EnumFacing.UP,
                         new Vec3d(gatePos.getX+0.5,gatePos.getY,gatePos.getZ+0.5),EnumHand.MAIN_HAND)

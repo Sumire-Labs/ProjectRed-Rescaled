@@ -4,11 +4,18 @@
 
 ### Added
 
+- Port the 1.21.1 IC compiler and simulator, including 20 gates, staged compilation and synchronized compile trees/problems.
+- Add full-width Bundled Bus I/O and channel controls to the Workbench.
+
 - Add Illumar Smart Lamps with mixed bundled-channel colours, variable brightness and six placement orientations.
 - Add Plotting, Lithography and Packaging Tables for IC production, with photomasks, rough silicon wafers and dies.
 - Add Pneumatic Tubes with cached graph routing, item-flow rendering, link particles and sounds. Existing Pressure/Resistance Tubes remain available.
 
 ### Changed
+
+- Use modern compiled targets throughout IC production and new fabricated-gate runtimes, retaining legacy drawing readers.
+- Persist large engine JSON as bounded compressed NBT and preserve two-tick IC input latching.
+- Update integration fixtures to the Sumire Scala 3.10 revisions and their client random-tick fix.
 
 - Align Auto Crafter work time, power consumption, plan cycling, GUI and appearance states with 1.21.1.
 - Adapt the newer IC Workbench tabs and tool palette, with manual/automatic compilation and compile diagnostics.

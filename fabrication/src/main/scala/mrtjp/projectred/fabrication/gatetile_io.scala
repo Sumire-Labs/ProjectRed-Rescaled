@@ -54,6 +54,10 @@ class IOGateICTile extends RedstoneGateICTile with IIOGateTile with TComplexGate
             case f:TFreqIOGateTileLogic => f.freqDown()
             case _ =>
         }
+        case 7 =>
+            val channel=in.readUByte()
+            if channel < 16 && subID == ICGateDefinition.IOBundledBus.ordinal && editor.externalBusActivation != null then
+                editor.externalBusActivation(this,channel)
         case _ => super.readClientPacket(in, key)
     }
 
@@ -76,6 +80,7 @@ object IOGateTileLogic
         case defs.IOSimple.ordinal => new SimpleIOGateTileLogic(gate)
         case defs.IOAnalog.ordinal => new AnalogIOGateTileLogic(gate)
         case defs.IOBundled.ordinal => new BundledIOGateTileLogic(gate)
+        case defs.IOBundledBus.ordinal => new BundledBusIOGateTileLogic(gate)
         case _ => throw new IllegalArgumentException("Invalid gate subID: "+subID)
     }
 }

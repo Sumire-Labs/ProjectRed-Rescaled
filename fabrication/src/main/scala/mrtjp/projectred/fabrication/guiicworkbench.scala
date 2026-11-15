@@ -17,6 +17,7 @@ import codechicken.lib.vec.uv.{UVScale, UVTranslation}
 import com.mojang.realmsclient.gui.ChatFormatting
 import mrtjp.core.gui.*
 import mrtjp.core.vec.{Point, Rect, Size}
+import mrtjp.projectred.core.LegacyKeys
 import mrtjp.projectred.fabrication.ICComponentStore.*
 import net.minecraft.client.gui.Gui
 import net.minecraft.client.renderer.GlStateManager
@@ -45,6 +46,21 @@ class TileMapEditorNode(editor:ICTileMapEditor) extends TNode
     private var leftMouseDown = false
     private var rightMouseDown = false
     private var mouseStart = Point(0, 0)
+    private var hoveredGate:Option[GateICTile] = None
+    var navigationEnabled = false
+
+    override def frameUpdate_Impl(mouse:Point,frame:Float):Unit = {
+        hoveredGate = if navigationEnabled && this.frame.contains(mouse) && rayTest(mouse) then
+            Option(editor.getTile(toGridPoint(mouse))).collect { case gate:GateICTile => gate }
+        else None
+    }
+
+    override def update_Impl():Unit = if navigationEnabled && org.lwjgl.opengl.Display.isActive then {
+        val horizontal=(if Keyboard.isKeyDown(LegacyKeys.KEY_A) then 1 else 0)-(if Keyboard.isKeyDown(LegacyKeys.KEY_D) then 1 else 0)
+        val vertical=(if Keyboard.isKeyDown(LegacyKeys.KEY_W) then 1 else 0)-(if Keyboard.isKeyDown(LegacyKeys.KEY_S) then 1 else 0)
+        val viewport=parent.frame.size
+        position += Point(horizontal*math.max(1,viewport.width/40),vertical*math.max(1,viewport.height/40))
+    }
 
     def size = editor.size*sizeMult
     override def frame = Rect(position, Size((size.width*scale).toInt, (size.height*scale).toInt))
@@ -260,6 +276,13 @@ class TileMapEditorNode(editor:ICTileMapEditor) extends TNode
     {
         import mrtjp.projectred.core.LegacyKeys.*
         if !consumed then keycode match {
+            case KEY_R if hoveredGate.nonEmpty =>
+                hoveredGate.foreach(_.sendClientPacket(_.writeByte(0)))
+                true
+            case KEY_F if hoveredGate.nonEmpty =>
+                hoveredGate.foreach(_.sendClientPacket(_.writeByte(8)))
+                true
+            case KEY_W | KEY_A | KEY_S | KEY_D if navigationEnabled => true
             case KEY_ESCAPE if leftMouseDown =>
                 leftMouseDown = false
                 true

@@ -19,8 +19,12 @@ repositories {
     }
     maven("https://cursemaven.com") { content { includeGroup("curse.maven") } }
     mavenCentral()
+    maven("https://maven.covers1624.net") {
+        content { includeModule("io.github.mrtjp", "fabrication-engine") }
+    }
 }
 dependencies {
+    add("contain", "io.github.mrtjp:fabrication-engine:0.1.0-alpha-19") { isTransitive = false }
     add("implementation", "org.scala-lang:scala3-library_3:${providers.gradleProperty("scala_version").get()}")
     add("implementation", cleanroom.deobf("mrtjp.core:MrTJPCore-Rescaled:${providers.gradleProperty("tjpcore_version").get()}"))
     add("implementation", cleanroom.deobf("codechicken:CBMultipart-Rescaled:${providers.gradleProperty("fmp_version").get()}"))

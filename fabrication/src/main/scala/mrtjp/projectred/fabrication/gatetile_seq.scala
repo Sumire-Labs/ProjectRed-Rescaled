@@ -82,7 +82,9 @@ class SequentialGateICTile extends RedstoneGateICTile with TComplexGateICTile
             case t:ICounterGuiLogic =>
                 val actionID = in.readByte()
                 actionID match {
-                    case 0 => t.setCounterStart(this, t.getCounterStart+in.readShort())
+                    case 0 =>
+                        val delta=in.readShort()
+                        if editor.externalSimulationActive == null then t.setCounterStart(this,t.getCounterStart+delta)
                     case 1 => t.setCounterMax(this, t.getCounterMax+in.readShort())
                     case 2 => t.setCounterIncr(this, t.getCounterIncr+in.readShort())
                     case 3 => t.setCounterDecr(this, t.getCounterDecr+in.readShort())

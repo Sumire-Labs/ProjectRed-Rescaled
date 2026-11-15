@@ -133,6 +133,22 @@ class TileICWorkbench extends TileICMachine with TICTileEditorNetwork
 
     var hasBP = false
     var watchers = MSet[EntityPlayer]()
+    private var modernEvents:PacketCustom = null
+    private val discardedEvents = new codechicken.lib.data.MCDataOutputWrapper(java.io.OutputStream.nullOutputStream())
+    def modernEventStream(key:Int):MCDataOutput = {
+        if watchers.isEmpty then discardedEvents
+        else {
+            if modernEvents == null then modernEvents=writeStream(10)
+            modernEvents.writeByte(key)
+            modernEvents
+        }
+    }
+    private def flushModernEvents():Unit = if modernEvents != null then {
+        modernEvents.writeByte(255)
+        modernEvents.compress()
+        watchers.foreach(modernEvents.sendToPlayer)
+        modernEvents=null
+    }
 
     override def save(tag:NBTTagCompound): Unit =
     {
@@ -147,7 +163,7 @@ class TileICWorkbench extends TileICMachine with TICTileEditorNetwork
     override def load(tag:NBTTagCompound): Unit =
     {
         super.load(tag)
-        editor.load(tag.getCompoundTag("ictag"))
+        editor.load(tag.getCompoundTag("ictag"),compileLegacy=false)
         hasBP = tag.getBoolean("bp")
         if hasBP && editor.isEmpty then editor.tileMapContainer.size = mrtjp.core.vec.Size(16,16)
         controller.load(tag)
@@ -176,6 +192,8 @@ class TileICWorkbench extends TileICMachine with TICTileEditorNetwork
             editor.readDesc(in)
             controller.readDesc(in)
         case 7 => controller.readDesc(in)
+        case 9 => controller.readLog(in)
+        case 10 => controller.readLogEvents(in)
         case 3 => readTileStream(in)
         case 4 => readICStream(in)
         case _ => super.read(in, key)
@@ -215,7 +233,18 @@ class TileICWorkbench extends TileICMachine with TICTileEditorNetwork
         writeStream(1).writeBoolean(hasBP).sendToChunk(this)
     }
 
-    private def sendICDesc(): Unit ={ sendICDesc(watchers.toSeq*) }
+    def sendICDesc(): Unit ={ sendICDesc(watchers.toSeq*) }
+
+    def sendModernLog(players:EntityPlayer*):Unit = {
+        flushModernEvents()
+        val recipients=if players.isEmpty then watchers.toSeq else players.toSeq
+        if recipients.nonEmpty then {
+            val out=writeStream(9)
+            controller.writeLog(out)
+            out.compress()
+            recipients.foreach(out.sendToPlayer)
+        }
+    }
 
     private def sendICDesc(players:EntityPlayer*): Unit =
     {
@@ -268,6 +297,7 @@ class TileICWorkbench extends TileICMachine with TICTileEditorNetwork
         flushICStream()
         flushTileStream()
         controller.tick()
+        flushModernEvents()
     }
     override def updateClient(): Unit =
     {
@@ -300,6 +330,7 @@ class TileICWorkbench extends TileICMachine with TICTileEditorNetwork
                 if editor.nonEmpty then {
                     saveTileMap(editor.tileMapContainer, stack)
                     saveFlags(stack, editor.simEngineContainer.logger)
+                    ModernBlueprint.attach(stack,controller.modern)
                     editor.clear()
                     sendICDesc()
                 }
@@ -313,14 +344,16 @@ class TileICWorkbench extends TileICMachine with TICTileEditorNetwork
                 hasBP = false
                 sendHasBPUpdate()
             } else {
+                // Send edits to existing viewers before opening a new viewer's complete snapshot.
+                flushICStream()
+                flushTileStream()
                 val nc = new mrtjp.projectred.core.TileContainer(this)
                 nc.startWatchDelegate = playerStartWatch
                 nc.stopWatchDelegate = playerStopWatch
                 GuiICWorkbench.open(player, nc, {p =>
                     p.writePos(pos)
                     editor.writeDesc(p)
-                    val simulation = editor.simEngineContainer.simEngine
-                    p.writeLong(if simulation == null then 0L else simulation.getRegVal[Long](SEIntegratedCircuit.REG_SYSTIME))
+                    p.writeLong(controller.simTime)
                     controller.writeDesc(p)
                 })
             }
@@ -336,6 +369,7 @@ class TileICWorkbench extends TileICMachine with TICTileEditorNetwork
             if editor.nonEmpty then {
                 saveTileMap(editor.tileMapContainer, stack)
                 saveFlags(stack, editor.simEngineContainer.logger)
+                ModernBlueprint.attach(stack,controller.modern)
             }
             WorldLib.dropItem(world, pos, stack)
         }
@@ -345,7 +379,9 @@ class TileICWorkbench extends TileICMachine with TICTileEditorNetwork
 
     def playerStartWatch(p:EntityPlayer): Unit =
     {
+        flushModernEvents()
         watchers += p
+        sendModernLog(p)
     }
 
     def playerStopWatch(p:EntityPlayer): Unit =

@@ -197,7 +197,8 @@ class ICTimerGateGui(override val gate:SequentialGateICTile) extends ICTileGui(g
 
 class ICCounterGateGui(override val gate:SequentialGateICTile) extends ICTileGui(gate) with TGateGui
 {
-    var valID = 0
+    private val modern=gate.editor.externalSimulationActive != null
+    var valID = if modern then 1 else 0
 
     {
         size = Size(160, 94)
@@ -224,7 +225,7 @@ class ICCounterGateGui(override val gate:SequentialGateICTile) extends ICTileGui
         sw.position = Point(54, 28)
         sw.size = Size(20, 12)
         sw.text = "var"
-        sw.clickDelegate = {() => valID = (valID+1)%4}
+        sw.clickDelegate = {() => valID = if modern then valID%3+1 else (valID+1)%4}
         addChild(sw)
 
         def createButton(x:Int, y:Int, w:Int, h:Int, delta:Int): Unit =

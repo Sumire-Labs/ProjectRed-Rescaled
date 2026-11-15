@@ -84,6 +84,8 @@ class ICGateLogic(gate:ICGatePart) extends RedstoneGateLogic[ICGatePart] with TB
 {
     val tmap = new ICTileMapContainer
     val sim = new ICSimEngineContainer
+    var modernSim:engine.ICSimulationContainer = null
+    var modernDisabled = false
     sim.delegate = this
 
     var systime_last = -1L
@@ -100,6 +102,13 @@ class ICGateLogic(gate:ICGatePart) extends RedstoneGateLogic[ICGatePart] with TB
     {
         tmap.saveTiles(tag)
         sim.saveSimState(tag)
+        if modernSim != null then {
+            val runtime=new NBTTagCompound
+            modernSim.save(runtime)
+            tag.setTag("engine_runtime",runtime)
+            tag.setInteger("engine_format",engine.PRFabricationEngine.COMPILE_FORMAT)
+        }
+        tag.setBoolean("modern_disabled",modernDisabled)
         tag.setShort("masks", ICGateLogic.packIO(ri, ro, bi, bo).toShort)
         tag.setShort("cmode", ICGateLogic.packConnModes(connmodes).toShort)
         tag.setIntArray("bout", out)
@@ -109,8 +118,24 @@ class ICGateLogic(gate:ICGatePart) extends RedstoneGateLogic[ICGatePart] with TB
     {
         tmap.loadTiles(tag)
 
-        sim.recompileSimulation(tmap)
-        sim.loadSimState(tag)
+        modernDisabled=tag.getBoolean("modern_disabled")
+        if tag.hasKey("engine_runtime") then {
+            modernDisabled=true
+            if tag.getInteger("engine_format") == engine.PRFabricationEngine.COMPILE_FORMAT then {
+                try {
+                    modernSim=new engine.ICSimulationContainer
+                    modernSim.load(tag.getCompoundTag("engine_runtime"))
+                    modernDisabled=false
+                    publishModernOutputs(false)
+                } catch { case scala.util.control.NonFatal(error) =>
+                    modernSim=null
+                    engine.EngineContext.LOGGER.warn("Saved IC needs recompilation; its drawing was retained",error)
+                }
+            }
+        } else if !modernDisabled then {
+            sim.recompileSimulation(tmap)
+            sim.loadSimState(tag)
+        }
 
         val (ri0, ro0, bi0, bo0) = ICGateLogic.unpackIO(tag.getShort("masks"))
         ri = ri0; ro = ro0; bi = bi0; bo = bo0
@@ -125,7 +150,7 @@ class ICGateLogic(gate:ICGatePart) extends RedstoneGateLogic[ICGatePart] with TB
     {
         packet.writeShort(ICGateLogic.packIO(ri, ro, bi, bo))
         packet.writeShort(ICGateLogic.packConnModes(connmodes))
-        packet.writeString(tmap.name)
+        packet.writeString(if modernDisabled then tmap.name+" (recompile in Workbench)" else tmap.name)
     }
 
     override def readDesc(packet:MCDataInput): Unit =
@@ -143,10 +168,10 @@ class ICGateLogic(gate:ICGatePart) extends RedstoneGateLogic[ICGatePart] with TB
             outUnpacked(r) = unpackDigital(outUnpacked(r), out(r))
     }
 
-    override def inputMask(shape:Int) = ri
-    override def outputMask(shape:Int) = ro
-    override def bundledInputMask(shape:Int) = bi
-    override def bundledOutputMask(shape:Int) = bo
+    override def inputMask(shape:Int) = if modernDisabled then 0 else ri
+    override def outputMask(shape:Int) = if modernDisabled then 0 else ro
+    override def bundledInputMask(shape:Int) = if modernDisabled then 0 else bi
+    override def bundledOutputMask(shape:Int) = if modernDisabled then 0 else bo
 
     override def registersDidChange(registers:Set[Int]): Unit ={}
 
@@ -159,11 +184,17 @@ class ICGateLogic(gate:ICGatePart) extends RedstoneGateLogic[ICGatePart] with TB
 
     override def onTick(gate:ICGatePart): Unit =
     {
-        if !gate.world.isRemote then {
+        if !gate.world.isRemote && !modernDisabled then {
             val t = gate.world.getTotalWorldTime
             val dt = if systime_last < 0 then 1 else t-systime_last
-            sim.advanceTime(dt)
-            sim.repropagate()
+            if modernSim != null then {
+                modernSim.progressTime(dt);modernSim.pushTime();modernSim.simulate()
+                publishModernOutputs(false)
+                updateOutputState()
+            } else {
+                sim.advanceTime(dt)
+                sim.repropagate()
+            }
             systime_last = t
         }
     }
@@ -191,13 +222,27 @@ class ICGateLogic(gate:ICGatePart) extends RedstoneGateLogic[ICGatePart] with TB
         if cmask != 0 then {
             gate.setState(gate.state&0xF0|getRSRenderInputs)
             gate.onInputChange()
-            sim.onInputChanged(cmask)
-            sim.repropagate()
+            if modernSim != null then {
+                for r <- 0 until 4 if (cmask&(1<<r)) != 0 do modernSim.setInput(r,sim.iostate(r).toShort)
+                gate.scheduleTick(2)
+            } else if !modernDisabled then {
+                sim.onInputChanged(cmask)
+                sim.repropagate()
+            }
         }
     }
 
     override def scheduledTick(gate:ICGatePart): Unit =
     {
+        if modernSim != null then {
+            modernSim.pushInputs(15); modernSim.simulate()
+            publishModernOutputs(false)
+        }
+        updateOutputState()
+        onChange(gate)
+    }
+
+    private def updateOutputState():Unit = {
         var cmask = 0
         for r <- 0 until 4 do
             if checkAndSetOutputChange(r) then
@@ -207,7 +252,6 @@ class ICGateLogic(gate:ICGatePart) extends RedstoneGateLogic[ICGatePart] with TB
             gate.setState(gate.state&0xF|getRSRenderOutputs<<4)
             gate.onOutputChange(cmask)
         }
-        onChange(gate)
     }
 
     def checkAndSetInputChange(r:Int):Boolean = {
@@ -236,6 +280,12 @@ class ICGateLogic(gate:ICGatePart) extends RedstoneGateLogic[ICGatePart] with TB
             true
         } else
             false
+    }
+
+    def publishModernOutputs(notify:Boolean):Unit = {
+        val changed=modernSim.pullOutputs()
+        for r <- 0 until 4 do sim.iostate(r)=(modernSim.getInput(r)&65535)|((modernSim.getOutput(r)&65535)<<16)
+        if notify && changed != 0 then ioRegistersDidChange()
     }
 
     def getRSRenderInputs =
@@ -296,7 +346,23 @@ object ICGateLogic
             logic.tmap.name = "ERROR: invalid"
         }
 
-        logic.sim.recompileSimulation(logic.tmap)
+        if stack.hasTagCompound && stack.getTagCompound.hasKey(ModernBlueprint.Key) then {
+            logic.modernDisabled=true
+            if ModernBlueprint.isBuilt(stack) then {
+                try {
+                    val flatMap=ModernBlueprint.flatMap(stack)
+                    if flatMap != null then {
+                        logic.modernSim=new engine.ICSimulationContainer
+                        logic.modernSim.setFlatMap(flatMap)
+                        logic.publishModernOutputs(false)
+                        logic.modernDisabled=false
+                    }
+                } catch { case scala.util.control.NonFatal(error) =>
+                    logic.modernSim=null
+                    engine.EngineContext.LOGGER.warn("IC item needs recompilation; its drawing was retained",error)
+                }
+            }
+        } else logic.sim.recompileSimulation(logic.tmap)
     }
 
     def packIO(ri:Int, ro:Int, bi:Int, bo:Int) = ri|ro<<4|bi<<8|bo<<12

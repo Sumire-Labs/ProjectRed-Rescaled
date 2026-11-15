@@ -48,14 +48,15 @@ object ICData:
         if tag == null then 0 else tag.getByte("log_warn") & 0xFF
 
     /** Compile snapshots with the native linker; legacy error flags may be stale or absent. */
-    private case class Validation(design:net.minecraft.nbt.NBTTagCompound,valid:Boolean)
+    private case class Validation(design:net.minecraft.nbt.NBTTagCompound,payload:net.minecraft.nbt.NBTTagCompound,valid:Boolean)
     private val validations = new java.util.WeakHashMap[ItemStack,Validation]
 
     def canFabricate(stack:ItemStack):Boolean = validations.synchronized {
         if !hasDesign(stack) then return false
         val design = stack.getTagCompound.getCompoundTag("tilemap")
         val cached = validations.get(stack)
-        if cached != null && cached.design == design then return cached.valid
+        val payload=stack.getTagCompound.getCompoundTag(ModernBlueprint.Key)
+        if cached != null && cached.design == design && cached.payload == payload then return cached.valid
         val snapshot = design.copy()
         val valid = try {
             val width = snapshot.getByte("sw")&255
@@ -68,13 +69,13 @@ object ICData:
                 map.loadTiles(snapshot)
                 if map.tiles.size != tiles.tagCount || map.tiles.keys.exists((x,y) => x>=width || y>=height) then false
                 else {
-                    val simulation = new ICSimEngineContainer
-                    simulation.recompileSimulation(map)
-                    simulation.logger.getErrors.isEmpty
+                    if stack.getTagCompound.hasKey(ModernBlueprint.Key) then
+                        ModernBlueprint.isBuilt(stack) && ModernBlueprint.flatMap(stack) != null
+                    else ModernBlueprint.compileLegacy(stack)
                 }
             }
         } catch { case scala.util.control.NonFatal(_) => false }
-        validations.put(stack,Validation(snapshot,valid))
+        validations.put(stack,Validation(snapshot,stack.getTagCompound.getCompoundTag(ModernBlueprint.Key).copy(),valid))
         valid
     }
 

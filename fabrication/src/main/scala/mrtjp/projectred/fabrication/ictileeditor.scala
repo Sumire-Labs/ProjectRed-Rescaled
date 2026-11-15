@@ -192,6 +192,9 @@ class ICTileMapEditor(val network:IICTileEditorNetwork) extends IICSimEngineCont
 
     var simEngineContainer = new ICSimEngineContainer
     var simNeedsRefresh = true
+    var externalSimulationActive:(() => Boolean) = null
+    var externalActivation:(ICTile => Unit) = null
+    var externalBusActivation:((IOGateICTile,Int) => Unit) = null
 
     var worldTimeOffset = -1L //number of ticks that the simulation is behind the total world time
     var lastWorldTime = -1L
@@ -213,13 +216,17 @@ class ICTileMapEditor(val network:IICTileEditorNetwork) extends IICSimEngineCont
         simEngineContainer.saveSimState(tag)
     }
 
-    def load(tag:NBTTagCompound): Unit =
+    def load(tag:NBTTagCompound):Unit = load(tag,compileLegacy=true)
+
+    def load(tag:NBTTagCompound,compileLegacy:Boolean): Unit =
     {
         clear()
         tileMapContainer.loadTiles(tag)
 
-        recompileSchematic()
-        simEngineContainer.loadSimState(tag)
+        if compileLegacy then {
+            recompileSchematic()
+            simEngineContainer.loadSimState(tag)
+        }
     }
 
     def writeDesc(out:MCDataOutput): Unit =
@@ -345,8 +352,9 @@ class ICTileMapEditor(val network:IICTileEditorNetwork) extends IICSimEngineCont
 
     def getTotalSimTimeClient = network.getEditorWorld.getTotalWorldTime-worldTimeOffset
 
-    def canInteractSimulation:Boolean = network.isSimulationRunning && !simNeedsRefresh &&
-        simEngineContainer.simEngine != null && simEngineContainer.logger.getErrors.isEmpty
+    def canInteractSimulation:Boolean = if externalSimulationActive != null then externalSimulationActive()
+        else network.isSimulationRunning && !simNeedsRefresh &&
+            simEngineContainer.simEngine != null && simEngineContainer.logger.getErrors.isEmpty
 
     def isEmpty = tileMapContainer.isEmpty
     def nonEmpty = tileMapContainer.nonEmpty

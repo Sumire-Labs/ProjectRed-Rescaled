@@ -80,7 +80,9 @@ abstract class GateICTile extends ICTile with TConnectableICTile with TICTileOri
     {
         case 0 => rotate()
         case 1 => configure()
+        case 2 if editor.externalActivation != null => editor.externalActivation(this)
         case 2 if editor.canInteractSimulation => getLogicPrimitive.activate(this)
+        case 8 if editor.externalSimulationActive != null => reflect()
         case _ =>
     }
 
@@ -134,12 +136,21 @@ abstract class GateICTile extends ICTile with TConnectableICTile with TICTileOri
 
     def rotate(): Unit =
     {
+        if editor.externalSimulationActive != null && this.isInstanceOf[IIOGateTile] then return
         setRotation((rotation+1)%4)
         updateConns()
         editor.network.markSave()
         sendOrientUpdate()
         notify(0xF)
         onSchematicChanged()
+    }
+
+    def reflect():Unit = {
+        import ICGateDefinition.*
+        if Set(SRLatch,TransparentLatch,Counter,Sequencer,StateCell).contains(ICGateDefinition(subID)) then {
+            setShape(shape^1);updateConns();sendShapeUpdate();this.notify(15)
+            editor.network.markSave();onSchematicChanged()
+        }
     }
 
     def sendShapeUpdate(): Unit =
@@ -267,6 +278,7 @@ object ICGateDefinition extends Enum
     val NullCell = ICGateDef("Null Cell", ICTileDefs.ArrayGate.id, gd.NullCell)
     val InvertCell = ICGateDef("Invert Cell", ICTileDefs.ArrayGate.id, gd.InvertCell)
     val BufferCell = ICGateDef("Buffer Cell", ICTileDefs.ArrayGate.id, gd.BufferCell)
+    val IOBundledBus = ICGateDef("Bundled Bus IO", ICTileDefs.IOGate.id)
 
     case class ICGateDef(unlocal:String, gateType:Int, intDef:GateDef = null) extends Value
     {

@@ -1,0 +1,147 @@
+// Ported from ProjectRed 1.21.1 e631f983. Client rendering is adapted separately.
+package mrtjp.projectred.fabrication.engine.gates;
+import mrtjp.projectred.fabrication.engine.*;
+import static mrtjp.projectred.fabrication.engine.EngineData.*;
+
+import codechicken.lib.data.MCDataInput;
+import codechicken.lib.data.MCDataOutput;
+import mrtjp.fengine.simulate.ICGate;
+import mrtjp.fengine.simulate.ICSimulation;
+import mrtjp.projectred.core.Configurator;
+import net.minecraft.nbt.NBTTagCompound;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static mrtjp.projectred.fabrication.engine.PRFabricationEngine.REG_TIME;
+
+public class SequencerGateTile extends SidedRedstoneGateTile {
+
+    public static final int MAX_TIME_PACKET = 16;
+
+    private int pointerMax = 38;
+
+    public SequencerGateTile() {
+        super(ICGateTileType.SEQUENCER);
+    }
+
+    public void save(NBTTagCompound tag) {
+        super.save(tag);
+        tag.setInteger("tmax", pointerMax);
+    }
+
+    public void load(NBTTagCompound tag) {
+        super.load(tag);
+        pointerMax = tag.getInteger("tmax");
+    }
+
+    public void writeDesc(MCDataOutput out) {
+        super.writeDesc(out);
+        out.writeInt(pointerMax);
+    }
+
+    public void readDesc(MCDataInput in) {
+        super.readDesc(in);
+        pointerMax = in.readInt();
+    }
+
+    public void read(MCDataInput in, int key) {
+        switch (key) {
+            case MAX_TIME_PACKET -> pointerMax = in.readInt();
+            default -> super.read(in, key);
+        }
+    }
+
+    protected void sendMaxTimeUpdate() {
+        getWriteStream(MAX_TIME_PACKET).writeInt(pointerMax);
+    }
+
+    //region BaseTile overrides
+
+    private void addTimerMax(int delta) {
+        int newMax = pointerMax + delta;
+        int min = Math.max(4, Configurator.minTimerTicks()) - 2;
+        if (newMax < min) newMax = min;
+
+        if (newMax != pointerMax) {
+            pointerMax = newMax;
+            sendMaxTimeUpdate();
+            getEditor().markTileChange();
+        }
+    }
+    //endregion
+
+    //region GateTile overrides
+
+    protected boolean canReflect() {
+        return true;
+    }
+
+    protected void reflectAndSend() {
+        configureShapeAndSend(getShape() == 0 ? 1 : 0);
+    }
+    //endregion
+
+    //region RedstoneGateTile overrides
+
+    protected int redstoneOutputMask() {
+        return 0xF;
+    }
+    //endregion
+
+    //region IGateRenderData
+
+    public boolean isPointerStarted() {
+        return getEditor().getStateMachine().isSimulating();
+    }
+
+    public int pointerMax() {
+        return pointerMax;
+    }
+
+    public int pointerValue() {
+        long simTime = getEditor().getStateMachine().getSimSystemTime();
+        return (int) (simTime % (pointerMax * 4L));
+    }
+    //endregion
+
+    protected void collectGate(Collector collector, int gateId, int[] inputRegisters, int[] outputRegisters) {
+        List<Integer> inputRegs = new ArrayList<>();
+        List<Integer> outputRegs = new ArrayList<>();
+
+        for (int i = 0; i < 8; i++) {           // 0-8: sysTime
+            inputRegs.add(REG_TIME[i]);
+        }
+
+        outputRegs.add(outputRegisters[0]);                        // 0: output top
+        outputRegs.add(outputRegisters[getShape() == 0 ? 1 : 3]);  // 1: output right
+        outputRegs.add(outputRegisters[2]);                        // 2: output bottom
+        outputRegs.add(outputRegisters[getShape() == 0 ? 3 : 1]);  // 3: output left
+
+        collector.addGate(gateId, new SequencerGate(pointerMax), inputRegs, outputRegs);
+    }
+
+    public static class SequencerGate implements ICGate {
+
+        private final long pointerMax;
+
+        public SequencerGate(long pointerMax) {
+            this.pointerMax = pointerMax;
+        }
+
+        private static long readSysTime(ICSimulation ic, int[] inputs) { return ic.getRegLongVal(inputs, 0); }
+
+        private static void writeOutputMask(ICSimulation ic, int[] outputs, int mask) {
+            ic.queueRegByteVal(outputs[0], (byte) ((mask & 1) != 0 ? 1 : 0));
+            ic.queueRegByteVal(outputs[1], (byte) ((mask & 2) != 0 ? 1 : 0));
+            ic.queueRegByteVal(outputs[2], (byte) ((mask & 4) != 0 ? 1 : 0));
+            ic.queueRegByteVal(outputs[3], (byte) ((mask & 8) != 0 ? 1 : 0));
+        }
+
+        public void compute(ICSimulation ic, int[] inputs, int[] outputs) {
+            long sysTime = readSysTime(ic, inputs);
+            int mask = 1 << sysTime % (pointerMax * 4L) / pointerMax;
+            writeOutputMask(ic, outputs, mask);
+        }
+    }
+}

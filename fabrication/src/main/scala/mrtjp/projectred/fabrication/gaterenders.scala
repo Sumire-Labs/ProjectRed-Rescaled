@@ -44,7 +44,8 @@ object RenderGateTile
         new RenderDecRandomizer,
         new RenderNullCell,
         new RenderInvertCell,
-        new RenderBufferCell
+        new RenderBufferCell,
+        new RenderBusIO
     )
 
     def registerIcons(reg:TextureMap): Unit ={}
@@ -127,7 +128,12 @@ class RenderAnalogIO extends RenderIO
 class RenderBundledIO extends RenderIO
 {
     override def invColour = EnumColour.WHITE.rgba
-    override def dynColour(gate:IOGateICTile) = EnumColour.values()(gate.getLogic[AnalogIOGateTileLogic].freq).rgba
+    override def dynColour(gate:IOGateICTile) = EnumColour.values()(gate.getLogic[TFreqIOGateTileLogic].freq).rgba
+}
+
+class RenderBusIO extends RenderIO {
+    override def invColour = EnumColour.GRAY.rgba
+    override def dynColour(gate:IOGateICTile) = EnumColour.GRAY.rgba
 }
 
 class RenderOR extends ICGateRenderer[ComboGateICTile]

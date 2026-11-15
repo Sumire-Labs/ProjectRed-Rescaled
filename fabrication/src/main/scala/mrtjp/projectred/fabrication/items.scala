@@ -141,6 +141,8 @@ object ItemICBlueprint
         totag.setByte("log_warn", fromtag.getByte("log_warn"))
         totag.setByte("log_err", fromtag.getByte("log_err"))
         totag.setByte("log_rtf", fromtag.getByte("log_rtf"))
+        if fromtag.hasKey(ModernBlueprint.Key) then totag.setTag(ModernBlueprint.Key,fromtag.getCompoundTag(ModernBlueprint.Key).copy())
+        else totag.removeTag(ModernBlueprint.Key)
     }
 
     def removeIC(stack:ItemStack): Unit =
@@ -148,6 +150,7 @@ object ItemICBlueprint
         if !stack.hasTagCompound then return
         val tag = stack.getTagCompound
         Seq("tilemap", "icname", "icw", "ich", "log_warn", "log_err", "log_rtf").foreach(tag.removeTag)
+        tag.removeTag(ModernBlueprint.Key)
     }
 
     def saveICToGate(tm:ICTileMapContainer, gate:ItemStack): Unit =
@@ -197,6 +200,8 @@ object ItemICBlueprint
     def copyToGate(bp:ItemStack, gate:ItemStack): Unit =
     {
         assertStackTag(gate)
+        if !bp.getTagCompound.hasKey(ModernBlueprint.Key) && !ModernBlueprint.compileLegacy(bp) then ModernBlueprint.attach(bp,null)
+        copyIC(bp,gate)
         val ic = loadTileMap(bp)
         saveICToGate(ic, gate)
     }

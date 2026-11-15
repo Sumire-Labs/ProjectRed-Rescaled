@@ -32,9 +32,10 @@ abstract class OpGateCommons(meta:Int) extends TileEditorOp
         val point = Point(in.readByte(), in.readByte())
         val r = in.readUByte()
 
-        if editor.getTile(point) == null && canPlace(editor, point) then {
+        if r < 4 && editor.getTile(point) == null && canPlace(editor, point) then {
             val part = ICTile.createTile(ICGateDefinition(meta).gateType).asInstanceOf[GateICTile]
-            part.preparePlacement(r, meta)
+            val rotation=if part.isInstanceOf[IIOGateTile] then findRot(editor,point,point) else r.toInt
+            part.preparePlacement(rotation, meta)
             editor.setTile(point, part)
         }
     }

@@ -24,6 +24,14 @@ val verifyDistribution = tasks.register("verifyDistribution") {
             check(jar.manifest.mainAttributes.getValue("FMLAT") == "projectred-relocation_at.cfg") { "Missing Relocation AT marker" }
             check(jar.getJarEntry("META-INF/projectred-relocation_at.cfg") != null) { "Missing Relocation AT" }
             check(jar.getJarEntry("META-INF/LICENSE.md") != null) { "Missing MIT notice" }
+            val engineName = "fabrication-engine-0.1.0-alpha-19.jar"
+            val engine = jar.getJarEntry(engineName) ?: error("Missing contained IC engine")
+            val engineHash = jar.getInputStream(engine).use {
+                java.security.MessageDigest.getInstance("SHA-256").digest(it.readBytes()).joinToString("") { byte -> "%02x".format(byte.toInt() and 255) }
+            }
+            check(engineHash == "bc489cd8bedd1146b754394a475f599d8df173d010e04402eb3f1bc59f5823a0") { "Unexpected IC engine artifact" }
+            check(jar.manifest.mainAttributes.getValue("ContainedDeps").split(' ').contains(engineName)) { "IC engine is not declared as a contained dependency" }
+            check(jar.getJarEntry("mrtjp/projectred/fabrication/engine/compile/QuietStepThroughAssembler.class") != null) { "Missing staged compiler adapter" }
             check(entries.none { it.name.startsWith("dan200/") || it.name.startsWith("mrtjp/projectred/verification/") }) { "Optional API stubs or regression tests leaked into the runtime jar" }
             val classes = entries.filter { it.name.startsWith("mrtjp/projectred/") && it.name.endsWith(".class") }
             check(classes.size > 500) { "Module classes missing from distribution" }

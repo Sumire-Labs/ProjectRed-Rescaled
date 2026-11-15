@@ -8,6 +8,8 @@ legacy operating behavior are superseded. IDs and old saves should be handled by
 compatibility readers/migrations instead of preserving conflicting mechanics.
 Remaining deviations must be recorded; a visual-only adaptation is not full parity.
 The current scope and unresolved differences are tracked in [SPEC_PARITY.md](SPEC_PARITY.md).
+The newer IC backend and its remaining frontend work are described in
+[IC_ENGINE_BACKPORT.md](IC_ENGINE_BACKPORT.md).
 
 - ProjectRed baseline: `11da8db1` on the legacy Minecraft 1.12 branch.
 - The source migration uses kappa-maintainer/ProjectRed at
@@ -54,7 +56,9 @@ The basic 64nm rough-wafer process now follows 1.21.1's 4096nm wafer and fixed
 16x16 manufacturing footprint: 16 dies with a 50% defect probability. The earlier
 12288nm/64x64 calibration has been removed. The GUI uses actual design dimensions
 for estimates, as upstream does; manufacturing still has upstream's fixed-size TODO.
-Advanced nodes, wafer grades and a new IC engine remain unfinished here. Tests cover the powered chain, pause/cancel/reload,
+The new IC backend is now used by Workbench and the production path. Advanced
+nodes, wafer grades and the complete newer editor frontend remain unfinished.
+Tests cover the powered chain, pause/cancel/reload,
 ingredient accounting, interface plates, design rejection and all three server-opened GUIs.
 
 Pneumatic transport follows the same reference's basic graph-routing implementation.
@@ -99,7 +103,7 @@ Matching names or renamed registrations alone do not establish a missing feature
 | Integration gates | The registered gate set largely corresponds to existing 1.12 gates. | Compare behavior and fixes before adding duplicate types. |
 | Exploration walls | All nine material variants already exist, but the legacy custom block is not recognized as a vanilla wall. | Restore standard wall recognition and sided connection rules without replacing `stone_wall` or its metadata. |
 | Exploration ores | Raw tin/silver and deepslate variants add real progression/world-generation changes. | Evaluate drop recipes, ore dictionary integration and generation policy separately. |
-| Fabrication editor | The newer editor uses data components and the external fabrication-engine library. | Treat engine/editor replacement and old-blueprint conversion as a separate migration. |
+| Fabrication editor | The newer backend and compiled targets are ported with 1.12 NBT adapters. | Complete viewport/tool rendering and stateful legacy-runtime conversion; see IC_ENGINE_BACKPORT.md. |
 | Pneumatic transport | Ordinary/backstuff destination priority, newer geometry and atlas are ported. | Continue the behavior audit and legacy-network migration. |
 
 Upstream PR #2004's redwire flag restoration is already covered by the earlier repair.
@@ -142,11 +146,21 @@ The follow-up adds seven upstream PNGs: three Workbench tab atlases, the Auto
 Crafter GUI, two charged/working front sprites and the Pneumatic Tube atlas.
 The matching tube OBJ changes only object declarations to groups for CCL's parser.
 The Workbench's legacy glyph atlas is retained separately for controls that still
-use the native editor. Its newer compiler/editor is still an open migration.
+use the native frontend. The newer compiler is active; the complete viewport and
+interaction-zone frontend remain an open migration.
 Auto Crafter rendering includes charge/work state and rotation in its model key.
 Textures for new raw-ore/deepslate content are part of the corresponding content port.
 
 ## Architecture
+
+The 1.21.1 reference contains seven gameplay mods: Core, Transmission,
+Integration, Illumination, Exploration, Expansion and Fabrication. All have
+corresponding modules here. Its `api` and `runtime` projects are build/run
+infrastructure, not additional gameplay mods. Newer transport belongs to Expansion
+upstream; this port retains the existing Transportation registration for save/API
+compatibility. A missing new feature therefore does not imply a wholly missing mod.
+The fabrication-engine library is contained in the distribution, not another mod
+that users must install separately.
 
 Eleven internal Gradle projects compile in dependency order. The root collects their
 class outputs and shared assets and reobfuscates one runtime jar. Internal jars are
@@ -230,8 +244,8 @@ Subsequent issue reproductions, repairs and expanded coverage are recorded in
 [the review log](REVIEW_LOG.md) and [issue triage](ISSUE_TRIAGE.md).
 
 Pinned dependency sources in `.github/scripts/verify.ps1` are built as Scala 3.10
-fixtures. Only the temporary CBMultipart copy adjusts its Scalar version declaration.
-The actual sibling repository is untouched. The Scalar fixture uses its pinned actual
+fixtures. Both Sumire dependency pins now declare Scala 3.10 and need no source patch.
+The actual sibling repositories are untouched. The Scalar fixture uses its pinned actual
 language adapter with Scala 3.10 libraries. Release workflows never publish fixtures.
 
 ## Remaining release work

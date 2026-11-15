@@ -285,3 +285,44 @@ variants, opens/resizes the actual Workbench, switches all tabs and selects a to
 through its palette, shows three Auto Crafter states and clicks its plan-cycle
 button. Screenshots were inspected. This caught and fixed a missing rotation state
 and a popup background that covered its own child buttons.
+
+## New IC backend and Workbench controls
+
+The Workbench and new fabrication targets now use the pinned 1.21.1 engine.
+The port includes all 20 gate implementations, four I/O types, wire pathfinding,
+byte-register simulation and a staged compiler with the 0.5ms tick budget.
+Full-width Bundled Bus I/O has channel controls. Existing IDs remain stable.
+Legacy-only components stay in the drawing and report conversion errors.
+
+Typed problems, progress and the compile tree are synchronized with viewers.
+Tests exposed byte/VarInt mismatches, insufficient path/child count widths and
+full-snapshot ordering problems. Pending events now precede snapshots, including
+when viewers join. Awaiting manual compilation no longer dirties the chunk or
+sends its state every tick. The bundled-colour renderer also needed a cast fix.
+
+Explicit I/O copy gates preserve direct connections and fan-out instead of
+renaming shared static registers. Redstone searches avoid duplicate colour ports;
+all insulated colours and sixteen bundled channels retain their signal paths.
+Assembler per-tile tracing is debug-only.
+
+Compiled targets are tied to their drawing snapshot and copied through production.
+New placed ICs use the new simulator, retain the two-tick input latch and publish
+time-driven changes on their simulation tick. Large engine JSON uses bounded
+gzip byte arrays instead of 1.12's size-limited NBT strings. Unknown runtime
+formats stop safely; unrecognized Workbench engine data is backed up while its
+original drawing remains available for recompilation.
+
+Development server/client and installed Cleanroom server checks passed. Coverage
+includes all gate implementations compiling/reloading, redstone and all insulated
+colours, full-width buses, I/O fan-out, large JSON persistence, source invalidation,
+unknown formats, an actual multipart gate's input-latch timing, legacy drawing
+conversion, simulation reload and compile-tree transport. The client manually
+compiles the 3,844-component fixture through 23,076 steps, inspects the synchronized
+tree, renders all four I/O types and toggles bus channel 15 through the real GUI.
+Screenshots were inspected.
+
+Dependency fixtures now use the existing Sumire Scala 3.10 revisions, including
+CBMultipart's client random-tick registration fix. No adjacent checkouts were
+modified. The engine library is contained in the runtime jar and verified by hash.
+The complete newer viewport/interaction-zone frontend and stateful conversion of
+already placed legacy ICs remain open; see IC_ENGINE_BACKPORT.md.
