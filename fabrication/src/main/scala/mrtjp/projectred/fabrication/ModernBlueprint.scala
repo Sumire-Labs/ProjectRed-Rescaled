@@ -14,12 +14,17 @@ object ModernBlueprint {
         (0 until tiles.tagCount).map(tiles.getCompoundTagAt).sortBy(t =>
             (t.getByte("xpos")&255,t.getByte("ypos")&255,t.getByte("id")&255)).foreach(t => ordered.appendTag(t.copy()))
         result.setTag("tiles",ordered)
+        val layers=source.getTagList("layers",10)
+        val normalized=new NBTTagList
+        (0 until layers.tagCount).map(layers.getCompoundTagAt).sortBy(_.getByte("layer")).foreach(t => normalized.appendTag(canonical(t)))
+        result.setTag("layers",normalized)
+        result.setByte("min_layer",source.getByte("min_layer"));result.setByte("max_layer",source.getByte("max_layer"))
         result
     }
     def matches(stack:ItemStack):Boolean = stack.hasTagCompound && stack.getTagCompound.hasKey(Key) && {
         val payload=stack.getTagCompound.getCompoundTag(Key)
         payload.getInteger("compile_format") == PRFabricationEngine.COMPILE_FORMAT &&
-            payload.getCompoundTag("source") == canonical(stack.getTagCompound.getCompoundTag("tilemap"))
+            canonical(payload.getCompoundTag("source")) == canonical(stack.getTagCompound.getCompoundTag("tilemap"))
     }
     def isBuilt(stack:ItemStack):Boolean = matches(stack) && stack.getTagCompound.getCompoundTag(Key).getBoolean("is_built")
     def attach(stack:ItemStack,model:ModernDesign):Unit = {

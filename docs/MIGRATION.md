@@ -103,7 +103,7 @@ Matching names or renamed registrations alone do not establish a missing feature
 | Integration gates | The registered gate set largely corresponds to existing 1.12 gates. | Compare behavior and fixes before adding duplicate types. |
 | Exploration walls | All nine material variants already exist, but the legacy custom block is not recognized as a vanilla wall. | Restore standard wall recognition and sided connection rules without replacing `stone_wall` or its metadata. |
 | Exploration ores | Raw tin/silver and deepslate variants add real progression/world-generation changes. | Evaluate drop recipes, ore dictionary integration and generation policy separately. |
-| Fabrication editor | The newer backend and compiled targets are ported with 1.12 NBT adapters. | Complete viewport/tool rendering and stateful legacy-runtime conversion; see IC_ENGINE_BACKPORT.md. |
+| Fabrication editor | The newer backend, perspective/layer/zone frontend and verified legacy-state conversion are ported with 1.12 API/NBT adapters. | Continue artwork and historical-save checks; incompatible legacy circuitry retains a reason and recovery data. |
 | Pneumatic transport | Ordinary/backstuff destination priority, newer geometry and atlas are ported. | Continue the behavior audit and legacy-network migration. |
 
 Upstream PR #2004's redwire flag restoration is already covered by the earlier repair.
@@ -146,8 +146,8 @@ The follow-up adds seven upstream PNGs: three Workbench tab atlases, the Auto
 Crafter GUI, two charged/working front sprites and the Pneumatic Tube atlas.
 The matching tube OBJ changes only object declarations to groups for CCL's parser.
 The Workbench's legacy glyph atlas is retained separately for controls that still
-use the native frontend. The newer compiler is active; the complete viewport and
-interaction-zone frontend remain an open migration.
+use native sprite rendering adapters inside the newer perspective viewport.
+Camera, picking, layers and interaction zones follow the newer implementation.
 Auto Crafter rendering includes charge/work state and rotation in its model key.
 Textures for new raw-ore/deepslate content are part of the corresponding content port.
 

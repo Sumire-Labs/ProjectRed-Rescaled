@@ -18,6 +18,7 @@ trait IICTileEditorNetwork
 
     def getICStreamOf(key:Int):MCDataOutput
     def getTileStream(pos:Point):MCDataOutput
+    def getTileStream(pos:Point,layer:Int):MCDataOutput = getTileStream(pos)
 
     def isRemote:Boolean
     def isSimulationRunning:Boolean = true
@@ -32,10 +33,14 @@ trait TICTileEditorNetwork extends IICTileEditorNetwork
     def createTileStream():PacketCustom
     def sendTileStream(out:PacketCustom): Unit
     override def getTileStream(pos:Point):MCDataOutput =
+        getTileStream(pos,getIC.currentLayer)
+
+    override def getTileStream(pos:Point,layer:Int):MCDataOutput =
     {
         if tileStream == null then tileStream = createTileStream()
 
-        val tile = getIC.getTile(pos)
+        val tile = getIC.withLayer(layer){getIC.getTile(pos)}
+        if layer!=0 then tileStream.writeByte(254).writeByte(layer)
         tileStream.writeByte(tile.id)
         tileStream.writeByte(pos.x).writeByte(pos.y)
 
@@ -54,13 +59,14 @@ trait TICTileEditorNetwork extends IICTileEditorNetwork
         try {
             var id = in.readUByte()
             while id != 255 do {
+                val layer=if id==254 then {val y=in.readByte().toInt;id=in.readUByte();y} else 0
                 val p = Point(in.readUByte(), in.readUByte())
-                var tile = getIC.getTile(p)
+                var tile = getIC.withLayer(layer){getIC.getTile(p)}
                 if tile == null || tile.id != id then {
                     log.error("client tile stream couldnt find tile "+p)
                     tile = ICTile.createTile(id)
                 }
-                tile.read(in)
+                getIC.withLayer(layer){tile.read(in)}
                 id = in.readUByte()
             }
         }
@@ -106,15 +112,22 @@ trait TICTileEditorNetwork extends IICTileEditorNetwork
     def readClientICStream(in:MCDataInput):Unit = {
         var id = in.readUByte()
         while id != 255 do {
-            if id == 3 then {
+            if id == 3 || id == 10 then {
+                val layer=if id==10 then in.readByte().toInt else 0
+                if !getIC.validLayer(layer) then return
                 val operation = in.readUByte()
                 if !TileEditorOpDefs.values.isDefinedAt(operation) then return
-                TileEditorOp.getOperation(operation).readOp(getIC, in)
-            } else if id == 4 then {
+                if getIC.externalSimulationActive!=null && Set(TileEditorOpDefs.Lever.getID,TileEditorOpDefs.Button.getID,TileEditorOpDefs.DecRandomizerGate.getID,
+                    TileEditorOpDefs.NullCellGate.getID,TileEditorOpDefs.InvertCellGate.getID,TileEditorOpDefs.BufferCellGate.getID).contains(operation.toInt) then return
+                getIC.withLayer(layer){TileEditorOp.getOperation(operation).readOp(getIC, in)}
+            } else if id == 4 || id == 11 then {
+                val layer=if id==11 then in.readByte().toInt else 0
+                if !getIC.validLayer(layer) then return
                 val point = Point(in.readUByte(), in.readUByte())
                 if point.x >= getIC.size.width || point.y >= getIC.size.height then return
-                getIC.getTile(point) match {
-                    case tile:TClientNetICTile => tile.readClientPacket(in)
+                val tile=getIC.withLayer(layer){getIC.getTile(point)}
+                tile match {
+                    case t:TClientNetICTile => getIC.withLayer(layer){t.readClientPacket(in)}
                     case _ => return
                 }
             } else return
@@ -125,6 +138,19 @@ trait TICTileEditorNetwork extends IICTileEditorNetwork
 
 class ICTileMapContainer extends ISETileMap
 {
+    var layerIndex=0
+    var minLayer=0
+    var maxLayer=0
+    val extraLayers=mutable.Map.empty[Int,ICTileMapContainer]
+    def layerMap(layer:Int):ICTileMapContainer = if layer==0 then this else {
+        require(layer>=minLayer && layer<=maxLayer,"Layer is outside the drawing")
+        extraLayers.getOrElseUpdate(layer,{
+            val map=new ICTileMapContainer;map.layerIndex=layer;map.size=size;map.name=name;map
+        })
+    }
+    def allLayers:Seq[(Int,ICTileMapContainer)] = (Seq(0->this)++extraLayers.toSeq).sortBy(_._1)
+    def allTiles:Seq[ICTile] = allLayers.flatMap(_._2.tiles.values)
+    def tileCount:Int=tiles.size+extraLayers.valuesIterator.map(_.tiles.size).sum
     override val tiles: mutable.Map[(Int, Int), ICTile] = mutable.Map[(Int, Int), ICTile]()
 
     var tilesLoadedDelegate = {() => ()}
@@ -159,10 +185,20 @@ class ICTileMapContainer extends ISETileMap
             tagList.appendTag(tileTag)
         }
         tag.setTag("tiles", tagList)
+        if layerIndex==0 then {
+            tag.setByte("min_layer",minLayer.toByte);tag.setByte("max_layer",maxLayer.toByte)
+            val layers=new NBTTagList
+            for (index,map) <- extraLayers.toSeq.sortBy(_._1) do {
+                val layerTag=new NBTTagCompound
+                map.saveTiles(layerTag);layerTag.setByte("layer",index.toByte);layers.appendTag(layerTag)
+            }
+            tag.setTag("layers",layers)
+        }
     }
 
     def loadTiles(tag:NBTTagCompound): Unit =
     {
+        tiles.clear();extraLayers.clear()
         name = tag.getString("name")
         size = Size(tag.getByte("sw")&0xFF, tag.getByte("sh")&0xFF)
 
@@ -178,6 +214,19 @@ class ICTileMapContainer extends ISETileMap
             tile.load(tileTag)
         }
 
+        if layerIndex==0 then {
+            minLayer=tag.getByte("min_layer");maxLayer=tag.getByte("max_layer")
+            require(minLayer<=maxLayer,"Invalid drawing layer bounds")
+            val layers=tag.getTagList("layers",10)
+            for i <- 0 until layers.tagCount do {
+                val saved=layers.getCompoundTagAt(i)
+                val index=saved.getByte("layer").toInt
+                require(index!=0 && index>=minLayer && index<=maxLayer && !extraLayers.contains(index),"Invalid drawing layer")
+                val map=new ICTileMapContainer;map.layerIndex=index;map.loadTiles(saved)
+                require(map.size==size,"Layer dimensions differ")
+                extraLayers(index)=map
+            }
+        }
         tilesLoadedDelegate()
     }
 
@@ -188,7 +237,18 @@ class ICTileMapContainer extends ISETileMap
 
 class ICTileMapEditor(val network:IICTileEditorNetwork) extends IICSimEngineContainerDelegate
 {
-    val tileMapContainer = new ICTileMapContainer
+    val rootTileMapContainer = new ICTileMapContainer
+    private var operationLayer=0
+    def currentLayer:Int=operationLayer
+    def validLayer(layer:Int):Boolean=layer>=rootTileMapContainer.minLayer && layer<=rootTileMapContainer.maxLayer
+    var revision=0L
+    def tileMapContainer:ICTileMapContainer=rootTileMapContainer.layerMap(operationLayer)
+    def withLayer[T](layer:Int)(body: => T):T = {
+        val before=operationLayer
+        require(layer>=rootTileMapContainer.minLayer && layer<=rootTileMapContainer.maxLayer,"Layer is outside the drawing")
+        operationLayer=layer
+        try body finally operationLayer=before
+    }
 
     var simEngineContainer = new ICSimEngineContainer
     var simNeedsRefresh = true
@@ -203,7 +263,7 @@ class ICTileMapEditor(val network:IICTileEditorNetwork) extends IICSimEngineCont
 
     tileMapContainer.tilesLoadedDelegate = {() =>
         simNeedsRefresh = true
-        for tile <- tileMapContainer.tiles.values do
+        for tile <- rootTileMapContainer.allTiles do
             tile.bindEditor(this)
     }
 
@@ -242,6 +302,15 @@ class ICTileMapEditor(val network:IICTileEditorNetwork) extends IICSimEngineCont
             tile.writeDesc(out)
         }
         out.writeByte(255)
+        val root=rootTileMapContainer
+        out.writeByte(root.minLayer).writeByte(root.maxLayer).writeVarInt(root.extraLayers.size)
+        for (layer,map) <- root.extraLayers.toSeq.sortBy(_._1) do {
+            out.writeByte(layer)
+            for ((x,y),tile) <- map.tiles do {
+                out.writeByte(tile.id).writeByte(x).writeByte(y);tile.writeDesc(out)
+            }
+            out.writeByte(255)
+        }
     }
 
     def readDesc(in:MCDataInput): Unit =
@@ -259,6 +328,22 @@ class ICTileMapEditor(val network:IICTileEditorNetwork) extends IICSimEngineCont
             tile.readDesc(in)
             id = in.readUByte()
         }
+        rootTileMapContainer.minLayer=in.readByte();rootTileMapContainer.maxLayer=in.readByte()
+        val count=in.readVarInt()
+        require(count>=0 && count<=255,"Invalid layer count")
+        for _ <- 0 until count do {
+            val layer=in.readByte().toInt
+            require(layer!=0 && validLayer(layer),"Invalid layer descriptor")
+            withLayer(layer){
+                var kind=in.readUByte()
+                while kind!=255 do {
+                    val tile=ICTile.createTile(kind)
+                    setTile_do(Point(in.readUByte(),in.readUByte()),tile);tile.readDesc(in)
+                    kind=in.readUByte()
+                }
+            }
+        }
+        revision+=1
     }
 
     def read(in:MCDataInput, key:Int) = key match
@@ -281,12 +366,25 @@ class ICTileMapEditor(val network:IICTileEditorNetwork) extends IICSimEngineCont
         case 7 => simEngineContainer.setOutput(in.readUByte(), in.readShort()) //TODO remove? not used...
         case 8 => simEngineContainer.logger.readLog(in)
         case 9 => worldTimeOffset = in.readLong()
+        case 12 =>
+            val layer=in.readByte().toInt
+            withLayer(layer){
+                val tile=ICTile.createTile(in.readUByte())
+                setTile_do(Point(in.readUByte(),in.readUByte()),tile);tile.readDesc(in)
+            }
+            revision+=1
+        case 13 =>
+            val layer=in.readByte().toInt
+            withLayer(layer){removeTile_do(Point(in.readUByte(),in.readUByte()))}
+            revision+=1
         case _ =>
     }
 
     def sendTileAdded(tile:ICTile): Unit =
     {
-        val out = network.getICStreamOf(1)
+        val layer=tile.tileMap.layerIndex
+        val out = network.getICStreamOf(if layer==0 then 1 else 12)
+        if layer!=0 then out.writeByte(layer)
         out.writeByte(tile.id)
         out.writeByte(tile.pos.x).writeByte(tile.pos.y)
         tile.writeDesc(out)
@@ -294,13 +392,17 @@ class ICTileMapEditor(val network:IICTileEditorNetwork) extends IICSimEngineCont
 
     def sendRemoveTile(pos:Point): Unit =
     {
-        network.getICStreamOf(2).writeByte(pos.x).writeByte(pos.y)
+        val out=network.getICStreamOf(if currentLayer==0 then 2 else 13)
+        if currentLayer!=0 then out.writeByte(currentLayer)
+        out.writeByte(pos.x).writeByte(pos.y)
     }
 
     def sendOpUse(op:TileEditorOp, start:Point, end:Point) =
     {
         if op.checkOp(this, start, end) then {
-            op.writeOp(this, start, end, network.getICStreamOf(3).writeByte(op.id))
+            val out=network.getICStreamOf(if currentLayer==0 then 3 else 10)
+            if currentLayer!=0 then out.writeByte(currentLayer)
+            op.writeOp(this,start,end,out.writeByte(op.id))
             true
         }
         else false
@@ -308,7 +410,10 @@ class ICTileMapEditor(val network:IICTileEditorNetwork) extends IICSimEngineCont
 
     def sendClientPacket(tile:TClientNetICTile, writer:MCDataOutput => Unit): Unit =
     {
-        val s = network.getICStreamOf(4).writeByte(tile.pos.x).writeByte(tile.pos.y)
+        val layer=tile.tileMap.layerIndex
+        val s=network.getICStreamOf(if layer==0 then 4 else 11)
+        if layer!=0 then s.writeByte(layer)
+        s.writeByte(tile.pos.x).writeByte(tile.pos.y)
         writer(s)
     }
 
@@ -341,13 +446,15 @@ class ICTileMapEditor(val network:IICTileEditorNetwork) extends IICSimEngineCont
 
     def clear(): Unit =
     {
-        tileMapContainer.tiles.values.foreach{_.unbind()}//remove references
-        tileMapContainer.tiles.clear()
+        rootTileMapContainer.allTiles.foreach(_.unbind())
+        rootTileMapContainer.tiles.clear();rootTileMapContainer.extraLayers.clear()
+        rootTileMapContainer.minLayer=0;rootTileMapContainer.maxLayer=0
         scheduledTicks = MMap()
         tileMapContainer.name = "untitled"
         tileMapContainer.size = Size.zeroSize
         for i <- 0 until 4 do simEngineContainer.iostate(i) = 0
         simNeedsRefresh = true
+        revision+=1
     }
 
     def getTotalSimTimeClient = network.getEditorWorld.getTotalWorldTime-worldTimeOffset
@@ -458,6 +565,7 @@ class ICTileMapEditor(val network:IICTileEditorNetwork) extends IICSimEngineCont
     def markSchematicChanged(): Unit =
     {
         simNeedsRefresh = true
+        revision+=1
     }
 
     def recompileSchematic(): Unit =

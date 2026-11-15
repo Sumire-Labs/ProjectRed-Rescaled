@@ -9,6 +9,7 @@ class SEIntegratedCircuit(
     $regDependents:Map[Int, Seq[Int]] //Register deps [regID -> Seq(gateID)]
 )
 {
+    var terminalRegisters=Map.empty[(mrtjp.core.vec.Point,Int,Boolean),Int]
     val registers:Array[ISERegister] = $registers.toArray
     val gates:Array[ISEGate] = $gates.toArray
 

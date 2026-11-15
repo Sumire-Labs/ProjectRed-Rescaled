@@ -29,7 +29,7 @@ class WorkbenchController(tile:TileICWorkbench) {
     }
     private def refreshAvailability():Unit = {
         val limit = Configurator.autoCompileTileLimit
-        autoCompileAvailable = limit == -1 || limit > 0 && tile.editor.tileMapContainer.tiles.size <= limit
+        autoCompileAvailable = limit == -1 || limit > 0 && tile.editor.rootTileMapContainer.tileCount <= limit
         autoCompileEnabled &&= autoCompileAvailable
     }
     private def changed():Unit = {
@@ -45,7 +45,7 @@ class WorkbenchController(tile:TileICWorkbench) {
         modern = null
         remoteLog.clear()
         completedSteps=0;totalSteps=0
-        if tile.editor.tileMapContainer.tiles.nonEmpty || state != 0 then state = 1
+        if tile.editor.rootTileMapContainer.tileCount>0 || state != 0 then state = 1
         tile.editor.simNeedsRefresh=false // The workflow now owns this edit, including manual-compile waits.
         changed()
     }
@@ -57,6 +57,7 @@ class WorkbenchController(tile:TileICWorkbench) {
     def requestCompile():Unit = if canTriggerCompile then {
         modern = new ModernDesign(tile.editor)
         modern.rebuild()
+        modern.synchronizeConnections()
         attachCallbacks()
         modern.context.getStateMachine.startCompile()
         modern.unsupported.foreach(modern.context.getStateMachine.getCompilerLog.addProblem)
@@ -68,6 +69,29 @@ class WorkbenchController(tile:TileICWorkbench) {
         refreshAvailability()
         autoCompileEnabled = autoCompileAvailable && !autoCompileEnabled
         changed()
+    }
+    def interact(layer:Int,point:mrtjp.core.vec.Point,zoneIndex:Int,left:Boolean,key:Int=0,flags:Int=0):Unit = {
+        if !tile.editor.validLayer(layer) || point.x<0 || point.y<0 || point.x>=tile.editor.size.width || point.y>=tile.editor.size.height then return
+        val model=if modern!=null then modern else {
+            val edit=new ModernDesign(tile.editor);edit.rebuild();edit
+        }
+        val target=model.context.getTileMap.getBaseTile(model.coordinate(point,layer))
+        if !target.isPresent then return
+        val part=target.get()
+        val zones=part.getInteractionZones
+        var edited=false
+        val oldCallback=model.context.schematicChanged
+        model.context.schematicChanged=()=>{edited=true}
+        try {
+            if key!=0 then zones.filter(_.canRespondToKey(key,flags)).foreach(_.onKeyPressed(key,flags))
+            else if zoneIndex>=0 && zoneIndex<zones.length then {
+                if left then zones(zoneIndex).onLeftClick() else zones(zoneIndex).onRightClick()
+            }
+        } finally model.context.schematicChanged=oldCallback
+        if edited then {
+            model.copySettings(part)
+            tile.editor.markSchematicChanged();markEdited()
+        }
     }
     private def activate(part:ICTile):Unit = if part.isInstanceOf[GateICTile] &&
         Set(ICGateDefinition.Repeater.ordinal,ICGateDefinition.ToggleLatch.ordinal).contains(part.asInstanceOf[GateICTile].subID) then
@@ -91,9 +115,9 @@ class WorkbenchController(tile:TileICWorkbench) {
         refreshAvailability()
         if !tile.hasBP || tile.editor.isEmpty then { state = 0; modern = null }
         else {
-            if state == 0 && tile.editor.tileMapContainer.tiles.nonEmpty then markEdited()
+            if state == 0 && tile.editor.rootTileMapContainer.tileCount>0 then markEdited()
             if tile.editor.simNeedsRefresh && state != 2 &&
-                (state != 0 || tile.editor.tileMapContainer.tiles.nonEmpty) then markEdited()
+                (state != 0 || tile.editor.rootTileMapContainer.tileCount>0) then markEdited()
             if state == 1 && autoCompileEnabled then requestCompile()
             if modern != null && (state == 2 || state == 3) then {
                 modern.context.getStateMachine.tick(tile.getWorld.getTotalWorldTime)
@@ -143,12 +167,13 @@ class WorkbenchController(tile:TileICWorkbench) {
                 state=context.getStateMachine.getState
                 tile.editor.simNeedsRefresh=false
                 modern.updateDiagnostics()
+                modern.restorePresentation()
             } catch { case scala.util.control.NonFatal(error) =>
                 engineBackup=tag.getCompoundTag("modern_engine").copy()
                 modern=null;state=1;tile.editor.simNeedsRefresh=true
                 engine.EngineContext.LOGGER.warn("Saved Workbench engine data was backed up; its drawing needs recompilation",error)
             }
-        } else state = if tile.editor.tileMapContainer.tiles.nonEmpty then 1 else 0
+        } else state = if tile.editor.rootTileMapContainer.tileCount>0 then 1 else 0
         refreshAvailability()
     }
     def writeDesc(out:MCDataOutput):Unit = out.writeByte(state).writeBoolean(autoCompileEnabled).writeBoolean(autoCompileAvailable)

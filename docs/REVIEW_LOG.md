@@ -326,3 +326,47 @@ CBMultipart's client random-tick registration fix. No adjacent checkouts were
 modified. The engine library is contained in the runtime jar and verified by hash.
 The complete newer viewport/interaction-zone frontend and stateful conversion of
 already placed legacy ICs remain open; see IC_ENGINE_BACKPORT.md.
+
+## Perspective Workbench, layers and placed legacy state
+
+The frontend now follows the pinned 1.21.1 camera and interaction definitions:
+top-down perspective, 70-degree vertical FOV, cursor-directed zoom, animated
+WASD/layer movement, drag-oriented gate placement and freehand wire selection.
+Counter, Timer, rotation/reflection and I/O zones act through the server's
+validated editor connection. The native sprites remain a rendering adapter.
+Frame inspection caught a reset that discarded layer alpha and an almost-zero
+transition opacity that could hide upper-layer components. Camera/picking axes,
+sprite compositing and GL-state restoration were corrected.
+
+Drawing NBT and descriptions now retain signed layers and bounds. Legacy
+single-layer data and compiled-source snapshots normalize to layer zero. The
+new engine connects vertically adjacent wires; layer-specific edits do not
+modify another layer. Automatic compile limits count every layer without
+allocating a complete component list each tick. Diagnostics retain the layer
+when focusing their target, and input-only/upper-only editor cases are handled.
+
+Placed legacy ICs migrate through the retained codec and semantic terminal/state
+mapping. Counter values and previous input edges, latch memory, timing phase,
+synchronizer arms and pending physical pulses are preserved. Committed register
+values are installed without recomputing live gates. A separate recalculation
+checks observable outputs before accepting the mapping. The old two-tick output
+pipeline is transferred to the new clock origin during handover; normal running
+then uses the new input-latching rules. Original data is retained in a recovery
+compound, including across repeated loads. Old inventory ICs use the new engine
+when placed if conversion succeeds.
+
+Unsupported components, conflicting drivers and unverified layouts retain a
+conversion reason and their legacy runtime. A drawing that the old reader cannot
+decode stops with its raw data preserved; loading or placing it does not discard
+the multipart or throw an uncaught decoder error. Normal new fabrication keeps
+the newer validation rules. Existing no-I/O runtime circuits may be grandfathered
+without weakening blueprint fabrication validation.
+
+Development and installed-server checks cover non-default state/edge continuation,
+pending pulse duration, incompatible/raw saves, multilayer persistence/transport,
+negative layers, vertical signals, upper-only drawings and dedicated-side zone
+actions. Actual client operations cover perspective picking, Counter adjustment,
+bus channel 15, layer transitions, upper-layer erasure and an L-shaped freehand
+wire path, alongside the large-circuit and existing module smoke checks.
+Screenshots were inspected. Historical saves from other forks still require
+case-by-case checks; their original runtime data remains available for recovery.

@@ -4,6 +4,9 @@
 
 ### Added
 
+- Add the newer perspective Workbench camera, animated layer navigation, direct interaction zones and freehand wire placement.
+- Migrate supported placed legacy ICs to the new simulator with running state, phase, input edges and pending pulses preserved; retain recovery copies and compatibility reasons.
+
 - Port the 1.21.1 IC compiler and simulator, including 20 gates, staged compilation and synchronized compile trees/problems.
 - Add full-width Bundled Bus I/O and channel controls to the Workbench.
 
@@ -31,6 +34,9 @@
 - Add Maven/CurseForge/Modrinth release workflows and isolated integration verification.
 
 ### Fixed
+
+- Keep layered drawings, vertical wire connections and layer-specific edits intact across saves and synchronization.
+- Restore IC drawing alpha and GL state during layer transitions; keep analog zero-input levels consistent with the newer implementation.
 
 - Route blocked pneumatic deliveries into backstuff buffers after checking ordinary destinations.
 

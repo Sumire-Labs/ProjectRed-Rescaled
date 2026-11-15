@@ -8,6 +8,7 @@ import net.minecraft.nbt.NBTTagCompound;
 
 /** Platform-neutral tile lifecycle from the 1.21.1 engine. Rendering belongs to the editor adapter. */
 public abstract class BaseTile implements FETile {
+    private mrtjp.projectred.fabrication.engine.zones.InteractionZone[] zones;
     private final ICTileType tileType;
     private BaseTileMap map;
     private TileCoord pos;
@@ -30,4 +31,15 @@ public abstract class BaseTile implements FETile {
     public void onRemoved() { }
     public void onNeighborChanged() { }
     public void onSimRegistersChanged(int mask, ICSimulationContainer container) { }
+    public final mrtjp.projectred.fabrication.engine.zones.InteractionZone[] getInteractionZones() {
+        if(zones==null){
+            var list=new java.util.ArrayList<mrtjp.projectred.fabrication.engine.zones.InteractionZone>();
+            buildInteractionZoneList(list);zones=list.toArray(new mrtjp.projectred.fabrication.engine.zones.InteractionZone[0]);
+        }
+        return zones;
+    }
+    public void buildInteractionZoneList(java.util.List<mrtjp.projectred.fabrication.engine.zones.InteractionZone> zones) { }
+    public void buildToolTip(java.util.List<mrtjp.projectred.fabrication.engine.zones.ZoneText> tooltip) {
+        tooltip.add(mrtjp.projectred.fabrication.engine.zones.ZoneText.translatable(tileType.getUnlocalizedName()));
+    }
 }

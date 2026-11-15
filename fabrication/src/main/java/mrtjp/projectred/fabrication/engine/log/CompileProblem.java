@@ -13,6 +13,16 @@ import net.minecraft.nbt.NBTTagCompound;
 import java.util.List;
 
 public abstract class CompileProblem {
+    public java.util.List<mrtjp.fengine.TileCoord> positions() {
+        if(this instanceof SimpleLocatableProblem problem)return java.util.List.of(problem.coord);
+        if(this instanceof MultiPositionProblem problem)return java.util.List.copyOf(problem.coordList);
+        if(this instanceof MultipleDriversError problem)return java.util.List.of(problem.coord);
+        return java.util.List.of();
+    }
+    public String displayTitle() {
+        if(this instanceof UnsupportedLegacyTileError problem)return "Legacy component needs conversion: "+problem.legacyType;
+        return mrtjp.projectred.fabrication.engine.zones.ZoneText.translatable("projectred_fabrication.problems."+type.name().toLowerCase(java.util.Locale.ROOT)+".title").getString();
+    }
 
     public final CompileProblemType type;
     public final CompileProblemSeverity severity;

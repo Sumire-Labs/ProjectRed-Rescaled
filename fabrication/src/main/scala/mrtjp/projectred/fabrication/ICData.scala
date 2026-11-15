@@ -63,11 +63,13 @@ object ICData:
             val height = snapshot.getByte("sh")&255
             val tiles = snapshot.getTagList("tiles",10)
             if !Set(16,32,48,64).contains(width) || !Set(16,32,48,64).contains(height) ||
-                tiles.tagCount == 0 || tiles.tagCount > width*height then false
+                tiles.tagCount > width*height then false
             else {
                 val map = new ICTileMapContainer
                 map.loadTiles(snapshot)
-                if map.tiles.size != tiles.tagCount || map.tiles.keys.exists((x,y) => x>=width || y>=height) then false
+                if map.allTiles.isEmpty || map.allLayers.exists{(_,layer) =>
+                    layer.tiles.size>width*height || layer.tiles.keys.exists((x,y) => x<0 || y<0 || x>=width || y>=height)
+                } || map.tiles.size != tiles.tagCount then false
                 else {
                     if stack.getTagCompound.hasKey(ModernBlueprint.Key) then
                         ModernBlueprint.isBuilt(stack) && ModernBlueprint.flatMap(stack) != null

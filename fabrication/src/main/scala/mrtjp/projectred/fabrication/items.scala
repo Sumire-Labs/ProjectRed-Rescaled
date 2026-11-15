@@ -157,7 +157,7 @@ object ItemICBlueprint
     {
         assertStackTag(gate)
 
-        val ioparts = tm.tiles.values.collect{case io:IIOGateTile => io}.toSeq
+        val ioparts = tm.allTiles.collect{case io:IIOGateTile => io}
         var (ri, ro, bi, bo) = (0, 0, 0, 0)
         val connmodes = new Array[Int](4)
 

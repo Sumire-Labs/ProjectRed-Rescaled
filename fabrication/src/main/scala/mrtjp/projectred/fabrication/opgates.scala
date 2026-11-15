@@ -13,7 +13,7 @@ import mrtjp.projectred.fabrication.TileEditorOp.*
 import mrtjp.projectred.fabrication.ICComponentStore.*
 import net.minecraftforge.fml.relauncher.{Side, SideOnly}
 
-abstract class OpGateCommons(meta:Int) extends TileEditorOp
+abstract class OpGateCommons(val meta:Int) extends TileEditorOp
 {
     def canPlace(editor:ICTileMapEditor, point:Point):Boolean
     def findRot(editor:ICTileMapEditor, start:Point, end:Point):Int

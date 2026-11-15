@@ -1,5 +1,13 @@
 // Ported from ProjectRed 1.21.1 e631f983. Client rendering is adapted separately.
 package mrtjp.projectred.fabrication.engine.gates;
+import mrtjp.projectred.fabrication.engine.zones.*;
+import net.minecraft.util.text.TextFormatting;
+import java.util.*;
+import java.util.function.*;
+import mrtjp.projectred.fabrication.engine.zones.InteractionZone;
+import mrtjp.projectred.fabrication.engine.zones.SimpleInteractionZone;
+import static mrtjp.projectred.fabrication.engine.zones.ZoneLabels.UL_SIDE_DISABLED;
+import static mrtjp.projectred.fabrication.engine.zones.ZoneLabels.UL_SIDE_ENABLED;
 import mrtjp.projectred.fabrication.engine.*;
 import static mrtjp.projectred.fabrication.engine.EngineData.*;
 
@@ -91,4 +99,26 @@ public abstract class SimpleGateTile extends SidedRedstoneGateTile {
         collector.addGate(gateId, createGate(), inputRegistersList, outputRegistersList);
     }
     //endregion
+
+    public void buildInteractionZoneList(List<InteractionZone> zones) {
+        super.buildInteractionZoneList(zones);
+        addDeadSidesInteractions(zones, interactMask(), this::getBoundsForIOToggleZone, this::toggleDeadSide, this::getDeadSideToolTip);
+    }
+
+    protected ZoneText getDeadSideToolTip(int r) {
+        boolean isEnabled = (getShape() & rotationToDeadSideBit(r)) == 0;
+        return ZoneText.translatable(isEnabled ? UL_SIDE_ENABLED : UL_SIDE_DISABLED).withStyle(EngineContext.UNIFORM_GRAY);
+    }
+
+    public static void addDeadSidesInteractions(List<InteractionZone> zones, int mask, Function<Integer, Cuboid6> boundsForR, Consumer<Integer> toggleForR, Function<Integer, ZoneText> tooltipForR) {
+        for (int r = 0; r < 4; r++) {
+            if ((mask & (1 << r)) == 0) continue;
+            final int fr = r;
+            zones.add(new SimpleInteractionZone.Builder()
+                    .bounds(() -> boundsForR.apply(fr))
+                    .leftClickAction(() -> toggleForR.accept(fr))
+                    .tooltip(() -> tooltipForR.apply(fr))
+                    .build());
+        }
+    }
 }

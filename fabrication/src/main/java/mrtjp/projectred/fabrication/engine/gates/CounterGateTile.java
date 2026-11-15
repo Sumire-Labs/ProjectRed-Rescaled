@@ -1,5 +1,12 @@
 // Ported from ProjectRed 1.21.1 e631f983. Client rendering is adapted separately.
 package mrtjp.projectred.fabrication.engine.gates;
+import mrtjp.projectred.fabrication.engine.zones.*;
+import net.minecraft.util.text.TextFormatting;
+import java.util.*;
+import java.util.function.*;
+import mrtjp.projectred.fabrication.engine.zones.InteractionZone;
+import mrtjp.projectred.fabrication.engine.zones.SimpleInteractionZone;
+import static mrtjp.projectred.fabrication.engine.zones.ZoneLabels.*;
 import mrtjp.projectred.fabrication.engine.*;
 import static mrtjp.projectred.fabrication.engine.EngineData.*;
 
@@ -307,4 +314,60 @@ public class CounterGateTile extends InternalStateGateTile {
         }
     }
     //endregion
+
+    public void buildInteractionZoneList(List<InteractionZone> zones) {
+        super.buildInteractionZoneList(zones);
+
+        double w = 2/16D;
+        double h = 0.5/16D;
+        double l = 1/16D;
+
+        // max adjust
+        double x = 0 / 16D;
+        double y = 2 / 16D;
+        double z = 0 / 16D;
+
+        int[] deltas = new int[] { -10, -5, -1, 1, 5, 10 };
+        String[] names = new String[] { UL_COUNTER_MAX, UL_COUNTER_INCR, UL_COUNTER_DECR };
+        List<Consumer<Integer>> actions = List.of(this::addMax, this::addIncr, this::addDecr);
+
+        for (int j = 0; j < 3; j++) {
+            for (int i = 0; i < 6; i++) {
+                final Consumer<Integer> action = actions.get(j);
+                final int delta = deltas[i];
+
+                ZoneText text = ZoneText.literal("%+d".formatted(deltas[i]));
+                ZoneText toolTip = ZoneText.translatable(names[j])
+                        .append(ZoneText.literal(" %+d".formatted(deltas[i])))
+                        .withStyle(EngineContext.UNIFORM_GRAY);
+
+                Cuboid6 box = new Cuboid6(0, 0, 0, w, h, l).add(x + i < 3 ? (i * w) : 1 - (3 * w) + ((i - 3) * w), y, z + (j * l));
+                zones.add(new SimpleInteractionZone.Builder()
+                        .bounds(box)
+                        .boundingBoxLineWidth(2.0)
+                        .leftClickAction(() -> action.accept(delta))
+                        .text(text)
+                        .tooltip(toolTip)
+                        .build());
+            }
+        }
+
+    }
+
+    public void buildToolTip(List<ZoneText> toolTip) {
+        super.buildToolTip(toolTip);
+
+        toolTip.add(ZoneText.translatable(UL_COUNTER_VALUE)
+                .append(ZoneText.literal(": " + value))
+                .withStyle(EngineContext.UNIFORM_GRAY));
+        toolTip.add(ZoneText.translatable(UL_COUNTER_MAX)
+                .append(ZoneText.literal(": " + max))
+                .withStyle(EngineContext.UNIFORM_GRAY));
+        toolTip.add(ZoneText.translatable(UL_COUNTER_INCR)
+                .append(ZoneText.literal(": " + incr))
+                .withStyle(EngineContext.UNIFORM_GRAY));
+        toolTip.add(ZoneText.translatable(UL_COUNTER_DECR)
+                .append(ZoneText.literal(": " + decr))
+                .withStyle(EngineContext.UNIFORM_GRAY));
+    }
 }

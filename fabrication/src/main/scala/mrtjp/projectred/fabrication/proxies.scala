@@ -90,6 +90,8 @@ class FabricationProxy_server extends IProxy with IPartFactory
                     list.add(RED.toString + "INVALID: Craft by surrounding Printed IC with Circuit Plates")
                 } else {
                     list.add(GRAY.toString+ItemICBlueprint.getICName(stack))
+                    if stack.getTagCompound.hasKey("legacy_migration_status") then
+                        list.add(RED.toString+"Workbench conversion: "+stack.getTagCompound.getString("legacy_migration_status"))
                 }
             }
         }

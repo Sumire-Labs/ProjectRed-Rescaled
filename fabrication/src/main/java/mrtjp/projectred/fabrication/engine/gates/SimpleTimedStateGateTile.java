@@ -1,5 +1,12 @@
 // Ported from ProjectRed 1.21.1 e631f983. Client rendering is adapted separately.
 package mrtjp.projectred.fabrication.engine.gates;
+import mrtjp.projectred.fabrication.engine.zones.*;
+import net.minecraft.util.text.TextFormatting;
+import java.util.*;
+import java.util.function.*;
+import mrtjp.projectred.fabrication.engine.zones.InteractionZone;
+import static mrtjp.projectred.fabrication.engine.zones.ZoneLabels.UL_SIDE_DISABLED;
+import static mrtjp.projectred.fabrication.engine.zones.ZoneLabels.UL_SIDE_ENABLED;
 import mrtjp.projectred.fabrication.engine.*;
 import static mrtjp.projectred.fabrication.engine.EngineData.*;
 
@@ -8,6 +15,7 @@ import codechicken.lib.vec.Cuboid6;
 import java.util.List;
 
 import static mrtjp.projectred.fabrication.engine.gates.SimpleGateTile.ZONE_BOUNDS;
+import static mrtjp.projectred.fabrication.engine.gates.SimpleGateTile.addDeadSidesInteractions;
 
 /**
  * Combination of {@link TimedStateGateTile} and {@link SimpleGateTile}.
@@ -54,4 +62,14 @@ public abstract class SimpleTimedStateGateTile extends TimedStateGateTile {
         return 1 << (r - 1);
     }
     //endregion
+
+    public void buildInteractionZoneList(List<InteractionZone> zones) {
+        super.buildInteractionZoneList(zones);
+        addDeadSidesInteractions(zones, interactMask(), this::getBoundsForIOToggleZone, this::toggleDeadSide, this::getDeadSideToolTip);
+    }
+
+    protected ZoneText getDeadSideToolTip(int r) {
+        boolean isEnabled = (getShape() & rotationToDeadSideBit(r)) == 0;
+        return ZoneText.translatable(isEnabled ? UL_SIDE_ENABLED : UL_SIDE_DISABLED).withStyle(EngineContext.UNIFORM_GRAY);
+    }
 }

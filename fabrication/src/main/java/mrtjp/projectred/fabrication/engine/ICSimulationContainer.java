@@ -186,4 +186,23 @@ public class ICSimulationContainer {
     public void simulate() {
         simulation.propagate(null);
     }
+    /** Import committed registers without running gates or generating synthetic input edges. */
+    public void restoreCommitted(ICFlatMap map,java.util.Map<Integer,Byte> values,long time,short[] cachedInputs,short[] cachedOutputs) {
+        for(var entry:values.entrySet()) {
+            var register=map.getRegisters().get(entry.getKey());
+            if(register==null) throw new IllegalArgumentException("Missing migrated register "+entry.getKey());
+            if(register instanceof mrtjp.fengine.simulate.ByteRegister){register.queueByteVal(entry.getValue());register.pushVal(null);}
+        }
+        simulation=new ICSimulation(map);
+        systemTime=time;
+        System.arraycopy(cachedInputs,0,inputs,0,4);System.arraycopy(cachedOutputs,0,outputs,0,4);
+    }
+    /** Verify an imported allocation layout without modifying the live state. */
+    public boolean outputsStableOnRecompute() {
+        ICSimulation probe=PRFabricationEngine.instance.deserializeSimulation(PRFabricationEngine.instance.serializeSimulation(simulation));
+        if(probe==null)return false;
+        if(!probe.computeAll(null))return false;
+        for(int id=64;id<128;id++)if(probe.getRegByteVal(id)!=simulation.getRegByteVal(id))return false;
+        return true;
+    }
 }

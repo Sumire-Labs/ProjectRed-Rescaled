@@ -59,6 +59,7 @@ trait ISEStatLogger
 
 trait ISELinker
 {
+    def recordTerminal(point:Point,side:Int,output:Boolean,id:Int):Unit=()
     /**
       * Allocates space for a register.
       *
@@ -138,6 +139,8 @@ object ISELinker
 
 private class SELinker(logger:ISEStatLogger) extends ISELinker
 {
+    val terminalRegisters=MMap.empty[(Point,Int,Boolean),Int]
+    override def recordTerminal(point:Point,side:Int,output:Boolean,id:Int):Unit={terminalRegisters((point,side,output))=id}
     import SEIntegratedCircuit.*
 
     private var registers = Array[ISERegister]() //The registers currently in the circuit, indexed by ID
@@ -347,6 +350,7 @@ private object SELinker
             gates.toSeq,
             regDependents.toMap
         )
+        ic.terminalRegisters=linker.terminalRegisters.toMap
 
         logger.logInfo("Computing initial signals...")
         ic.computeAll()

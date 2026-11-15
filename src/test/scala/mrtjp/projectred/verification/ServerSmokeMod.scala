@@ -33,6 +33,8 @@ class ServerSmokeMod {
             WorkbenchChecks.run(server.getWorld(0))
             ModernEngineChecks.run()
             ModernGateTimingChecks.run(server.getWorld(0))
+            LegacyRuntimeMigrationChecks.run(server.getWorld(0))
+            WorkbenchLayerChecks.run(server.getWorld(0))
             Files.writeString(Path.of(result), "PASS\n")
             println("PROJECTRED_SMOKE_PASS: all modules, persistence, authorization, ICs, gates, Smart Lamps, production and pneumatic transport")
         } finally server.initiateShutdown()

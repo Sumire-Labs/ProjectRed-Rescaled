@@ -630,6 +630,22 @@
       "blobSha1": "958f4fff1ca827800d91b6fb48b1cdaa95027fc3",
       "oldSize": null,
       "newSize": "32x32"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/gui/ic_rotate.png",
+      "source": "fabrication/src/main/resources/assets/projectred_fabrication/textures/block/workbench_ui/rotate.png",
+      "sourceKind": "projectred",
+      "blobSha1": "d603aea5cc17cdca01f7d91b1ee775dc0b487b56",
+      "oldSize": null,
+      "newSize": "16x16"
+    },
+    {
+      "target": "src/main/resources/assets/projectred/textures/gui/ic_reflect.png",
+      "source": "fabrication/src/main/resources/assets/projectred_fabrication/textures/block/workbench_ui/reflect.png",
+      "sourceKind": "projectred",
+      "blobSha1": "fcbd9a2eb761df4d1373287dc91fa09db2b47617",
+      "oldSize": null,
+      "newSize": "16x16"
     }
   ],
   "models": [

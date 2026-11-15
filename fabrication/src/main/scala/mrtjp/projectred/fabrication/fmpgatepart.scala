@@ -68,6 +68,10 @@ class ICGatePart extends RedstoneGatePart with TBundledGatePart with TComplexGat
     {
         val stack = getGateDef.makeStack
         stack.setTagCompound(itemTag)
+        if logic!=null && logic.legacyMigrationStatus.nonEmpty then {
+            stack.setTagCompound(if itemTag==null then new NBTTagCompound else itemTag.copy())
+            stack.getTagCompound.setString("legacy_migration_status",logic.legacyMigrationStatus)
+        }
         stack
     }
 
@@ -86,6 +90,11 @@ class ICGateLogic(gate:ICGatePart) extends RedstoneGateLogic[ICGatePart] with TB
     val sim = new ICSimEngineContainer
     var modernSim:engine.ICSimulationContainer = null
     var modernDisabled = false
+    var legacyMigrationStatus=""
+    var legacyRuntimeBackup:NBTTagCompound=null
+    var legacyDrawingUnreadable=false
+    var migrationOutputUntil = -1L
+    var migrationTimeHold=0L
     sim.delegate = this
 
     var systime_last = -1L
@@ -100,6 +109,14 @@ class ICGateLogic(gate:ICGatePart) extends RedstoneGateLogic[ICGatePart] with TB
 
     override def save(tag:NBTTagCompound): Unit =
     {
+        if legacyDrawingUnreadable && legacyRuntimeBackup!=null then {
+            import scala.jdk.CollectionConverters.*
+            for key<-legacyRuntimeBackup.getKeySet.asScala if !tag.hasKey(key) do tag.setTag(key,legacyRuntimeBackup.getTag(key).copy())
+            tag.setBoolean("modern_disabled",true);tag.setBoolean("legacy_drawing_unreadable",true)
+            tag.setString("legacy_migration_status",legacyMigrationStatus)
+            tag.setTag("legacy_runtime_backup",legacyRuntimeBackup.copy())
+            return
+        }
         tmap.saveTiles(tag)
         sim.saveSimState(tag)
         if modernSim != null then {
@@ -109,6 +126,10 @@ class ICGateLogic(gate:ICGatePart) extends RedstoneGateLogic[ICGatePart] with TB
             tag.setInteger("engine_format",engine.PRFabricationEngine.COMPILE_FORMAT)
         }
         tag.setBoolean("modern_disabled",modernDisabled)
+        tag.setString("legacy_migration_status",legacyMigrationStatus)
+        tag.setLong("migration_output_until",migrationOutputUntil)
+        tag.setLong("migration_time_hold",migrationTimeHold)
+        if legacyRuntimeBackup!=null then tag.setTag("legacy_runtime_backup",legacyRuntimeBackup.copy())
         tag.setShort("masks", ICGateLogic.packIO(ri, ro, bi, bo).toShort)
         tag.setShort("cmode", ICGateLogic.packConnModes(connmodes).toShort)
         tag.setIntArray("bout", out)
@@ -116,9 +137,22 @@ class ICGateLogic(gate:ICGatePart) extends RedstoneGateLogic[ICGatePart] with TB
 
     override def load(tag:NBTTagCompound): Unit =
     {
-        tmap.loadTiles(tag)
+        try tmap.loadTiles(tag)
+        catch {case scala.util.control.NonFatal(error)=>
+            legacyDrawingUnreadable=true;modernDisabled=true;modernSim=null
+            legacyRuntimeBackup=tag.copy();legacyRuntimeBackup.removeTag("legacy_runtime_backup")
+            legacyMigrationStatus="Unrecognized legacy drawing: "+Option(error.getMessage).getOrElse(error.getClass.getSimpleName)
+            tmap.name=tag.getString("name")
+            val (in,out,bIn,bOut)=ICGateLogic.unpackIO(tag.getShort("masks"))
+            ri=in;ro=out;bi=bIn;bo=bOut;connmodes=ICGateLogic.unpackConnModes(tag.getShort("cmode"))
+            return
+        }
 
         modernDisabled=tag.getBoolean("modern_disabled")
+        legacyMigrationStatus=tag.getString("legacy_migration_status")
+        migrationOutputUntil=if tag.hasKey("migration_output_until") then tag.getLong("migration_output_until") else -1L
+        migrationTimeHold=math.max(0L,math.min(2L,tag.getLong("migration_time_hold")))
+        legacyRuntimeBackup=if tag.hasKey("legacy_runtime_backup") then tag.getCompoundTag("legacy_runtime_backup").copy() else null
         if tag.hasKey("engine_runtime") then {
             modernDisabled=true
             if tag.getInteger("engine_format") == engine.PRFabricationEngine.COMPILE_FORMAT then {
@@ -143,14 +177,27 @@ class ICGateLogic(gate:ICGatePart) extends RedstoneGateLogic[ICGatePart] with TB
         connmodes = ICGateLogic.unpackConnModes(tag.getShort("cmode"))
 
         val b = tag.getIntArray("bout")
-        for r <- 0 until b.length do setOut(r, b(r))
+        for r <- 0 until math.min(4,b.length) do setOut(r, b(r))
+        if !tag.hasKey("engine_runtime") && !modernDisabled && legacyMigrationStatus.isEmpty then {
+            val backup=tag.copy();backup.removeTag("legacy_runtime_backup")
+            legacyRuntimeBackup=backup
+            LegacyRuntimeMigration.convert(tmap,sim) match {
+                case Right(converted) =>
+                    modernSim=converted.runtime
+                    publishModernOutputs(false)
+                    sim.simEngine=null
+                    migrationOutputUntil=if tag.hasKey("schedTime") then tag.getLong("schedTime") else -1L
+                    migrationTimeHold=2L // Move the old output pipeline's two ticks to the new simulation clock origin.
+                case Left(reason) => legacyMigrationStatus=reason
+            }
+        }
     }
 
     override def writeDesc(packet:MCDataOutput): Unit =
     {
         packet.writeShort(ICGateLogic.packIO(ri, ro, bi, bo))
         packet.writeShort(ICGateLogic.packConnModes(connmodes))
-        packet.writeString(if modernDisabled then tmap.name+" (recompile in Workbench)" else tmap.name)
+        packet.writeString(if modernDisabled then tmap.name+" (recompile in Workbench)" else if legacyMigrationStatus.nonEmpty then tmap.name+" (legacy: "+legacyMigrationStatus+")" else tmap.name)
     }
 
     override def readDesc(packet:MCDataInput): Unit =
@@ -188,9 +235,11 @@ class ICGateLogic(gate:ICGatePart) extends RedstoneGateLogic[ICGatePart] with TB
             val t = gate.world.getTotalWorldTime
             val dt = if systime_last < 0 then 1 else t-systime_last
             if modernSim != null then {
-                modernSim.progressTime(dt);modernSim.pushTime();modernSim.simulate()
+                val held=math.min(math.max(0L,dt),migrationTimeHold)
+                migrationTimeHold-=held
+                modernSim.progressTime(dt-held);modernSim.pushTime();modernSim.simulate()
                 publishModernOutputs(false)
-                updateOutputState()
+                if migrationOutputUntil<0 || t>=migrationOutputUntil then {migrationOutputUntil = -1L;updateOutputState()}
             } else {
                 sim.advanceTime(dt)
                 sim.repropagate()
@@ -201,6 +250,7 @@ class ICGateLogic(gate:ICGatePart) extends RedstoneGateLogic[ICGatePart] with TB
 
     override def setup(gate:ICGatePart): Unit =
     {
+        if migrationOutputUntil>=0 then return
         var cmask = 0
         for r <- 0 until 4 do
             if checkAndSetOutputChange(r) then
@@ -234,6 +284,7 @@ class ICGateLogic(gate:ICGatePart) extends RedstoneGateLogic[ICGatePart] with TB
 
     override def scheduledTick(gate:ICGatePart): Unit =
     {
+        migrationOutputUntil = -1L
         if modernSim != null then {
             modernSim.pushInputs(15); modernSim.simulate()
             publishModernOutputs(false)
@@ -337,8 +388,18 @@ object ICGateLogic
     def constructICLogic(logic:ICGateLogic, stack:ItemStack): Unit =
     {
         import ItemICBlueprint.*
+        logic.modernSim=null;logic.modernDisabled=false;logic.legacyMigrationStatus="";logic.legacyRuntimeBackup=null
+        logic.legacyDrawingUnreadable=false
+        logic.migrationOutputUntil = -1L;logic.migrationTimeHold=0
         if hasICInside(stack) then {
-            loadTileMap(logic.tmap, stack)
+            try loadTileMap(logic.tmap, stack)
+            catch {case scala.util.control.NonFatal(_) =>
+                val original=stack.getTagCompound.getCompoundTag("tilemap").copy()
+                original.setShort("masks",stack.getTagCompound.getShort("masks"))
+                original.setShort("cmode",stack.getTagCompound.getShort("cmode"))
+                logic.load(original)
+                return
+            }
             val (ri0, ro0, bi0, bo0) = getGateMasks(stack)
             logic.ri = ri0; logic.ro = ro0; logic.bi = bi0; logic.bo = bo0
             logic.connmodes = getConnModes(stack)
@@ -362,7 +423,14 @@ object ICGateLogic
                     engine.EngineContext.LOGGER.warn("IC item needs recompilation; its drawing was retained",error)
                 }
             }
-        } else logic.sim.recompileSimulation(logic.tmap)
+        } else {
+            logic.sim.recompileSimulation(logic.tmap)
+            val backup=new NBTTagCompound;logic.save(backup);logic.legacyRuntimeBackup=backup
+            LegacyRuntimeMigration.convert(logic.tmap,logic.sim) match {
+                case Right(converted)=>logic.modernSim=converted.runtime;logic.publishModernOutputs(false);logic.sim.simEngine=null
+                case Left(reason)=>logic.legacyMigrationStatus=reason
+            }
+        }
     }
 
     def packIO(ri:Int, ro:Int, bi:Int, bo:Int) = ri|ro<<4|bi<<8|bo<<12

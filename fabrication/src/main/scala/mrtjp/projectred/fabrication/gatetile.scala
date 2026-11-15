@@ -175,9 +175,13 @@ abstract class GateICTile extends ICTile with TConnectableICTile with TICTileOri
         getLogicPrimitive.allocateOrFindRegisters(this, linker)
     }
 
-    def getInputRegister(r:Int, linker:ISELinker):Int =  linker.findInputRegister(pos, toAbsolute(r))
+    def getInputRegister(r:Int, linker:ISELinker):Int = {
+        val id=linker.findInputRegister(pos,toAbsolute(r));linker.recordTerminal(pos,r,false,id);id
+    }
 
-    def getOutputRegister(r:Int, linker:ISELinker):Int =  linker.findOutputRegister(pos, toAbsolute(r))
+    def getOutputRegister(r:Int, linker:ISELinker):Int = {
+        val id=linker.findOutputRegister(pos,toAbsolute(r));linker.recordTerminal(pos,r,true,id);id
+    }
 
     override def declareOperations(linker:ISELinker): Unit =
     {

@@ -55,7 +55,7 @@ abstract class ICTile extends ISETile
     def bindEditor(ic:ICTileMapEditor): Unit =
     {
         editor = ic
-        bindTileMap(ic.tileMapContainer)
+        if tileMap == null then bindTileMap(ic.tileMapContainer)
     }
 
     def bindTileMap(tm:ICTileMapContainer): Unit =
@@ -85,7 +85,7 @@ abstract class ICTile extends ISETile
     def writeDesc(out:MCDataOutput): Unit ={}
     def readDesc(in:MCDataInput): Unit ={}
 
-    def writeStreamOf(key:Int):MCDataOutput = editor.network.getTileStream(pos).writeByte(key)
+    def writeStreamOf(key:Int):MCDataOutput = editor.network.getTileStream(pos,tileMap.layerIndex).writeByte(key)
     def read(in:MCDataInput): Unit = { read(in, in.readUByte()) }
     def read(in:MCDataInput, key:Int) = key match {
         case 0 => readDesc(in)

@@ -39,6 +39,10 @@ object ModernWorkbenchClientChecks {
                     val wire=new BundledCableICTile;wire.colour=(-1).toByte
                     tile.editor.setTile(Point(8,y),wire)
                 }
+                val counter=new SequentialGateICTile;counter.preparePlacement(0,ICGateDefinition.Counter.ordinal)
+                tile.editor.setTile(Point(3,3),counter)
+                tile.editor.rootTileMapContainer.maxLayer=1
+                tile.editor.withLayer(1){val timer=new SequentialGateICTile;timer.preparePlacement(0,ICGateDefinition.Timer.ordinal);tile.editor.setTile(Point(4,4),timer)}
                 tile.controller.markEdited()
                 tile.markDescUpdate()
                 player.inventory.setInventorySlotContents(0,net.minecraft.item.ItemStack.EMPTY)
@@ -74,7 +78,7 @@ object ModernWorkbenchClientChecks {
         if ticks%60==0 then println(s"MODERN_BUS_GUI: phase=$phase state=${gui.tile.controller.state} tiles=${gui.tile.editor.tileMapContainer.tiles.size} bp=${gui.tile.hasBP}")
         phase match {
             case 4 if gui.tile.controller.state==3 && ticks>10 =>
-                val point=gui.pref.convertPointToScreen(Point(8*8+4,4))
+                val point=gui.pref.worldScreenPoint(.5,-7.90)
                 gui.mouseClicked(point.x,point.y,1);gui.mouseReleased(point.x,point.y,1)
                 assert(gui.pref.children.exists(_.isInstanceOf[ICBusIOGui]),"Bus I/O controls did not open")
                 ticks=0;phase=1
@@ -97,8 +101,42 @@ object ModernWorkbenchClientChecks {
                 })
                 ticks=0;phase=3
             case 3 =>
+                gui.pref.children.foreach(_.removeFromParent())
+                gui.pref.focusAt(Point(3,3));ticks=0;phase=5
+            case 5 if ticks>12 =>
+                val point=gui.pref.zoneScreenPoint(Point(3,3),7)
+                gui.mouseClicked(point.x,point.y,0);gui.mouseReleased(point.x,point.y,0)
+                ticks=0;phase=6
+            case 6 =>
+                val counter=gui.tile.editor.getTile(Point(3,3)).asInstanceOf[SequentialGateICTile].getLogic[Counter]
+                if counter.max!=20 then return false
+                gui.pref.setLayer(1);ticks=0;phase=7
+            case 7 if ticks>8 =>
+                assert(gui.pref.camera.layer==1 && math.abs(gui.pref.camera.layerAnimation.vector.y-1)<1e-6,s"Layer transition did not finish: ${gui.pref.camera.layerAnimation.vector.y}")
+                assert(gui.tile.editor.rootTileMapContainer.extraLayers(1).tiles.size==1,"Upper layer was not synchronized")
+                ScreenShotHelper.saveScreenshot(mc.gameDir,"projectred-workbench-layer1.png",mc.displayWidth,mc.displayHeight,mc.getFramebuffer)
+                gui.pref.focusAt(Point(4,4),1)
+                gui.pref.currentOp=TileEditorOpDefs.Erase.getOp
+                ticks=0;phase=8
+            case 8 if ticks>12 =>
+                val point=gui.pref.tileScreenPoint(Point(4,4))
+                gui.mouseClicked(point.x,point.y,0);gui.mouseReleased(point.x,point.y,0)
+                ticks=0;phase=9
+            case 9 =>
+                if gui.tile.editor.rootTileMapContainer.extraLayers(1).tiles.nonEmpty then return false
+                gui.pref.currentOp=TileEditorOpDefs.AlloyWire.getOp
+                gui.pref.focusAt(Point(6,6),0);ticks=0;phase=10
+            case 10 if ticks>12 =>
+                val start=gui.pref.tileScreenPoint(Point(5,5));val bend=gui.pref.tileScreenPoint(Point(6,5));val end=gui.pref.tileScreenPoint(Point(6,6))
+                gui.mouseClicked(start.x,start.y,0)
+                gui.mouseClickMove(bend.x,bend.y,0,50)
+                gui.mouseClickMove(end.x,end.y,0,100)
+                gui.mouseReleased(end.x,end.y,0)
+                ticks=0;phase=11
+            case 11 =>
+                if !Seq(Point(5,5),Point(6,5),Point(6,6)).forall(p=>gui.tile.editor.getTile(p).isInstanceOf[AlloyWireICTile]) then return false
                 mc.player.closeScreen()
-                println("PROJECTRED_MODERN_WORKBENCH_CLIENT_PASS: four I/O types rendered and bus channel 15 toggled through its actual GUI")
+                println("PROJECTRED_MODERN_WORKBENCH_CLIENT_PASS: perspective, bus control, Counter zone, layer transition, upper-layer edit and freehand wires")
                 return true
             case _ =>
         }

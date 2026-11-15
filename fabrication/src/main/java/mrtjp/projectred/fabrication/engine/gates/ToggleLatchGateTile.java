@@ -1,5 +1,12 @@
 // Ported from ProjectRed 1.21.1 e631f983. Client rendering is adapted separately.
 package mrtjp.projectred.fabrication.engine.gates;
+import mrtjp.projectred.fabrication.engine.zones.*;
+import net.minecraft.util.text.TextFormatting;
+import java.util.*;
+import java.util.function.*;
+import mrtjp.projectred.fabrication.engine.zones.InteractionZone;
+import mrtjp.projectred.fabrication.engine.zones.SimpleInteractionZone;
+import static mrtjp.projectred.fabrication.engine.zones.ZoneLabels.*;
 import mrtjp.projectred.fabrication.engine.*;
 import static mrtjp.projectred.fabrication.engine.EngineData.*;
 
@@ -142,5 +149,19 @@ public class ToggleLatchGateTile extends InternalStateGateTile {
 
             writeState(ic, outputs, (byte) (inputMask << 4 | nextState));
         }
+    }
+
+    public void buildInteractionZoneList(List<InteractionZone> zones) {
+        super.buildInteractionZoneList(zones);
+        zones.add(new SimpleInteractionZone.Builder()
+                .bounds(() -> LEVER_ZONE_BOUNDS[getRotation()])
+                .leftClickAction(this::toggleDefaultState)
+                .tooltip(toolTip -> {
+                    toolTip.add(ZoneText.translatable(UL_DEFAULT_STATE)
+                            .append(ZoneText.literal(": "))
+                            .append(ZoneText.translatable(getShape() == 0 ? UL_TOP : UL_BOTTOM))
+                            .withStyle(EngineContext.UNIFORM_GRAY));
+                })
+                .build());
     }
 }

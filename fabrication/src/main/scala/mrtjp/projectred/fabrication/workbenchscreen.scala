@@ -23,7 +23,6 @@ class GuiICWorkbench(val tile:TileICWorkbench) extends NodeGui(408,222) {
     var toolSets = Seq.empty[ICToolsetNode]
     var activeTab = 1
     private val clip = new ClipNode
-    private val pan = new PanNode
     private val palette = new TNode {}
     private val tabs = scala.collection.mutable.ArrayBuffer.empty[ButtonNode]
     private val nameBox = new SimpleTextboxNode
@@ -48,24 +47,21 @@ class GuiICWorkbench(val tile:TileICWorkbench) extends NodeGui(408,222) {
         activeTab = math.max(0,math.min(2,index))
         toolSets.foreach(_.closePopup())
     }
-    def centerOn(point:Point):Unit = {
+    def centerOn(point:Point,layer:Int=0):Unit = {
         selectTab(1)
-        pref.position = Point(pan.size/2)-Point(((point.x+0.5D)*8*pref.scale).toInt,((point.y+0.5D)*8*pref.scale).toInt)
+        pref.focusAt(point,layer)
     }
 
     override def onAddedToParent_Impl():Unit = {
         clip.position = Point(bodyX+7,18)
         addChild(clip)
-        pan.clampSlack = 35
-        pan.dragTestFunction = {() => net.minecraft.client.gui.GuiScreen.isShiftKeyDown}
-        clip.addChild(pan)
         pref = new TileMapEditorNode(tile.editor)
         pref.zPosition = -0.01
         pref.opPickDelegate = { op =>
             toolSets.foreach(_.pickOp(op))
             if op == null then pref.currentOp = null
         }
-        pan.addChild(pref)
+        clip.addChild(pref)
         palette.zPosition = 2
         addChild(palette)
         import TileEditorOpDefs.*
@@ -137,16 +133,14 @@ class GuiICWorkbench(val tile:TileICWorkbench) extends NodeGui(408,222) {
 
     private def relayout():Unit = {
         val desiredWidth = math.min(408,math.max(260,width-8))
-        val previous = pan.size
         size = Size(desiredWidth,222)
         xSize = size.width; ySize = size.height
         guiLeft = (width-size.width)/2; guiTop = (height-size.height)/2
         position = Point(guiLeft,guiTop)
         clip.position = Point(bodyX+7,18)
         clip.size = Size(bodyWidth-14,197)
-        pan.size = clip.size
-        if previous == Size.zeroSize then pref.position = Point(pan.size/2-pref.size/2)
-        else pref.position += Point((pan.size-previous)/2)
+        pref.viewportSize=clip.size
+        pref.position=Point.zeroPoint
         palette.position = Point(sideX+8,80)
         for group <- toolSets do group.placePopup(Point(bodyX+bodyWidth-82-palette.position.x-group.position.x,
             48-palette.position.y-group.position.y))
@@ -181,7 +175,7 @@ class GuiICWorkbench(val tile:TileICWorkbench) extends NodeGui(408,222) {
         for (tab,index) <- tabs.zipWithIndex do tab.mouseoverLock = activeTab == index
         if boardSize != tile.editor.size then {
             boardSize = tile.editor.size
-            pref.position = Point(pan.size/2-pref.frame.size/2)
+            pref.resetView()
         }
     }
 
@@ -224,6 +218,7 @@ class GuiICWorkbench(val tile:TileICWorkbench) extends NodeGui(408,222) {
             if !tile.controller.autoCompileAvailable then text(tr("auto_limit"),x,158,w,EnumColour.GRAY.argb)
         }
         if !clip.hidden then {
+            text(tr("layer",Int.box(pref.camera.layer)),sideX+8,53,68,EnumColour.WHITE.argb)
             text(tr("tooltips"),sideX+25,168,54,EnumColour.WHITE.argb)
             text(tr("scale"),sideX+8,182,68,EnumColour.WHITE.argb)
             text(f"${pref.scale}%.1f",sideX+28,199,31,EnumColour.WHITE.argb)
@@ -236,7 +231,7 @@ class GuiICWorkbench(val tile:TileICWorkbench) extends NodeGui(408,222) {
         val x = bodyX+12
         val w = bodyWidth-24
         text(tr("name"),x,22,w,EnumColour.GRAY.argb)
-        val rows = Seq(tr("dimensions",Int.box(tile.editor.size.width),Int.box(tile.editor.size.height)),
+        val rows = Seq(tr("dimensions3",Int.box(tile.editor.size.width),Int.box(tile.editor.size.height),Int.box(tile.editor.rootTileMapContainer.maxLayer-tile.editor.rootTileMapContainer.minLayer+1)),
             tr("components",Int.box(tile.editor.tileMapContainer.tiles.size)),
             tr("errors",Int.box(logger.getErrors.size)),tr("warnings",Int.box(logger.getWarnings.size)))
         for (row,i) <- rows.zipWithIndex do text(row,x,66+i*16,w,EnumColour.GRAY.argb)
@@ -247,34 +242,40 @@ class GuiICWorkbench(val tile:TileICWorkbench) extends NodeGui(408,222) {
     }
     private class CompileLog extends TNode {
         private var scroll = 0
-        private var visible = Vector.empty[(Seq[Point],String,Int)]
+        private var visible = Vector.empty[(Seq[Point],String,Int,Int)]
         override def frame:Rect = Rect(Point(bodyX+7,18),Size(diagnosticWidth,197))
         override def frameUpdate_Impl(mouse:Point,frame:Float):Unit = hidden = activeTab != 2 || !tile.hasBP || tile.editor.isEmpty
         private def entries = {
             val logger = tile.editor.simEngineContainer.logger
-            logger.getErrors.iterator.map((p,s) => (p,s,EnumColour.RED.argb)) ++
-                logger.getWarnings.iterator.map((p,s) => (p,s,EnumColour.YELLOW.argb)) ++
-                logger.getRuntimeFlags.iterator.map((p,s) => (p,s,EnumColour.MAGENTA.argb))
+            val modern=tile.controller.compilerLog.getProblems
+            if !modern.isEmpty then modern.asScala.iterator.map { problem =>
+                val positions=problem.positions().asScala
+                val points=positions.map(p=>Point(p.x+tile.editor.size.width/2,p.z+tile.editor.size.height/2)).toSeq
+                (points,problem.displayTitle(),if problem.severity==engine.log.CompileProblemSeverity.ERROR then EnumColour.RED.argb else EnumColour.YELLOW.argb,positions.headOption.map(_.y).getOrElse(0))
+            } else logger.getErrors.iterator.map((p,s) => (p,s,EnumColour.RED.argb,0)) ++
+                logger.getWarnings.iterator.map((p,s) => (p,s,EnumColour.YELLOW.argb,0)) ++
+                logger.getRuntimeFlags.iterator.map((p,s) => (p,s,EnumColour.MAGENTA.argb,0))
         }
-        private def treeEntries:Iterator[(Seq[Point],String,Int)] = {
-            def nodes(children:java.util.List[engine.log.ICCompilerLog.CompileTreeNode],depth:Int):Iterator[(Seq[Point],String,Int)] =
+        private def treeEntries:Iterator[(Seq[Point],String,Int,Int)] = {
+            def nodes(children:java.util.List[engine.log.ICCompilerLog.CompileTreeNode],depth:Int):Iterator[(Seq[Point],String,Int,Int)] =
                 children.asScala.iterator.flatMap { node =>
                     val points=node.tileCoords.asScala.toSeq.map(p => Point(p.x+tile.editor.size.width/2,p.z+tile.editor.size.height/2))
                     val label=tr("step_"+node.step.name().toLowerCase(java.util.Locale.ROOT))
                     val message="  "*depth+label+s" (${node.registerIds.size()} / ${node.gateIds.size()})"
-                    Iterator((points,message,EnumColour.WHITE.argb)) ++ nodes(node.children,depth+1)
+                    Iterator((points,message,EnumColour.WHITE.argb,node.tileCoords.asScala.headOption.map(_.y).getOrElse(0))) ++ nodes(node.children,depth+1)
                 }
             nodes(tile.controller.compilerLog.getRootNodes,0)
         }
         override def drawBack_Impl(mouse:Point,partial:Float):Unit = {
             val logger = tile.editor.simEngineContainer.logger
             val count = if showCompileTree then tile.controller.compilerLog.getTotalSteps
+                else if !tile.controller.compilerLog.getProblems.isEmpty then tile.controller.compilerLog.getProblems.size
                 else logger.getErrors.size+logger.getWarnings.size+logger.getRuntimeFlags.size
             scroll = math.max(0,math.min(scroll,math.max(0,count-13)))
             visible = (if showCompileTree then treeEntries else entries).drop(scroll).take(13).toVector
             if visible.isEmpty then text(tr("no_problems"),frame.x+4,frame.y+4,frame.width-8,EnumColour.WHITE.argb)
-            for ((points,message,colour),i) <- visible.zipWithIndex do {
-                val prefix = points.headOption.map(p => s"${p.x},${p.y}: ").getOrElse("")
+            for ((points,message,colour,layer),i) <- visible.zipWithIndex do {
+                val prefix = points.headOption.map(p => s"${p.x},$layer,${p.y}: ").getOrElse("")
                 text(prefix+message,frame.x+4,frame.y+4+i*14,frame.width-8,colour)
             }
         }
@@ -285,7 +286,7 @@ class GuiICWorkbench(val tile:TileICWorkbench) extends NodeGui(408,222) {
         override def mouseClicked_Impl(p:Point,button:Int,consumed:Boolean):Boolean = {
             if consumed || button != 0 || !frame.contains(p) || !rayTest(p) then false
             else {
-                visible.lift((p.y-frame.y-4)/14).flatMap(_._1.headOption).foreach(centerOn)
+                visible.lift((p.y-frame.y-4)/14).foreach(row=>row._1.headOption.foreach(p=>centerOn(p,row._4)))
                 true
             }
         }

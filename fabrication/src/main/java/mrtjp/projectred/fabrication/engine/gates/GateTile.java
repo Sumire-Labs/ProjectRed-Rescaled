@@ -1,5 +1,13 @@
 // Ported from ProjectRed 1.21.1 e631f983. Client rendering is adapted separately.
 package mrtjp.projectred.fabrication.engine.gates;
+import mrtjp.projectred.fabrication.engine.zones.*;
+import net.minecraft.util.text.TextFormatting;
+import java.util.*;
+import java.util.function.*;
+import mrtjp.projectred.fabrication.engine.zones.HotKeyInteractionZone;
+import mrtjp.projectred.fabrication.engine.zones.InteractionZone;
+import static mrtjp.projectred.fabrication.engine.zones.ZoneLabels.UL_REFLECT;
+import static mrtjp.projectred.fabrication.engine.zones.ZoneLabels.UL_ROTATE;
 import mrtjp.projectred.fabrication.engine.*;
 import static mrtjp.projectred.fabrication.engine.EngineData.*;
 
@@ -198,4 +206,34 @@ public abstract class GateTile extends BaseTile implements IConnectableICTile, I
         return port==required;
     }
     //endregion
+
+    public void buildInteractionZoneList(List<InteractionZone> zones) {
+        super.buildInteractionZoneList(zones);
+
+        double s = 2/16D;
+        double h = s + 0.5/16D;
+        Cuboid6 box = new Cuboid6(0, 0, 0, s, h, s);
+
+        int i = 1;
+        if (canRotate()) {
+            zones.add(new HotKeyInteractionZone.Builder()
+                    .keyCode(82)
+                    .text(ZoneText.translatable(UL_ROTATE))
+                    .bounds(box.copy().add(1 - s * i, 0, 1 - s))
+                    .keyAction(this::rotateAndSend)
+                    .icon(() -> ZoneIcons.ROTATE)
+                    .build());
+            i++;
+        }
+        if (canReflect()) {
+            zones.add(new HotKeyInteractionZone.Builder()
+                    .keyCode(70)
+                    .text(ZoneText.translatable(UL_REFLECT))
+                    .bounds(box.copy().add(1 - s * i, 0, 1 - s))
+                    .keyAction(this::reflectAndSend)
+                    .icon(() -> ZoneIcons.REFLECT)
+                    .build());
+            i++;
+        }
+    }
 }

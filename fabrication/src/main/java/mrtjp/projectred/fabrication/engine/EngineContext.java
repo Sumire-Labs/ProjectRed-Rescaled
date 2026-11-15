@@ -12,6 +12,7 @@ import java.util.function.Consumer;
 
 /** Hosts the portable engine while the world/editor adapter owns networking and rendering. */
 public final class EngineContext {
+    public static final net.minecraft.util.text.Style UNIFORM_GRAY=new net.minecraft.util.text.Style().setColor(net.minecraft.util.text.TextFormatting.GRAY);
     public static final Logger LOGGER = LogManager.getLogger("ProjectRed Fabrication");
     private final BaseTileMap tileMap = new BaseTileMap(this);
     private final EngineCompiler stateMachine = new EngineCompiler(this);

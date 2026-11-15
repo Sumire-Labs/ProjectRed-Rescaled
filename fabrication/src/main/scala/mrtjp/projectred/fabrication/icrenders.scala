@@ -141,6 +141,7 @@ object PrefboardRenderer
         }
 
         ccrs.reset()
+        ccrs.alphaOverride=ICComponentStore.viewportAlpha
         ccrs.pullLightmap()
 
         for ((tex, models) <- Seq(("prefboard", getBoardModel(w, h)),

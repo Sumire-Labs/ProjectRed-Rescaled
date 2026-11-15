@@ -224,6 +224,42 @@ class TileICWorkbench extends TileICMachine with TICTileEditorNetwork
                 sendICDesc()
             case 7 if hasBP => controller.requestCompile()
             case 8 if hasBP => controller.toggleAutomatic()
+            case 10 if hasBP =>
+                val mode=in.readUByte()
+                val layer=in.readByte().toInt
+                val point=mrtjp.core.vec.Point(in.readUByte(),in.readUByte())
+                if mode==0 then controller.interact(layer,point,in.readVarInt(),in.readBoolean())
+                else if mode==1 then controller.interact(layer,point,-1,false,in.readInt(),in.readInt())
+            case 11 if hasBP =>
+                val layer=in.readByte().toInt;val operation=in.readVarInt();val overwrite=in.readBoolean();val count=in.readVarInt()
+                if editor.validLayer(layer) && TileEditorOpDefs.values.isDefinedAt(operation) && count>=0 && count<=editor.size.width*editor.size.height then
+                    TileEditorOp.getOperation(operation) match {
+                        case wire:OpWire => editor.withLayer(layer){
+                            for _<-0 until count do {
+                                val p=mrtjp.core.vec.Point(in.readUByte(),in.readUByte())
+                                if p.x>0 && p.y>0 && p.x<editor.size.width-1 && p.y<editor.size.height-1 && (editor.getTile(p)==null || overwrite) then {
+                                    if editor.getTile(p)!=null then editor.removeTile(p)
+                                    editor.setTile(p,wire.createPart)
+                                }
+                            }
+                        }
+                        case _ =>
+                    }
+                if editor.simNeedsRefresh then controller.markEdited()
+            case 12 if hasBP =>
+                val layer=in.readByte().toInt;val operation=in.readVarInt();val p=mrtjp.core.vec.Point(in.readUByte(),in.readUByte());val rotation=in.readUByte().toInt
+                if editor.validLayer(layer) && TileEditorOpDefs.values.isDefinedAt(operation) && rotation<4 then
+                    TileEditorOp.getOperation(operation) match {
+                        case op:OpGateCommons if !Set(ICGateDefinition.DecRandomizer.ordinal,ICGateDefinition.NullCell.ordinal,ICGateDefinition.InvertCell.ordinal,ICGateDefinition.BufferCell.ordinal).contains(op.meta) => editor.withLayer(layer){
+                            if p.x>=0 && p.y>=0 && p.x<editor.size.width && p.y<editor.size.height && op.canPlace(editor,p) && editor.getTile(p)==null then {
+                                val part=ICTile.createTile(ICGateDefinition(op.meta).gateType).asInstanceOf[GateICTile]
+                                part.preparePlacement(if part.isInstanceOf[IIOGateTile] then op.findRot(editor,p,p) else rotation,op.meta)
+                                editor.setTile(p,part)
+                            }
+                        }
+                        case _ =>
+                    }
+                if editor.simNeedsRefresh then controller.markEdited()
             case _ =>
         }
     }
@@ -272,6 +308,16 @@ class TileICWorkbench extends TileICMachine with TICTileEditorNetwork
 
     def sendCompileToServer():Unit = writeStream(7).sendToServer()
     def sendAutoCompileToggle():Unit = writeStream(8).sendToServer()
+    def sendZoneClick(layer:Int,point:mrtjp.core.vec.Point,index:Int,left:Boolean):Unit =
+        writeStream(10).writeByte(0).writeByte(layer).writeByte(point.x).writeByte(point.y).writeVarInt(index).writeBoolean(left).sendToServer()
+    def sendZoneKey(layer:Int,point:mrtjp.core.vec.Point,key:Int,flags:Int):Unit =
+        writeStream(10).writeByte(1).writeByte(layer).writeByte(point.x).writeByte(point.y).writeInt(key).writeInt(flags).sendToServer()
+    def sendWirePath(layer:Int,operation:Int,points:Seq[mrtjp.core.vec.Point],overwrite:Boolean=false):Unit={
+        val out=writeStream(11).writeByte(layer).writeVarInt(operation).writeBoolean(overwrite).writeVarInt(points.size)
+        points.foreach(p=>out.writeByte(p.x).writeByte(p.y));out.sendToServer()
+    }
+    def sendGatePlacement(layer:Int,operation:Int,p:mrtjp.core.vec.Point,rotation:Int):Unit=
+        writeStream(12).writeByte(layer).writeVarInt(operation).writeByte(p.x).writeByte(p.y).writeByte(rotation).sendToServer()
 
     override def getIC = editor
     override def getEditorWorld = world

@@ -1,5 +1,12 @@
 // Ported from ProjectRed 1.21.1 e631f983. Client rendering is adapted separately.
 package mrtjp.projectred.fabrication.engine.gates;
+import mrtjp.projectred.fabrication.engine.zones.*;
+import net.minecraft.util.text.TextFormatting;
+import java.util.*;
+import java.util.function.*;
+import mrtjp.projectred.fabrication.engine.zones.InteractionZone;
+import static mrtjp.projectred.fabrication.engine.zones.ZoneLabels.UL_TIMER_INTERVAL;
+import static mrtjp.projectred.fabrication.engine.zones.ZoneLabels.UL_UNIT_ONLY_TICKS;
 import mrtjp.projectred.fabrication.engine.*;
 import static mrtjp.projectred.fabrication.engine.EngineData.*;
 
@@ -143,5 +150,21 @@ public class SequencerGateTile extends SidedRedstoneGateTile {
             int mask = 1 << sysTime % (pointerMax * 4L) / pointerMax;
             writeOutputMask(ic, outputs, mask);
         }
+    }
+
+    public void buildInteractionZoneList(List<InteractionZone> zones) {
+        super.buildInteractionZoneList(zones);
+        TimerGateTile.addTimerAdjustmentInteractionZones(zones, this::addTimerMax);
+    }
+
+    public void buildToolTip(List<ZoneText> toolTip) {
+        super.buildToolTip(toolTip);
+        int tmax = pointerMax + 2; // Account for 2-tick high-state
+        double smax = tmax * 0.05;
+        toolTip.add(ZoneText.translatable(UL_TIMER_INTERVAL)
+                .append(ZoneText.literal(": %.2fs (%d ".formatted(smax, tmax)))
+                .append(ZoneText.translatable(UL_UNIT_ONLY_TICKS))
+                .append(ZoneText.literal(")"))
+                .withStyle(EngineContext.UNIFORM_GRAY));
     }
 }

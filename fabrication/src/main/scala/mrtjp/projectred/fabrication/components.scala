@@ -20,6 +20,9 @@ import org.lwjgl.opengl.GL11
 
 object ICComponentStore
 {
+    private val alphaState=ThreadLocal.withInitial[Integer](()=>Integer.valueOf(-1))
+    def viewportAlpha:Int=alphaState.get().intValue()
+    def viewportAlpha_=(value:Int):Unit=alphaState.set(Integer.valueOf(value))
     val faceModels =
     {
         val m = CCModel.quadModel(4)
@@ -105,6 +108,7 @@ object ICComponentStore
     {
         TextureUtils.bindBlockTexture()
         ccrs.reset()
+        ccrs.alphaOverride=viewportAlpha
         ccrs.startDrawing(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR)
         ccrs.pullLightmap()
     }

@@ -19,10 +19,13 @@ public final class EngineCompiler {
     private int state;
     private long lastTick = -1;
     private String flatMap = PRFabricationEngine.EMPTY_FLAT_MAP_SERIALIZED;
+    private java.util.function.BooleanSupplier presentationRunning;
+    private java.util.function.LongSupplier presentationTime;
+    public void setPresentation(java.util.function.BooleanSupplier running,java.util.function.LongSupplier time){presentationRunning=running;presentationTime=time;}
     public EngineCompiler(EngineContext editor) { this.editor=editor; }
     public int getState() { return state; }
-    public boolean isSimulating() { return state==3; }
-    public long getSimSystemTime() { return simulation.getSystemTime(); }
+    public boolean isSimulating() { return presentationRunning!=null?presentationRunning.getAsBoolean():state==3; }
+    public long getSimSystemTime() { return presentationTime!=null?presentationTime.getAsLong():simulation.getSystemTime(); }
     public ICCompilerLog getCompilerLog() { return log; }
     public ICSimulationContainer getSimulation() { return simulation; }
     public String getFlatMap() { return flatMap; }

@@ -1,5 +1,13 @@
 // Ported from ProjectRed 1.21.1 e631f983. Client rendering is adapted separately.
 package mrtjp.projectred.fabrication.engine.gates;
+import mrtjp.projectred.fabrication.engine.zones.*;
+import net.minecraft.util.text.TextFormatting;
+import java.util.*;
+import java.util.function.*;
+import mrtjp.projectred.fabrication.engine.zones.InteractionZone;
+import mrtjp.projectred.fabrication.engine.zones.SimpleInteractionZone;
+import static mrtjp.projectred.fabrication.engine.zones.ZoneLabels.UL_TIME_DELAY;
+import static mrtjp.projectred.fabrication.engine.zones.ZoneLabels.UL_UNIT_TICKS;
 import mrtjp.projectred.fabrication.engine.*;
 import static mrtjp.projectred.fabrication.engine.EngineData.*;
 
@@ -125,5 +133,20 @@ public class RepeaterGateTile extends TimedStateGateTile {
                 }
             }
         }
+    }
+
+    public void buildInteractionZoneList(List<InteractionZone> zones) {
+        super.buildInteractionZoneList(zones);
+        zones.add(new SimpleInteractionZone.Builder()
+                .bounds(() -> DELAY_ZONE_BOUNDS[getRotation()])
+                .leftClickAction(() -> shiftDelay(true))
+                .rightClickAction(() -> shiftDelay(false))
+                .tooltip(toolTip -> {
+                    toolTip.add(ZoneText.translatable(UL_TIME_DELAY)
+                            .append(ZoneText.literal(": "))
+                            .append(ZoneText.translatable(UL_UNIT_TICKS, DELAYS[getShape()]).withStyle(TextFormatting.GRAY))
+                            .withStyle(EngineContext.UNIFORM_GRAY));
+                })
+                .build());
     }
 }
