@@ -34,6 +34,7 @@ import scala.jdk.CollectionConverters.*
   * 20 seconds of work using the shared native power cost.
   */
 class TilePackagingTable extends TGuiFabricationMachine with TInventory with TInventoryCapablilityTile:
+    private var legacyArchive:NBTTagCompound = null
 
     /** Centre of the 3x3 grid. */
     val dieSlot = 4
@@ -118,9 +119,12 @@ class TilePackagingTable extends TGuiFabricationMachine with TInventory with TIn
     override def save(tag:NBTTagCompound):Unit =
         super.save(tag)
         saveInv(tag)
+        if legacyArchive != null then tag.setTag(mrtjp.projectred.core.LegacySaveMigration.Key,legacyArchive.copy())
 
     override def load(tag:NBTTagCompound):Unit =
         super.load(tag)
+        legacyArchive = if tag.hasKey(mrtjp.projectred.core.LegacySaveMigration.Key,10) then
+            tag.getCompoundTag(mrtjp.projectred.core.LegacySaveMigration.Key).copy() else null
         clear()
         loadInv(tag)
 

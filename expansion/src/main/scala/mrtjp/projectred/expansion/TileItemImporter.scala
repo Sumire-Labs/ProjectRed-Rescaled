@@ -52,38 +52,51 @@ class TileItemImporter extends TileMachine with TPressureActiveDevice with IReds
     def importInv():Boolean =
     {
         val s = EnumFacing.VALUES(side)
-        val inv = InvWrapper.wrap(world, getPos.offset(s.getOpposite), s)
-        if inv == null then return false
-        val list = inv.getAllItemStacks
-        list.find { case (k, _) => canImport(k) } match
-        {
-            case Some((k, _)) =>
-                val toExtract = math.min(k.getMaxStackSize, getExtractAmount)
-                val extracted = inv.extractItem(k, toExtract)
-                if extracted > 0 then
-                {
-                    itemStorage.add(k.makeStack(extracted))
-                    active = true
-                    sendStateUpdate()
-                    scheduleTick(4)
-                    exportBuffer()
-                    true
-                }
-                else false
-            case None => false
+        val input = getPos.offset(s.getOpposite)
+        if !world.isBlockLoaded(input) then return false
+        val target = world.getTileEntity(input)
+        if target == null then return false
+        def accepted(stack:net.minecraft.item.ItemStack):Boolean = {
+            if stack.isEmpty then return false
+            itemStorage.add(stack)
+            active = true
+            markDirty()
+            sendStateUpdate()
+            scheduleTick(4)
+            exportBuffer()
+            true
         }
+        target match {
+            case inv:net.minecraft.inventory.ISidedInventory =>
+                val slots = inv.getSlotsForFace(s)
+                var index = 0
+                while index < slots.length do {
+                    val slot = slots(index)
+                    val stack = inv.getStackInSlot(slot)
+                    if !stack.isEmpty && inv.canExtractItem(slot,stack,s) then {
+                        val removed = inv.decrStackSize(slot,math.max(stack.getMaxStackSize,getExtractAmount))
+                        if accepted(removed) then { inv.markDirty(); return true }
+                    }
+                    index += 1
+                }
+            case _ =>
+        }
+        val handler = target.getCapability(net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY,s)
+        if handler != null then {
+            var slot = 0
+            while slot < handler.getSlots do {
+                if accepted(handler.extractItem(slot,getExtractAmount,false)) then return true
+                slot += 1
+            }
+        }
+        false
     }
 
     def importEntities():Boolean =
-    {
-        suckEntities(sbounds(side))
-    }
+        false // The pinned 1.21.1 Transposer has no entity-suction implementation.
 
     override def onEntityCollision(ent:Entity): Unit =
-    {
-        if !world.isRemote && !powered && itemStorage.isEmpty then
-            suckEntities(ibounds(side))
-    }
+        ()
 
     def suckEntities(box:Cuboid6):Boolean =
     {

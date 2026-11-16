@@ -175,7 +175,7 @@ object PneumaticChecks {
                 "Pneumatic routing bypassed sided insertion restrictions")
             val oldPressure = mrtjp.projectred.transportation.TransportationProxy.createPart(PipeDefs.PRESSURETUBE.partname,false)
             val oldResistance = mrtjp.projectred.transportation.TransportationProxy.createPart(PipeDefs.RESISTANCETUBE.partname,false)
-            assert(oldPressure.isInstanceOf[PressureTube] && oldResistance.isInstanceOf[ResistanceTube],"Legacy tube registrations were replaced")
+            assert(oldPressure.isInstanceOf[PneumaticTubePart] && oldResistance.isInstanceOf[PneumaticTubePart],"Legacy tube aliases did not create modern tubes")
         } finally touched.toSeq.reverse.foreach(world.setBlockToAir)
     }
 

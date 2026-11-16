@@ -54,6 +54,7 @@ import scala.collection.mutable.{Map as MMap, Set as MSet}
 
 class TileICPrinter extends TileICMachine with TInventory with TInventoryCapablilityTile
 {
+    private var legacyArchive:NBTTagCompound = null
     var progress = 0.0
     var speed = 0.0
     var isWorking = false
@@ -75,15 +76,18 @@ class TileICPrinter extends TileICMachine with TInventory with TInventoryCapabli
         tag.setBoolean("w", isWorking)
         tag.setByte("in", inputICState.toByte)
         saveInv(tag)
+        if legacyArchive != null then tag.setTag(mrtjp.projectred.core.LegacySaveMigration.Key,legacyArchive.copy())
     }
 
     override def load(tag:NBTTagCompound): Unit =
     {
         super.load(tag)
+        legacyArchive = mrtjp.projectred.core.LegacySaveMigration.archive(tag.copy(),"ic_printer").copy()
         progress = tag.getFloat("prog")
         speed = tag.getFloat("sp")
-        isWorking = tag.getBoolean("w")
+        isWorking = false
         inputICState = tag.getByte("in")
+        clear()
         loadInv(tag)
     }
 
@@ -166,27 +170,39 @@ class TileICPrinter extends TileICMachine with TInventory with TInventoryCapabli
 
     override def updateServer(): Unit =
     {
-        if isWorking then {
-            if world.getTotalWorldTime%10 == 0 && !canStart then {
-                doStop()
-            } else {
-                progress += speed
-                if progress >= 1.0 then {
-                    doStop()
-                    if canStart then onFinished()
-                }
-            }
-        }
-
-        if !isWorking && world.getTotalWorldTime%10 == 0 && canStart then //delay check, can be expensive
-            doStart()
+        migrateToPackaging()
     }
 
-    def canStart =
-    {
-        if world.getTotalWorldTime%20 == 0 then
-            checkIngredients() && checkOutputClear && checkInputIC && checkBlueprint && checkBlueprintFlags
-        else checkOutputClear && checkInputIC && checkBlueprint && checkBlueprintFlags && checkIngredients() //use cheaper checks as fail-fast
+    def canStart = false
+
+    def migrateToPackaging():Boolean = {
+        if world == null || world.isRemote || world.getTileEntity(pos) != this then return false
+        val original = writeToNBT(new NBTTagCompound)
+        if !original.hasKey(mrtjp.projectred.core.LegacySaveMigration.Key) then
+            mrtjp.projectred.core.LegacySaveMigration.archive(original,"ic_printer")
+        val contents = storage.map(_.copy())
+        val conversionSource = original.copy()
+        val entries = conversionSource.getTagList("icprinteritems",10)
+        for i <- 0 until entries.tagCount do {
+            val entry = entries.getCompoundTagAt(i)
+            val index = entry.getInteger("index")
+            if contents.isDefinedAt(index) then entry.setInteger("Count",contents(index).getCount)
+        }
+        val converted = LegacyFabricationMigration.packagingData(conversionSource)
+        val prepared = new TilePackagingTable
+        prepared.setWorld(world)
+        prepared.setPos(pos)
+        prepared.load(converted)
+        clear()
+        val target = mrtjp.projectred.ProjectRedFabrication.fabricationMachineBlock.getStateFromMeta(2)
+        if world.getBlockState(pos) != target && !world.setBlockState(pos,target,3) then {
+            contents.copyToArray(storage)
+            return false
+        }
+        world.setTileEntity(pos,prepared)
+        prepared.markDirty()
+        world.notifyBlockUpdate(pos,target,target,3)
+        true
     }
 
     def checkBlueprint =
@@ -296,17 +312,7 @@ class TileICPrinter extends TileICMachine with TInventory with TInventoryCapabli
     }
 
     def onFinished(): Unit =
-    {
-
-        val bp = getStackInSlot(18)
-        val chip = getStackInSlot(19)
-
-        if chip.getItemDamage != 1 then getRequiredResources.foreach(eatResource)
-
-        ItemICBlueprint.copyIC(bp, chip)
-        setInventorySlotContents(19, ItemStack.EMPTY)
-        setInventorySlotContents(20, chip)
-    }
+        ()
 
     override def markDirty(): Unit =
     {
@@ -335,9 +341,8 @@ class TileICPrinter extends TileICMachine with TInventory with TInventoryCapabli
 
     override def onBlockActivated(player:EntityPlayer, side:Int):Boolean =
     {
-        if super.onBlockActivated(player, side) then return true
-        if !world.isRemote then
-            GuiICPrinter.open(player, createContainer(player), _.writePos(pos))
+        if !world.isRemote && migrateToPackaging() then
+            world.getTileEntity(pos).asInstanceOf[TilePackagingTable].openGui(player)
         true
     }
 

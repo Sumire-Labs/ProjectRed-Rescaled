@@ -10,6 +10,10 @@ The behavior reference remains ProjectRed 1.21.1 at
 `e631f983c9b31c79f04deffa92ae5e68468326a0`. Kappa provides source material;
 its build, dependency repositories and conflicting mechanics are not the target.
 
+The JSON preserves the decisions at the end of that audit. The subsequent
+[legacy save migration](LEGACY_SAVE_MIGRATION.md) implements the transport and
+manufacturing retirements that were still pending in that snapshot.
+
 ## Coverage
 
 [KAPPA_AUDIT.json](KAPPA_AUDIT.json) records every changed path after normalizing
@@ -52,9 +56,9 @@ The evidence IDs below are used by the path inventory.
 | `localization` | All English and Chinese key/value pairs in the pinned Kappa language files are present after this audit. Existing newer strings are retained, and Japanese translations cover the newly used keys. This is not a translation review of every legacy locale. |
 | `smart-lamp` | Smart Lamp, placement topology, channel input, rendering, inventory halo, recipe and persistence are ported. Shared color calculation and color-only light updates are retained. The connection-mask correction follows 1.21.1. Pulsar's separate Smart Lamp adapter remains outside ProjectRed. |
 | `pneumatic` | Graph routing, payloads, device connections, round-robin exits, bounce, link effects and sounds are ported. Newer ordinary/backstuff priority and geometry supersede Kappa's deferred versions. Keep dirty tracking, bounded NBT transport, large counts, normal sided inventory wrappers and unloaded-chunk guards. |
-| `legacy-transport` | Retain old transport IDs and readers pending an explicit world migration. Kappa deletes Pressure/Resistance Tube implementations and their recipe; copying that deletion would invalidate existing content. This is a remaining 1.21.1 migration item in SPEC_PARITY.md. Kappa worlds that reuse metadata 64 for pneumatic tubes are not directly interchangeable with this fork's legacy worlds. |
+| `legacy-transport` | Old transport IDs now load as modern Pneumatic Tubes. Payloads and recoverable components migrate, while original settings are archived. Old routing services and recipes are retired. Keeping the read aliases avoids the loss caused by deleting registrations. See LEGACY_SAVE_MIGRATION.md. |
 | `production` | The five new items, three machines, work durations, power use, inventory rules, state appearances and GUI are ported. Use the newer 4096 nm wafer and fixed 16x16 production footprint. Do not adopt Kappa's 12288 nm/64x64 calibration or larger-drawing yield behavior. Advanced processes and wafer grades are unimplemented in the pinned upstream source. |
-| `modern-ic` | The newer compiler/simulator, layered perspective editor and state migration supersede Kappa's legacy editor implementation. Preserve the old codecs and verified migration safeguards. Old single-step crafting and IC Printer availability still require a separate progression/world migration, as recorded in SPEC_PARITY.md. |
+| `modern-ic` | The newer compiler/simulator, layered perspective editor and state migration supersede Kappa's legacy editor implementation. Old Printer/chip saves now migrate to Packaging, dies/blueprints and recovery archives. Single-step recipes are retired; old codecs remain readable. |
 | `repairs` | Keep this fork's additional fixes for wire flags, numeric narrowing, gate state/timing, inventory rollback, barrel hiding, dense IC searches, authorization, client keys, large NBT and repeated loads. Kappa code must not undo those repairs. |
 
 ## Verification and limits
@@ -73,7 +77,6 @@ server and synchronized to the client before testing. Auto Crafter and Plotting
 Table screenshots were inspected. The installed run completed on 2026-11-17.
 
 This audit resolves the identified omissions from the pinned Kappa fork. The
-broader 1.21.1 behavior audit, historical real-save checks, old transport and
-manufacturing progression migrations remain in [SPEC_PARITY.md](SPEC_PARITY.md)
+broader 1.21.1 behavior audit and historical real-save checks remain in [SPEC_PARITY.md](SPEC_PARITY.md)
 and [IC_ENGINE_BACKPORT.md](IC_ENGINE_BACKPORT.md). Kappa's TODO file describes
 unimplemented work; its entries are not completed features available to import.

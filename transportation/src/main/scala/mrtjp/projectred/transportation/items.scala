@@ -29,6 +29,8 @@ import scala.collection.mutable.ListBuffer
 
 class ItemPartPipe extends ItemCore with TItemMultiPart
 {
+    override def getNBTShareTag(stack:ItemStack):NBTTagCompound =
+        mrtjp.projectred.core.LegacySaveMigration.archiveShare(super.getNBTShareTag(stack))
     setHasSubtypes(true)
     setCreativeTab(ProjectRedTransportation.tabTransportation)
 
@@ -37,10 +39,14 @@ class ItemPartPipe extends ItemCore with TItemMultiPart
       */
     override def newPart(item:ItemStack, player:EntityPlayer, world:World, pos:BlockPos, side:Int, vhit:Vector3) =
     {
-        val pdef = PipeDefs.fromMeta(item.getItemDamage)
+        val migrated = mrtjp.projectred.core.LegacySaveMigration.item(item)
+        val pdef = PipeDefs.fromMeta(migrated.getItemDamage)
         val p = MultiPartRegistry.loadPart(pdef.partname, null:NBTTagCompound)
         p match
-            case pipe:SubcorePipePart => pipe.preparePlacement(side, item.getItemDamage)
+            case pipe:mrtjp.projectred.transportation.pneumatics.part.PneumaticTubePart =>
+                pipe.preparePlacement(side,66)
+                if migrated.hasTagCompound then pipe.loadRecovery(migrated.getTagCompound)
+            case pipe:SubcorePipePart => pipe.preparePlacement(side, migrated.getItemDamage)
             case _ =>
         p
     }
@@ -48,7 +54,7 @@ class ItemPartPipe extends ItemCore with TItemMultiPart
     override def getSubItems(tab:CreativeTabs, list:NonNullList[ItemStack]): Unit =
     {
         if isInCreativeTab(tab) then
-            for t <- PipeDefs.values do list.add(t.makeStack)
+            list.add(PipeDefs.PNEUMATICTUBE.makeStack)
     }
 
     override def getPlacementSound(item:ItemStack) = SoundType.GLASS
@@ -97,12 +103,12 @@ class ItemRoutingChip extends ItemCore
 
     override def getSubItems(tab:CreativeTabs, list:NonNullList[ItemStack]): Unit =
     {
-        if isInCreativeTab(tab) then
-            for c <- RoutingChipDefs.values do list.add(c.makeStack)
+        () // Retained only as a readable recovery item for old saves.
     }
 
     override def addInformation(stack:ItemStack, world:World, list:JList[String], flag:ITooltipFlag): Unit =
     {
+        list.add(I18n.format("tooltip.projectred.migration.retired_routing"))
         if net.minecraft.client.gui.GuiScreen.isShiftKeyDown then if ItemRoutingChip.hasChipInside(stack) then
         {
             import scala.jdk.CollectionConverters.*
@@ -115,27 +121,11 @@ class ItemRoutingChip extends ItemCore
     }
 
     override def onItemRightClick(world:World, player:EntityPlayer, hand:EnumHand) =
-    {
-        val stack = player.getHeldItem(hand)
-        if !world.isRemote && ItemRoutingChip.isValidChip(stack) then
-        {
-            val r = ItemRoutingChip.loadChipFromItemStack(stack)
-            r.openGui(player)
-        }
         super.onItemRightClick(world, player, hand)
-    }
 
 
     override def onItemUse(player:EntityPlayer, world:World, pos:BlockPos, hand:EnumHand, facing:EnumFacing, hitX:Float, hitY:Float, hitZ:Float) =
-    {
-        val stack = player.getHeldItem(hand)
-        if !world.isRemote && ItemRoutingChip.isValidChip(stack) then
-        {
-            val r = ItemRoutingChip.loadChipFromItemStack(stack)
-            r.openGui(player)
-        }
-        EnumActionResult.SUCCESS
-    }
+        EnumActionResult.PASS
 
     override def doesSneakBypassUse(stack:ItemStack, world:IBlockAccess, pos:BlockPos, player:EntityPlayer) = true
 }
@@ -232,5 +222,5 @@ object ChipType extends Enumeration
 class ItemRouterUtility extends ItemCore
 {
     setMaxStackSize(1)
-    setCreativeTab(ProjectRedTransportation.tabTransportation)
+    setCreativeTab(null)
 }

@@ -16,7 +16,10 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NBTTagCompound
-import net.minecraft.util.{BlockRenderLayer, EnumFacing, ITickable}
+import net.minecraft.util.{BlockRenderLayer, EnumFacing, EnumHand, ITickable}
+import net.minecraft.util.text.TextComponentTranslation
+import codechicken.lib.raytracer.CuboidRayTraceResult
+import mrtjp.projectred.core.LegacySaveMigration
 import net.minecraft.util.math.BlockPos
 import net.minecraft.inventory.{IInventory, ISidedInventory}
 import codechicken.multipart.TMultiPart
@@ -29,13 +32,39 @@ import mrtjp.core.fx.ParticleAction.*
 
 import scala.jdk.CollectionConverters.*
 
-class PneumaticTubePart extends SubcorePipePart with TCenterConnectable with TSwitchPacket with ITickable with PneumaticTransportContainer with GraphContainer
+class PneumaticTubePart(val legacySource:String = "") extends SubcorePipePart with TCenterConnectable with TSwitchPacket with ITickable with PneumaticTransportContainer with GraphContainer
 :
     private val transport = new PneumaticTransport(this)
     private val graphNode = new GraphNode(this)
     private val linkCache = new ClientLinkCache
     private var lastRoundRobinDir = -1
     private var linkCallbacksSetup = false
+    private var recovery:NBTTagCompound = null
+    private var hasRecovery = false
+    private var rerouteAfterLoad = false
+
+    def loadRecovery(tag:NBTTagCompound):Unit =
+        recovery = if tag.hasKey(LegacySaveMigration.Key,10) then tag.getCompoundTag(LegacySaveMigration.Key).copy() else null
+        hasRecovery = recovery != null
+
+    override def getItem:ItemStack =
+        val stack = super.getItem
+        if recovery != null then
+            val tag = new NBTTagCompound
+            tag.setTag(LegacySaveMigration.Key,recovery.copy())
+            stack.setTagCompound(tag)
+        stack
+
+    override def activate(player:EntityPlayer, hit:CuboidRayTraceResult, held:ItemStack, hand:EnumHand):Boolean =
+        if !hasRecovery || !held.isEmpty then false
+        else
+            if !world.isRemote && recovery != null then
+                val items = recovery.getTagList("recovered_items",10)
+                val remaining = LegacySaveMigration.withdraw(items,player)
+                recovery.setTag("recovered_items",remaining)
+                tile.markDirty()
+                player.sendMessage(new TextComponentTranslation("message.projectred.migration.transport",Int.box(remaining.tagCount)))
+            true
 
     override def getPneumaticTransport = transport
     override def getGraphNode = graphNode
@@ -96,9 +125,15 @@ class PneumaticTubePart extends SubcorePipePart with TCenterConnectable with TSw
         super.save(tag)
         tag.setByte("last_dir",lastRoundRobinDir.toByte)
         transport.save(tag)
+        if recovery != null then tag.setTag(LegacySaveMigration.Key,recovery.copy())
+        tag.setBoolean("migration_reroute",rerouteAfterLoad)
 
     override def load(tag:NBTTagCompound): Unit =
+        mrtjp.projectred.transportation.LegacyTransportMigration.convertPart(tag,legacySource)
         super.load(tag)
+        meta = 66.toByte
+        loadRecovery(tag)
+        rerouteAfterLoad = tag.getBoolean("migration_reroute")
         lastRoundRobinDir = if tag.hasKey("last_dir") then tag.getByte("last_dir") else -1
         transport.load(tag)
 
@@ -106,11 +141,13 @@ class PneumaticTubePart extends SubcorePipePart with TCenterConnectable with TSw
         super.writeDesc(packet)
         transport.writeDesc(packet)
         linkCache.writeDesc(packet)
+        packet.writeBoolean(hasRecovery)
 
     override def readDesc(packet:MCDataInput): Unit =
         super.readDesc(packet)
         transport.readDesc(packet)
         linkCache.readDesc(packet)
+        hasRecovery = packet.readBoolean()
 
     override def read(packet:MCDataInput, key:Int) = key match
         case 10 => transport.readPayloadUpdate(packet)
@@ -124,6 +161,13 @@ class PneumaticTubePart extends SubcorePipePart with TCenterConnectable with TSw
         case _ => super.read(packet, key)
 
     override def update(): Unit =
+        if !world.isRemote && rerouteAfterLoad then
+            updateInward()
+            updateOutward()
+            onMaskChanged()
+            transport.getPayloads.filter(_.getProgress >= 115).foreach(setOutputDirection)
+            rerouteAfterLoad = false
+            tile.markDirty()
         if !world.isRemote && transport.getPayloads.nonEmpty then tile.markDirty()
         transport.tick()
         if !world.isRemote then graphNode.onTick()
@@ -145,7 +189,7 @@ class PneumaticTubePart extends SubcorePipePart with TCenterConnectable with TSw
             for payload <- transport.getPayloads.toSeq do
                 val stack = payload.getItemStack
                 if !stack.isEmpty then
-                    world.spawnEntity(new net.minecraft.entity.item.EntityItem(world, pos.getX + 0.5D, pos.getY + 0.5D, pos.getZ + 0.5D, stack))
+                    LegacySaveMigration.dropStacks(world,pos,stack)
         super.onRemoved()
 
     override def canConnectPart(part:IConnectable, side:Int) = part match
@@ -210,6 +254,9 @@ class PneumaticTubePart extends SubcorePipePart with TCenterConnectable with TSw
     override def onPayloadReachedOutput(id:Int, payload:PneumaticTubePayload):Boolean =
         if world.isRemote then return false
         val side = payload.getOutputSide
+        if side < 0 || side > 5 then
+            payload.setProgress(0)
+            return false
         if !neighborLoaded(side) then
             bouncePayload(id,payload)
             return false

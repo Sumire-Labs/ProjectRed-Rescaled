@@ -111,12 +111,16 @@ class AbstractPipePayload(val payloadID:Int)
         val tag2 = new NBTTagCompound
         getItemStack.writeToNBT(tag2)
         tag.setTag("Item", tag2)
+        tag.setInteger("stack_count",getItemStack.getCount)
     }
 
     def load(tag:NBTTagCompound): Unit =
     {
         data = tag.getInteger("idata")
-        setItemStack(new ItemStack(tag.getCompoundTag("Item")))
+        val itemTag = tag.getCompoundTag("Item")
+        val count = if tag.hasKey("stack_count",99) then tag.getInteger("stack_count") else itemTag.getInteger("Count")
+        val stack = mrtjp.projectred.core.LegacySaveMigration.stackFromSaved(itemTag,count)
+        setItemStack(stack)
     }
 
     def writeDesc(packet:MCDataOutput): Unit =

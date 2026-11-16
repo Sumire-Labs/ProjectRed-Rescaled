@@ -307,44 +307,57 @@ class ItemICChip extends ItemCore
 {
     setMaxStackSize(1)
     setHasSubtypes(true)
-    setCreativeTab(ProjectRedFabrication.tabFabrication)
+    setCreativeTab(null)
 
     override def getNBTShareTag(stack:ItemStack):NBTTagCompound =
-        CompressedNBT.encode(super.getNBTShareTag(stack))
+        if stack.getItemDamage != 2 then CompressedNBT.encode(super.getNBTShareTag(stack))
+        else {
+            val saved = super.getNBTShareTag(stack)
+            if saved == null || saved.getBoolean("recovery_summary") then saved
+            else {
+                val summary = new NBTTagCompound
+                summary.setBoolean("recovery_summary",true)
+                summary.setInteger("recovery_stacks",saved.getCompoundTag("BlockEntityTag").getTagList("Items",10).tagCount)
+                if saved.hasKey("display",10) then summary.setTag("display",saved.getCompoundTag("display").copy())
+                summary
+            }
+        }
 
     override def readNBTShareTag(stack:ItemStack, tag:NBTTagCompound):Unit =
         super.readNBTShareTag(stack,CompressedNBT.decode(tag))
 
     override def addInformation(stack:ItemStack, world:World, tooltip:JList[String], advanced:ITooltipFlag): Unit =
     {
-        ItemICChip.addInfo(stack, tooltip)
-        if stack.getItemDamage == 1 then {
-            tooltip.add(I18n.format("gui.projectred.fabrication.chip.creativeOnly"))
-            tooltip.add(I18n.format("gui.projectred.fabrication.chip.instantPrints"))
-            tooltip.add(I18n.format("gui.projectred.fabrication.chip.rightclickGate"))
+        if stack.getItemDamage == 2 then {
+            val tag = getNBTShareTag(stack)
+            tooltip.add(I18n.format("tooltip.projectred.migration.recovery",Int.box(if tag == null then 0 else tag.getInteger("recovery_stacks"))))
+            return
         }
+        ItemICChip.addInfo(stack, tooltip)
+        tooltip.add(I18n.format("tooltip.projectred.migration.chip"))
     }
 
     override def onItemRightClick(world:World, player:EntityPlayer, hand:EnumHand):ActionResult[ItemStack] =
     {
         val stack = player.getHeldItem(hand)
-        if stack.getItemDamage == 1 && ItemICBlueprint.hasICInside(stack) then //creative chip
-        {
-            val gate = GateDefinition.ICGate.makeStack
-            ItemICBlueprint.copyToGate(stack, gate)
-            if !player.inventory.addItemStackToInventory(gate) then
-                player.entityDropItem(gate, player.getEyeHeight)
-            return new ActionResult(EnumActionResult.SUCCESS, stack)
+        if stack.getItemDamage == 2 then {
+            if !world.isRemote && stack.hasTagCompound then {
+                val block = stack.getTagCompound.getCompoundTag("BlockEntityTag")
+                val items = block.getTagList("Items",10)
+                val remaining = mrtjp.projectred.core.LegacySaveMigration.withdraw(items,player)
+                block.setTag("Items",remaining)
+                player.inventory.markDirty()
+                val key = if remaining.tagCount == 0 then "message.projectred.migration.recovery_done" else "message.projectred.migration.recovery"
+                player.sendMessage(new net.minecraft.util.text.TextComponentTranslation(key,Int.box(remaining.tagCount)))
+            }
+            return new ActionResult(EnumActionResult.SUCCESS,stack)
         }
         super.onItemRightClick(world, player, hand)
     }
 
     override def getSubItems(tab:CreativeTabs, subItems:NonNullList[ItemStack]): Unit =
     {
-        if isInCreativeTab(tab) then {
-            subItems.add(new ItemStack(this, 1, 0))
-            subItems.add(new ItemStack(this, 1, 1))
-        }
+        ()
     }
 }
 

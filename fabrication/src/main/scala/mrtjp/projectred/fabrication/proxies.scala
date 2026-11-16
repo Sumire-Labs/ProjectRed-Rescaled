@@ -34,17 +34,18 @@ class FabricationProxy_server extends IProxy with IPartFactory
 {
     override def preinit(): Unit =
     {
+        LegacyFabricationMigration.init()
         icBlock = new BlockICMachine(icMachineBakery)
         icBlock.setTranslationKey("projectred.fabrication.icMachine")
         ForgeRegistries.BLOCKS.register(icBlock.setRegistryName("ic_machine"))
-        ForgeRegistries.ITEMS.register(new ItemBlockCore(icBlock).setRegistryName(icBlock.getRegistryName))
+        ForgeRegistries.ITEMS.register(new ItemBlockICMachine().setRegistryName(icBlock.getRegistryName))
         icBlock.addTile(classOf[TileICWorkbench], 0)
         icBlock.addTile(classOf[TileICPrinter], 1)
 
         fabricationMachineBlock = new BlockFabricationMachine(fabricationMachineBakery)
         fabricationMachineBlock.setTranslationKey("projectred.fabrication.fabricationMachine")
         ForgeRegistries.BLOCKS.register(fabricationMachineBlock.setRegistryName("fabrication_machine"))
-        ForgeRegistries.ITEMS.register(new ItemBlockCore(fabricationMachineBlock).setRegistryName(fabricationMachineBlock.getRegistryName))
+        ForgeRegistries.ITEMS.register(new ItemBlockFabricationMachine().setRegistryName(fabricationMachineBlock.getRegistryName))
         fabricationMachineBlock.addTile(classOf[TilePlottingTable],0)
         fabricationMachineBlock.addTile(classOf[TileLithographyTable],1)
         fabricationMachineBlock.addTile(classOf[TilePackagingTable],2)
@@ -87,7 +88,7 @@ class FabricationProxy_server extends IProxy with IPartFactory
             if stack.getItemDamage == GateDefinition.ICGate.meta then {
                 import com.mojang.realmsclient.gui.ChatFormatting.*
                 if !ItemICBlueprint.hasICInside(stack) then {
-                    list.add(RED.toString + "INVALID: Craft by surrounding Printed IC with Circuit Plates")
+                    list.add(RED.toString + "INVALID: Assemble a compiled die in the Packaging Table")
                 } else {
                     list.add(GRAY.toString+ItemICBlueprint.getICName(stack))
                     if stack.getTagCompound.hasKey("legacy_migration_status") then
@@ -164,8 +165,13 @@ class FabricationProxy_client extends FabricationProxy_server
         registerModelType(itemICBlueprint, "projectred:fabrication/items", "ic_blueprint")
         MapRenderRegistry.registerMapRenderer(itemICBlueprint, ItemRenderICBlueprint)
 
-        registerModelType(itemICChip, "projectred:fabrication/items", Array("ic_active", "ic_inert"), { stack =>
-            if ItemICBlueprint.hasICInside(stack) then "ic_active" else "ic_inert" })
+        val activeChip = new ModelResourceLocation("projectred:fabrication/items","type=ic_active")
+        val emptyChip = new ModelResourceLocation("projectred:fabrication/items","type=ic_inert")
+        val recoveryModel = new ModelResourceLocation("minecraft:book","inventory")
+        MCModelBakery.registerItemVariants(itemICChip,activeChip,emptyChip,recoveryModel)
+        ModelLoader.setCustomMeshDefinition(itemICChip,stack =>
+            if stack.getItemDamage == 2 then recoveryModel
+            else if ItemICBlueprint.hasICInside(stack) then activeChip else emptyChip)
 
         ClientRegistry.bindTileEntitySpecialRenderer(classOf[TileICPrinter], RenderICPrinterDynamic)
 

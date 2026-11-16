@@ -31,6 +31,7 @@ import net.minecraftforge.fml.relauncher.{Side, SideOnly}
 
 class TileFilteredImporter extends TileItemImporter with TInventory with ISidedInventory with TInventoryCapablilityTile
 {
+    override def updateServer():Unit = { LegacyDeviceMigration.convert(this) }
     var colour:Byte = -1
 
     override protected val storage = Array.fill(9)(ItemStack.EMPTY)//new Array[ItemStack](9)
@@ -66,8 +67,11 @@ class TileFilteredImporter extends TileItemImporter with TInventory with ISidedI
 
     override def load(tag:NBTTagCompound): Unit =
     {
-        super.load(tag)
-        loadInv(tag)
+        val source = tag.copy()
+        mrtjp.projectred.core.LegacySaveMigration.archive(source,"filtered_importer")
+        super.load(source)
+        clear()
+        loadInv(source)
         colour = tag.getByte("col")
     }
 
@@ -115,10 +119,8 @@ class TileFilteredImporter extends TileItemImporter with TInventory with ISidedI
 
     override def onBlockActivated(player:EntityPlayer, actside:Int):Boolean =
     {
-        if super.onBlockActivated(player, actside) then return true
-
-        if !world.isRemote then
-            GuiFilteredImporter.open(player, createContainer(player), _.writePos(getPos))
+        if !world.isRemote && LegacyDeviceMigration.convert(this) then
+            world.getTileEntity(pos).asInstanceOf[TileItemImporter].onBlockActivated(player,actside)
         true
     }
 

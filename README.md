@@ -6,9 +6,10 @@ packages, registry names and module IDs are retained. Do not install the origina
 ProjectRed jars alongside this distribution.
 
 The backports add Illumar Smart Lamps, the Plotting/Lithography/Packaging IC production
-line and Pneumatic Tubes. The existing IC Printer and crafting route remain available.
-Craft a Pneumatic Tube from one Pressure Tube and one iron nugget. Existing pressure,
-resistance and routed pipes retain their registrations; the new tube is a separate network.
+line and Pneumatic Tubes. Old transport and IC production saves migrate to the
+newer systems, with recovery archives for contents and settings. Three rows of
+copper/glass pane/copper craft eight Pneumatic Tubes. See the
+[save migration guide](docs/LEGACY_SAVE_MIGRATION.md) for conversion and recovery steps.
 Updated 1.21.1 textures cover existing machines, minerals, tools, gem armor and backpacks.
 See [the texture manifest](docs/TEXTURE_BACKPORTS.json) for the source of each changed PNG.
 

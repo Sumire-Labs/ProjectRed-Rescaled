@@ -399,3 +399,43 @@ from the integrated server and exercise hit/destroy callbacks, all 32 lamp state
 and all insulated-wire colors. Existing GUI, 482-item rendering, IC migration,
 manufacturing and pneumatic delivery checks still pass. Auto Crafter and Plotting
 Table screenshots were inspected. The installed check omits JEI.
+
+## Legacy transport and manufacturing save migration
+
+Retired the old routing and direct IC production paths against the pinned 1.21.1
+source. All nine old transport part IDs load as Pneumatic Tubes; old pipe stacks
+become metadata 66. In-flight stacks retain counts, NBT and normalized position,
+then use the newer routing and speed. Interface chips, attached redstone and
+original settings remain recoverable. No old router threads or actions start.
+
+Filtered Importers convert to ordinary Importers. Buffers survive, while filter
+items and settings move to a recovery archive. The newer tube/air output, sided
+slot order and item-handler extraction rules apply. Existing entity suction is
+disabled because it is unimplemented in the pinned Transposer. Old pipe/chip,
+Filtered Importer, IC Printer/chip and direct-gate recipes are removed; the newer
+copper/glass-pane recipe makes eight tubes.
+
+Old Printers convert to Packaging Tables after preparing and loading a replacement
+before clearing the old inventory. Printed supported circuits become dies;
+unbuildable or creative-chip designs become blueprints. Blank chips become rough
+wafers. The output recovery archive retains ingredients, blueprints and other
+contents, plus original NBT. Old progress does not shorten the new powered job.
+Recovery preserves leftovers in full creative inventories, uses integer counts
+and does not replay withdrawn contents. Unreadable queue records remain saved and
+pause export. Large buffer drops are split into vanilla-sized entity stacks.
+
+The first native client review found a new description arriving while the old
+Printer still occupied the client position. Replacing the immediate custom packet
+with standard block/tile synchronization fixes that ordering race. Delayed old
+Printer and Filtered Importer fixtures now ensure the client sees the old class
+before conversion. The Gradle client check rejects logged task failures even if
+the smoke completion marker says PASS.
+
+Server fixtures cover nested Forge fixes, mixed multipart saves, repeated loads,
+exact recovery counts, 1000-item queues/recovery/drop records and continued powered
+packaging. Actual GUI clicks and a use packet retrieve the recovery contents. A
+vanilla item-codec round trip checks the summary used by the inventory transaction;
+integrated local channels otherwise skip serialization. The client renders 459
+currently exposed creative variants. Migration screenshots were inspected. See
+LEGACY_SAVE_MIGRATION.md for supported schemas, operator steps and remaining
+historical-save validation.

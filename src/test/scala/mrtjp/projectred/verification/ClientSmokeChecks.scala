@@ -188,7 +188,11 @@ object ClientSmokeChecks {
                     TextureBackportClientChecks.start()
                     state = 12
                 }
-                case 12 => if TextureBackportClientChecks.tick() then finish()
+                case 12 => if TextureBackportClientChecks.tick() then {
+                    LegacyContentClientChecks.start()
+                    state = 14
+                }
+                case 14 => if LegacyContentClientChecks.tick() then finish()
                 case _ =>
             }
         } catch { case error:Throwable => failure = error; finish() }

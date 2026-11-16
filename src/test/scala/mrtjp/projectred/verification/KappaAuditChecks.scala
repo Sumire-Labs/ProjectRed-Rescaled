@@ -40,7 +40,7 @@ object KappaAuditChecks {
         val pos = new BlockPos(12,80,-12)
         for definition <- PipeDefs.values do {
             val part = item.newPart(definition.makeStack,player,world,pos,1,new Vector3(0.5,1,0.5))
-            assert(part.isInstanceOf[SubcorePipePart] && part.asInstanceOf[SubcorePipePart].meta == definition.meta,
+            assert(part.isInstanceOf[mrtjp.projectred.transportation.pneumatics.part.PneumaticTubePart] && part.asInstanceOf[SubcorePipePart].meta == 66,
                 s"Pipe item did not create metadata ${definition.meta}")
         }
         val held = player.getHeldItemMainhand

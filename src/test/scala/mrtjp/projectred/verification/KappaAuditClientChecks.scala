@@ -17,10 +17,10 @@ object KappaAuditClientChecks {
     private var waitingTicks = 0
     private val positions = new java.util.concurrent.atomic.AtomicReference[Vector[net.minecraft.util.math.BlockPos]]()
     private def machineStates =
-        (0 until 13).map(ProjectRedExpansion.machine2.getStateFromMeta) ++
+        (0 until 13).filter(_ != 3).map(ProjectRedExpansion.machine2.getStateFromMeta) ++
             (0 until 2).map(ProjectRedExpansion.machine1.getStateFromMeta) ++
             (0 until 3).map(ProjectRedFabrication.fabricationMachineBlock.getStateFromMeta) ++
-            (0 until 2).map(ProjectRedFabrication.icBlock.getStateFromMeta)
+            Seq(ProjectRedFabrication.icBlock.getStateFromMeta(0))
 
     def run():Boolean = {
         val mc = Minecraft.getMinecraft

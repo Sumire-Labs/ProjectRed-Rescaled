@@ -8,7 +8,7 @@ import codechicken.multipart.MultiPartRegistry
 import codechicken.multipart.api.IPartFactory
 import mrtjp.core.gui.GuiHandler
 import mrtjp.projectred.ProjectRedTransportation.*
-import mrtjp.projectred.core.{Configurator, IProxy}
+import mrtjp.projectred.core.IProxy
 import mrtjp.projectred.transportation.pneumatics.part.PneumaticTubePart
 import net.minecraft.client.renderer.block.model.ModelResourceLocation
 import net.minecraft.util.ResourceLocation
@@ -25,6 +25,7 @@ class TransportationProxy_server extends IProxy with IPartFactory
 
     override def preinit(): Unit =
     {
+        LegacyTransportMigration.init()
         itemPartPipe = new ItemPartPipe
         itemPartPipe.setTranslationKey("projectred.transportation.pipe")
         ForgeRegistries.ITEMS.register(itemPartPipe.setRegistryName("pipe"))
@@ -38,7 +39,6 @@ class TransportationProxy_server extends IProxy with IPartFactory
         ForgeRegistries.ITEMS.register(itemRouterUtility.setRegistryName("router_utility"))
 
         MultiPartRegistry.registerParts(this, PipeDefs.values.map{_.partname}.toArray)
-        MinecraftForge.EVENT_BUS.register(ChipResetRecipe)
         MinecraftForge.EVENT_BUS.register(PneumaticSounds)
     }
 
@@ -50,22 +50,13 @@ class TransportationProxy_server extends IProxy with IPartFactory
     {
         PacketCustom.assignHandler(TransportationSPH.channel, TransportationSPH)
 
-        for i <- 0 until Configurator.routerUpdateThreadCount do new TableUpdateThread(i)
     }
 
     import mrtjp.projectred.transportation.PipeDefs.*
     override def createPart(name:ResourceLocation, client:Boolean) = name match
     {
-        case BASIC.partname => new BasicPipePart
-        case ROUTEDJUNCTION.partname => new RoutedJunctionPipePart
-        case ROUTEDINTERFACE.partname => new RoutedInterfacePipePart
-        case ROUTEDREQUEST.partname => new RoutedRequestPipePart
-        case ROUTEDFIREWALL.partname => new RoutedFirewallPipe
-        case PRESSURETUBE.partname => new PressureTube
-        case RESISTANCETUBE.partname => new ResistanceTube
+        case legacy if LegacyTransportMigration.oldParts(legacy.toString) => new PneumaticTubePart(legacy.toString)
         case PNEUMATICTUBE.partname => new PneumaticTubePart
-        case NETWORKVALVE.partname => new NetworkValvePipePart
-        case NETWORKLATENCY.partname => new NetworkLatencyPipePart
         case _ => null
     }
 }

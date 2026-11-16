@@ -4,6 +4,7 @@
 
 ### Added
 
+- Convert old transport, Filtered Importer and IC production saves, with recovery archives for saved contents and settings.
 - Add the newer perspective Workbench camera, animated layer navigation, direct interaction zones and freehand wire placement.
 - Migrate supported placed legacy ICs to the new simulator with running state, phase, input edges and pending pulses preserved; retain recovery copies and compatibility reasons.
 
@@ -12,10 +13,12 @@
 
 - Add Illumar Smart Lamps with mixed bundled-channel colours, variable brightness and six placement orientations.
 - Add Plotting, Lithography and Packaging Tables for IC production, with photomasks, rough silicon wafers and dies.
-- Add Pneumatic Tubes with cached graph routing, item-flow rendering, link particles and sounds. Existing Pressure/Resistance Tubes remain available.
+- Add Pneumatic Tubes with cached graph routing, item-flow rendering, link particles and sounds; old pipe registrations migrate into this network.
 
 ### Changed
 
+- Retire old routing, Filtered Importer and single-step IC manufacturing recipes while keeping their save readers.
+- Use the 1.21.1 copper/glass-pane tube recipe and Transposer transfer rules.
 - Use modern compiled targets throughout IC production and new fabricated-gate runtimes, retaining legacy drawing readers.
 - Persist large engine JSON as bounded compressed NBT and preserve two-tick IC input latching.
 - Update integration fixtures to the Sumire Scala 3.10 revisions and their client random-tick fix.
@@ -35,6 +38,8 @@
 
 ### Fixed
 
+- Preserve extended device-buffer counts and unreadable records, and retain recovery leftovers in full creative inventories.
+- Send converted tile descriptions after the corresponding block update to avoid stale-client packet decoding errors.
 - Fix a crash when placing Pneumatic Tubes from their item.
 - Restore machine, lamp, frame and framed-wire particles; use the lamp's actual color and lit state.
 - Localize GUI labels, routing-chip tooltips and server messages, preserving custom item names and adding Japanese translations.

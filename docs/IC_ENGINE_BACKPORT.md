@@ -122,6 +122,8 @@ and preservation of legacy-only components.
 - Continue artwork/model comparisons, including the exact newer Bundled Bus mesh.
 - Exercise copies of real saves from other historical forks/codecs; the original
   runtime backup remains necessary when a layout cannot be verified.
-- Complete migration of legacy direct fabrication routes and the IC Printer.
+
+Legacy direct recipes are retired; Printer and chip saves now migrate through
+[the manufacturing save conversion](LEGACY_SAVE_MIGRATION.md).
 
 See [SPEC_PARITY.md](SPEC_PARITY.md) for the wider behavior audit.

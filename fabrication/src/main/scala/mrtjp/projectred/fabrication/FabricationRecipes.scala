@@ -1,8 +1,6 @@
 package mrtjp.projectred.fabrication
 
 import mrtjp.projectred.ProjectRedFabrication.*
-import mrtjp.projectred.core.PartDefs
-import mrtjp.projectred.integration.GateDefinition
 import net.minecraft.inventory.InventoryCrafting
 import net.minecraft.item.ItemStack
 import net.minecraft.item.crafting.IRecipe
@@ -19,7 +17,6 @@ object FabricationRecipes
     {
         event.getRegistry.register(new ICBlueprintResetRecipe().setRegistryName("ic_blueprint_reset"))
         event.getRegistry.register(new ICBlueprintCopyRecipe().setRegistryName("ic_blueprint_copy"))
-        event.getRegistry.register(new ICGateRecipe().setRegistryName("ic_gate"))
     }
 }
 
@@ -69,28 +66,6 @@ class ICBlueprintCopyRecipe extends TBaseRecipe {
             !s.isEmpty && s.getItem == itemICBlueprint && ItemICBlueprint.hasICInside(s)
         }.foreach(i => remaining.set(i, inv.getStackInSlot(i).copy))
         remaining
-    }
-}
-
-class ICGateRecipe extends TBaseRecipe {
-    override def getRecipeOutput = GateDefinition.ICGate.makeStack
-    override def getRecipeSize = 9
-    override def getCraftingResult(inv:InventoryCrafting):ItemStack =
-    {
-        val valid = (0 until 9).forall { i =>
-            val stack = inv.getStackInSlot(i)
-            if stack.isEmpty then false
-            else i match {
-                case 4 => stack.getItem == itemICChip && ItemICBlueprint.hasICInside(stack)
-                case _ => stack.isItemEqual(PartDefs.PLATE.makeStack)
-            }
-        }
-        if !valid then ItemStack.EMPTY
-        else {
-        val out = GateDefinition.ICGate.makeStack
-        ItemICBlueprint.copyToGate(inv.getStackInSlot(4), out)
-        out
-        }
     }
 }
 

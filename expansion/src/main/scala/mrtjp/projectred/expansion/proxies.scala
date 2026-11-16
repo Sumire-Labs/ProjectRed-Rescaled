@@ -31,6 +31,7 @@ class ExpansionProxy_server extends IProxy with IPartFactory
 {
     def preinit(): Unit =
     {
+        LegacyDeviceMigration.init()
         PacketCustom.assignHandler(ExpansionSPH.channel, ExpansionSPH)
 
         MultiPartRegistry.registerParts(this, Array(SolarPanelPart.typeID))
@@ -75,7 +76,7 @@ class ExpansionProxy_server extends IProxy with IPartFactory
         ForgeRegistries.BLOCKS.register(machine1.setRegistryName("machine1"))
         ForgeRegistries.ITEMS.register(new ItemBlockCore(machine1).setRegistryName(machine1.getRegistryName))
         ForgeRegistries.BLOCKS.register(machine2.setRegistryName("machine2"))
-        ForgeRegistries.ITEMS.register(new ItemBlockCore(machine2).setRegistryName(machine2.getRegistryName))
+        ForgeRegistries.ITEMS.register(new ItemBlockDevice().setRegistryName(machine2.getRegistryName))
 
         ForgeRegistries.ENCHANTMENTS.register(enchantmentElectricEfficiency.setRegistryName("electric_efficiency"))
 

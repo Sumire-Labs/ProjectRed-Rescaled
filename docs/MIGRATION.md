@@ -47,8 +47,9 @@ Server checks cover all six orientations, bundled input, colour-only changes, NB
 description packets. Client checks render the item and six placed lamps with mixed halos.
 
 Plotting, Lithography and Packaging Tables use the same pinned 1.12 reference and
-the upstream 1.21.1 basic production chain. Existing IC Printer and crafting routes
-remain available. The tables share the native power system, preserve processing
+the upstream 1.21.1 basic production chain. Old Printer and chip saves now follow
+[the manufacturing migration](LEGACY_SAVE_MIGRATION.md); direct recipes are retired.
+The tables share the native power system, preserve processing
 progress through NBT and use tile-bound containers. Client inventory synchronization
 never runs server work cancellation or sends server-only chunk updates.
 Production validates a design with the existing IC linker, caches unchanged snapshots
@@ -59,17 +60,18 @@ The basic 64nm rough-wafer process now follows 1.21.1's 4096nm wafer and fixed
 12288nm/64x64 calibration has been removed. The GUI uses actual design dimensions
 for estimates, as upstream does; manufacturing still has upstream's fixed-size TODO.
 The new IC backend is now used by Workbench and the production path. Advanced
-nodes, wafer grades and the complete newer editor frontend remain unfinished.
+nodes and wafer grades remain unimplemented upstream; artwork and historical-codec
+checks for the newer editor remain in the conformance ledger.
 Tests cover the powered chain, pause/cancel/reload,
 ingredient accounting, interface plates, design rejection and all three server-opened GUIs.
 
 Pneumatic transport follows the same reference's basic graph-routing implementation.
 It is added at pipe metadata 66 with the new `pneumatic_tube` multipart registration.
-Pressure Tube metadata 64, Resistance Tube metadata 65 and routed-pipe registrations
-remain unchanged. The new shapeless upgrade recipe consumes a Pressure Tube and an
-iron nugget, avoiding a recipe collision with the existing pressure-tube recipe.
-New tubes use their own network; existing importers and breakers implement its device
-contract through an adapter that preserves the original queue NBT and filtering logic.
+Old pressure/resistance/routed IDs remain load aliases and migrate to the modern
+network. Saved payloads, counts and recovery data are retained. The 1.21.1 copper
+and glass-pane recipe produces eight new tubes; old tube/chip recipes are retired.
+Filtered Importers migrate to ordinary Item Importers, with filter items/settings
+in a recovery archive. The queue reader preserves legacy buffers and extended counts.
 
 Routing caches invalidate on world separation and re-entry; neighbor lookups do not
 load missing chunks. Initial descriptions include link state, payload counts use VarInt,
@@ -78,7 +80,7 @@ MCData item serialization bypasses Forge share-tag hooks, so payload description
 explicitly apply the large-NBT transport envelope. External inventory access uses
 normal wrappers; `wrapInternal` in the reference bypassed Sumire's sided/item restrictions.
 Graph debug logging is disabled at normal log levels. New tubes now use the newer
-OBJ geometry and pneumatic atlas; legacy tubes retain their models. Link smoke
+OBJ geometry and pneumatic atlas, including migrated tubes. Link smoke
 and pressure/depressure sounds are included.
 
 Tests cover nearest and equal-distance exits, round-robin state, partial insertion,

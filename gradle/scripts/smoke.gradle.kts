@@ -15,7 +15,13 @@ if (providers.gradleProperty("client_smoke").orElse("false").get().toBoolean()) 
         workingDir(directory)
         systemProperty("projectred.client.result", result.absolutePath)
         doFirst { directory.mkdirs(); result.parentFile.mkdirs(); result.delete() }
-        doLast { check(result.isFile && result.readText().trim() == "PASS") { "ProjectRed client checks did not finish; inspect run/smoke-client/logs/latest.log" } }
+        doLast {
+            check(result.isFile && result.readText().trim() == "PASS") { "ProjectRed client checks did not finish; inspect run/smoke-client/logs/latest.log" }
+            val log = directory.resolve("logs/latest.log").readText()
+            check(!log.contains("Error executing task") && !log.contains("Unreported exception thrown!")) {
+                "A client task failed despite the completion marker; inspect run/smoke-client/logs/latest.log"
+            }
+        }
     }
 }
 if (providers.gradleProperty("smoke_test").orElse("false").get().toBoolean()) {

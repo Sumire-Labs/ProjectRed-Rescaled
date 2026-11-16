@@ -16,17 +16,38 @@ import net.minecraft.block.Block
 import net.minecraft.item.ItemStack
 import net.minecraft.nbt.{NBTTagCompound, NBTTagList}
 import net.minecraft.util.EnumFacing
+import net.minecraft.entity.player.EntityPlayer
+import mrtjp.projectred.core.LegacySaveMigration
 
 import scala.collection.mutable.ListBuffer
 
 class ItemStorage
 {
     private val storage = ListBuffer[PressurePayload]()
+    private val unreadable = ListBuffer[(Long,NBTTagCompound)]()
+    private val order = new java.util.IdentityHashMap[PressurePayload,java.lang.Long]
+    private var firstOrder = -1L
+    private var lastOrder = 0L
     var backlogged = false
 
-    def isEmpty = storage.isEmpty
+    def isEmpty = storage.isEmpty && unreadable.isEmpty
+    def hasUnreadable = unreadable.nonEmpty
+    def unreadableItems:Seq[NBTTagCompound] = unreadable.map { (_,tag) =>
+        val item = if tag.hasKey("Item",10) then tag.getCompoundTag("Item").copy() else tag.copy()
+        if tag.hasKey("stack_count",99) then item.setInteger("Count",tag.getInteger("stack_count"))
+        item
+    }.toVector
+    def clearUnreadable():Unit = unreadable.clear()
+    def clear():Unit = {
+        storage.clear(); unreadable.clear(); order.clear()
+        firstOrder = -1L; lastOrder = 0L; backlogged = false
+    }
 
-    def add(item:PressurePayload): Unit ={ storage.prepend(item) }
+    def add(item:PressurePayload): Unit ={
+        storage.prepend(item)
+        order.put(item,java.lang.Long.valueOf(firstOrder))
+        firstOrder -= 1
+    }
 
     def add(item:ItemStack): Unit =
     {
@@ -35,11 +56,16 @@ class ItemStorage
         add(p)
     }
 
-    def addBacklog(item:PressurePayload): Unit ={ storage.append(item); backlogged = true }
+    def addBacklog(item:PressurePayload): Unit ={
+        storage.append(item); backlogged = true
+        order.put(item,java.lang.Long.valueOf(lastOrder))
+        lastOrder += 1
+    }
 
     def poll() =
     {
         val item = storage.remove(storage.size-1)
+        order.remove(item)
         if storage.size == 0 then backlogged = false
         item
     }
@@ -49,35 +75,44 @@ class ItemStorage
     def save(tag:NBTTagCompound): Unit =
     {
         val nbttaglist = new NBTTagList
-        for r <- storage do
-        {
+        val entries = storage.map { r =>
             val payloadData = new NBTTagCompound
-            nbttaglist.appendTag(payloadData)
             r.save(payloadData)
+            (order.get(r).longValue(),payloadData)
         }
+        (entries ++ unreadable).sortBy(_._1).foreach((_,tag)=>nbttaglist.appendTag(tag))
         tag.setTag("itemFlow", nbttaglist)
+        tag.setBoolean("itemFlowBacklogged",backlogged)
     }
 
     def load(tag:NBTTagCompound): Unit =
     {
-        storage.clear()
+        clear()
         val nbttaglist = tag.getTagList("itemFlow", 10)
+        lastOrder = nbttaglist.tagCount.toLong
         for j <- 0 until nbttaglist.tagCount do
         {
+            val payloadData = nbttaglist.getCompoundTagAt(j)
             try
             {
-                val payloadData = nbttaglist.getCompoundTagAt(j)
                 val r = new PressurePayload(AbstractPipePayload.claimID())
                 r.load(payloadData)
-                if !r.isCorrupted then storage.append(r)
+                if !r.isCorrupted then {
+                    storage.append(r)
+                    order.put(r,java.lang.Long.valueOf(j.toLong))
+                } else unreadable += ((j.toLong,payloadData.copy()))
             }
-            catch {case t:Throwable =>}
+            catch {case scala.util.control.NonFatal(_) => unreadable += ((j.toLong,payloadData.copy()))}
         }
+        backlogged = !isEmpty && (!tag.hasKey("itemFlowBacklogged") || tag.getBoolean("itemFlowBacklogged"))
     }
 }
 
 trait TActiveDevice extends TileMachine
 {
+    private var legacyArchive:NBTTagCompound = null
+    private var hasRecovery = false
+    var suppressLegacyRecoveryDrop = false
     val itemStorage = new ItemStorage
     var powered = false
     var active = false
@@ -88,6 +123,7 @@ trait TActiveDevice extends TileMachine
         tag.setBoolean("pow", powered)
         tag.setBoolean("act", active)
         itemStorage.save(tag)
+        if legacyArchive != null then tag.setTag(LegacySaveMigration.Key,legacyArchive.copy())
     }
 
     override def load(tag:NBTTagCompound): Unit =
@@ -96,12 +132,16 @@ trait TActiveDevice extends TileMachine
         powered = tag.getBoolean("pow")
         active = tag.getBoolean("act")
         itemStorage.load(tag)
+        if !itemStorage.isEmpty then active = true
+        legacyArchive = if tag.hasKey(LegacySaveMigration.Key,10) then tag.getCompoundTag(LegacySaveMigration.Key).copy() else null
+        hasRecovery = legacyArchive != null && !legacyArchive.getBoolean("archive_exported")
     }
 
     override def writeDesc(out:MCDataOutput): Unit =
     {
         super.writeDesc(out)
         out.writeBoolean(powered).writeBoolean(active)
+        out.writeBoolean(hasRecovery)
     }
 
     override def readDesc(in:MCDataInput): Unit =
@@ -109,6 +149,30 @@ trait TActiveDevice extends TileMachine
         super.readDesc(in)
         powered = in.readBoolean()
         active = in.readBoolean()
+        hasRecovery = in.readBoolean()
+    }
+
+    override def onBlockActivated(player:EntityPlayer, face:Int):Boolean = {
+        if itemStorage.hasUnreadable && player.getHeldItemMainhand.isEmpty then {
+            if !getWorld.isRemote then player.sendMessage(new net.minecraft.util.text.TextComponentTranslation("message.projectred.migration.queue_unreadable"))
+            return true
+        }
+        if !hasRecovery || !player.getHeldItemMainhand.isEmpty then return super.onBlockActivated(player,face)
+        if !getWorld.isRemote then {
+            val items = legacyArchive.getTagList("recovered_items",10)
+            val carrier = LegacySaveMigration.recoveryItem(legacyArchive,items)
+            if !carrier.isEmpty then {
+                LegacySaveMigration.insertRecovered(carrier,player)
+                if carrier.isEmpty then {
+                    legacyArchive.setTag("recovered_items",new NBTTagList)
+                    legacyArchive.setBoolean("archive_exported",true)
+                    hasRecovery = false
+                    markDirty()
+                    markDescUpdate()
+                }
+            }
+        }
+        true
     }
 
     override def read(in:MCDataInput, key:Int) = key match
@@ -127,6 +191,11 @@ trait TActiveDevice extends TileMachine
 
     def shouldAcceptBacklog = true
     def shouldAcceptInput = !powered && itemStorage.isEmpty
+
+    override def updateServer():Unit = {
+        super.updateServer()
+        if !itemStorage.isEmpty && !isTickScheduled then scheduleTick(4)
+    }
 
     override def onScheduledTick(): Unit =
     {
@@ -171,10 +240,11 @@ trait TActiveDevice extends TileMachine
 
     def exportBuffer(): Unit =
     {
+        if itemStorage.hasUnreadable then return
         while !itemStorage.isEmpty do
         {
             val r = itemStorage.peek
-            if exportPipe(r) || exportInv(r) || exportEject(r) then itemStorage.poll()
+            if exportPipe(r) || exportEject(r) then itemStorage.poll()
             else itemStorage.backlogged = true
 
             if itemStorage.backlogged then return
@@ -185,9 +255,6 @@ trait TActiveDevice extends TileMachine
     {
         BlockMultipart.getPart(getWorld, getPos.offset(EnumFacing.VALUES(side)), 6) match
         {
-            case pipe:TPressureTube if pipe.hasDestination(r, side^1) =>
-                pipe.injectPayload(r, side)
-                true
             case pipe:mrtjp.projectred.transportation.pneumatics.PneumaticTransportContainer =>
                 pipe.insertPayload(side,new mrtjp.projectred.transportation.pneumatics.part.PneumaticTubePayload(r.payload.makeStack.copy()))
             case _ => false
@@ -218,8 +285,25 @@ trait TActiveDevice extends TileMachine
     override def onBlockRemoval(): Unit =
     {
         super.onBlockRemoval()
+        if itemStorage.hasUnreadable then {
+            val source = writeToNBT(new NBTTagCompound)
+            val history = LegacySaveMigration.archive(source,"device_queue")
+            val recovered = history.getTagList("recovered_items",10).copy()
+            itemStorage.unreadableItems.foreach(recovered.appendTag)
+            val carrier = LegacySaveMigration.recoveryItem(history,recovered)
+            if !carrier.isEmpty then WorldLib.dropItem(getWorld,getPos,carrier)
+            itemStorage.clearUnreadable()
+            if legacyArchive != null then legacyArchive.setBoolean("archive_exported",true)
+            hasRecovery = false
+        }
+        if hasRecovery && legacyArchive != null && !suppressLegacyRecoveryDrop then {
+            val carrier = LegacySaveMigration.recoveryItem(legacyArchive,legacyArchive.getTagList("recovered_items",10))
+            if !carrier.isEmpty then WorldLib.dropItem(getWorld,getPos,carrier)
+            hasRecovery = false
+            legacyArchive.setBoolean("archive_exported",true)
+        }
         while !itemStorage.isEmpty do
-            WorldLib.dropItem(getWorld, getPos, itemStorage.poll().payload.makeStack)
+            LegacySaveMigration.dropStacks(getWorld,getPos,itemStorage.poll().payload.makeStack)
     }
 }
 

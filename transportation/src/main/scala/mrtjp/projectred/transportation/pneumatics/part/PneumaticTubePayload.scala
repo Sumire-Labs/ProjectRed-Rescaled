@@ -62,8 +62,11 @@ class PneumaticTubePayload:
         speed = tag.getInteger("speed")
         inputSide = tag.getInteger("input_side")
         outputSide = tag.getInteger("output_side")
-        itemStack = if tag.hasKey("item_stack", 10) then new ItemStack(tag.getCompoundTag("item_stack")) else ItemStack.EMPTY
-        if tag.hasKey("item_stack",10) && tag.hasKey("stack_count") then itemStack.setCount(tag.getInteger("stack_count"))
+        itemStack = if tag.hasKey("item_stack",10) then
+            val item = tag.getCompoundTag("item_stack")
+            val count = if tag.hasKey("stack_count",99) then tag.getInteger("stack_count") else item.getInteger("Count")
+            mrtjp.projectred.core.LegacySaveMigration.stackFromSaved(item,count)
+        else ItemStack.EMPTY
 
     def writeDesc(out:MCDataOutput): Unit =
         out.writeByte(progress)

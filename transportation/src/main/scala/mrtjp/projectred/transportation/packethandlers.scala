@@ -62,15 +62,7 @@ object TransportationCPH extends TransportationPH with IClientPacketHandler
 
 object TransportationSPH extends TransportationPH with IServerPacketHandler
 {
-    def handlePacket(packet:PacketCustom, sender:EntityPlayerMP, handler:INetHandlerPlayServer) = packet.getType match
-    {
-        case this.gui_ChipNBTSet => setChipNBT(packet, sender)
-        case this.gui_Request_action => handleRequestAction(packet, sender)
-        case this.gui_Request_submit => handleRequestSubmit(packet, sender)
-        case this.gui_Request_listRefresh => handleRequestListRefresh(packet, sender)
-        case this.gui_FirewallPipe_action => handleFirewallAction(packet, sender)
-        case _ =>
-    }
+    def handlePacket(packet:PacketCustom, sender:EntityPlayerMP, handler:INetHandlerPlayServer):Unit = ()
 
     private def handleFirewallAction(packet:PacketCustom, sender:EntityPlayerMP): Unit =
     {

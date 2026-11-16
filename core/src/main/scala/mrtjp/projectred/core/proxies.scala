@@ -16,6 +16,7 @@ class CoreProxy_server extends IProxy
     def preinit(): Unit =
     {
         MinecraftForge.EVENT_BUS.register(Configurator)
+        LegacySaveMigration.init()
 
         /* Item Registration */
         itemPart = new ItemPart

@@ -1,8 +1,9 @@
 {
-  "type": "forge:ore_shapeless",
-  "ingredients": [
-    { "item": "projectred-transportation:pipe", "data": 64 },
-    { "item": "minecraft:iron_nugget" }
-  ],
-  "result": { "item": "projectred-transportation:pipe", "data": 66, "count": 1 }
+  "type": "forge:ore_shaped",
+  "pattern": ["BGB", "BGB", "BGB"],
+  "key": {
+    "B": { "type": "forge:ore_dict", "ore": "ingotCopper" },
+    "G": { "type": "forge:ore_dict", "ore": "paneGlass" }
+  },
+  "result": { "item": "projectred-transportation:pipe", "data": 66, "count": 8 }
 }

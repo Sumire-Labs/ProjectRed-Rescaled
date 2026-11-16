@@ -6,6 +6,12 @@ import java.nio.file.{Files, Path}
 
 @Mod(modid="projectred_smoke", name="ProjectRed regression checks", version="1", dependencies="required-after:projectred-core;required-after:projectred-expansion;required-after:projectred-fabrication")
 class ServerSmokeMod {
+    @Mod.EventHandler def prepare(event:net.minecraftforge.fml.common.event.FMLPreInitializationEvent):Unit = {
+        net.minecraftforge.fml.common.registry.GameRegistry.registerTileEntity(classOf[DelayedLegacyPrinter],
+            new net.minecraft.util.ResourceLocation("projectred_smoke:delayed_printer"))
+        net.minecraftforge.fml.common.registry.GameRegistry.registerTileEntity(classOf[DelayedLegacyFiltered],
+            new net.minecraft.util.ResourceLocation("projectred_smoke:delayed_filtered"))
+    }
     @Mod.EventHandler def loaded(event:net.minecraftforge.fml.common.event.FMLLoadCompleteEvent):Unit =
         if System.getProperty("projectred.client.result") != null then
             Class.forName("mrtjp.projectred.verification.ClientSmokeChecks").getMethod("start").invoke(null)
@@ -16,6 +22,7 @@ class ServerSmokeMod {
         try {
             RegressionChecks.run(server.getWorld(0))
             KappaAuditChecks.run(server.getWorld(0))
+            LegacyContentMigrationChecks.run(server.getWorld(0))
             ICScheduleChecks.run(server.getWorld(0))
             ICWireNetChecks.run()
             LargeICPacketChecks.run(server.getWorld(0))
