@@ -17,6 +17,7 @@ import mrtjp.core.item.ItemKey
 import mrtjp.core.vec.{Point, Size}
 import mrtjp.projectred.transportation.PressurePayload
 import net.minecraft.client.renderer.texture.{TextureAtlasSprite, TextureMap}
+import net.minecraft.client.resources.I18n
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.inventory.{Container, ISidedInventory}
 import net.minecraft.item.ItemStack
@@ -175,8 +176,8 @@ class GuiFilteredImporter(c:Container, tile:TileFilteredImporter) extends NodeGu
     {
         TextureUtils.changeTexture(GuiFilteredImporter.background)
         GuiDraw.drawTexturedModalRect(0, 0, 0, 0, 176, 168)
-        GuiDraw.drawString("Filtered Importer", 8, 6, EnumColour.GRAY.argb, false)
-        GuiDraw.drawString("Inventory", 8, 75, EnumColour.GRAY.argb, false)
+        GuiDraw.drawString(I18n.format("tile.projectred.expansion.machine2|3.name"), 8, 6, EnumColour.GRAY.argb, false)
+        GuiDraw.drawString(I18n.format("container.inventory"), 8, 75, EnumColour.GRAY.argb, false)
     }
 }
 
@@ -236,6 +237,8 @@ object RenderFilteredImporter extends SimpleBlockRenderer
     override def getItemTransforms(stack: ItemStack) = Triple.of(0, 0, iconT1)
 
     override def shouldCull() = true
+    override def getParticleTexture(state: IExtendedBlockState) = bottom
+
 
     def getIcon(s:Int, meta:Int) = s match
     {

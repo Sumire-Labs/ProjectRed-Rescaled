@@ -8,11 +8,15 @@ import mrtjp.core.item.{ItemEquality, ItemKey, ItemKeyStack, ItemQueue}
 import mrtjp.projectred.transportation.RoutingChipDefs.ChipVal
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.inventory.IInventory
+import net.minecraft.client.resources.I18n
 import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NBTTagCompound
 import org.lwjgl.input.Keyboard
 
 import scala.collection.mutable.ListBuffer
+/** Lang key prefix for routing chip tooltips. */
+private[transportation] val ChipLang = "gui.projectred.transportation.chip."
+
 
 abstract class RoutingChip
 {
@@ -165,26 +169,32 @@ trait TChipFilter extends RoutingChip
         super.load(tag)
     }
 
-    val hide = Seq("off", "one per type", "one per stack")
+    /** Hide-mode names, as lang key suffixes. */
+    val hide = Seq("hideOff", "hideOnePerType", "hideOnePerStack")
+
     def addFilterInfo(list:ListBuffer[String]): Unit =
     {
-        if enableHiding then list+=(ChatFormatting.GRAY.toString+"Hide mode: "+hide(hideMode))
+        if enableHiding then
+            list+=(ChatFormatting.GRAY.toString+I18n.format(ChipLang+"hideMode", I18n.format(ChipLang+hide(hideMode))))
 
         if enablePatterns then
         {
-            var s = ""
-            def sep = if s == "" then "" else ", "
-            if metaMatch then s += "Meta"
-            if nbtMatch then s += sep+"NBT"
-            if oreMatch then s += sep+"Ore Dictionary"
-            list+=(ChatFormatting.GRAY.toString+"Matching: "+(if s.isEmpty then "ignore all" else s))
-            if damageGroupMode!=0 then list+=(ChatFormatting.GRAY.toString+"Damage group: "+grpPerc(damageGroupMode)+"%")
+            val s = Seq(
+                if metaMatch then Some(I18n.format(ChipLang+"labelMeta")) else None,
+                if nbtMatch then Some(I18n.format(ChipLang+"labelNbt")) else None,
+                if oreMatch then Some(I18n.format(ChipLang+"labelOre")) else None
+            ).flatten.mkString(", ")
+            val matching = if s.isEmpty then I18n.format(ChipLang+"matchingIgnoreAll") else s
+            list+=(ChatFormatting.GRAY.toString+I18n.format(ChipLang+"matching", matching))
+            if damageGroupMode!=0 then
+                list+=(ChatFormatting.GRAY.toString+I18n.format(ChipLang+"damageGroup", grpPerc(damageGroupMode)))
         }
 
         if enableFilter then
         {
-            list+=(ChatFormatting.GRAY.toString+"Filter mode: "+(if filterExclude then "blacklist" else "whitelist"))
-            list+=(ChatFormatting.GRAY.toString+"Filter: ")
+            val mode = I18n.format(ChipLang+(if filterExclude then "blacklist" else "whitelist"))
+            list+=(ChatFormatting.GRAY.toString+I18n.format(ChipLang+"filterModeLabel", mode))
+            list+=(ChatFormatting.GRAY.toString+I18n.format(ChipLang+"filterTitle"))
             var added = false
 
             for i <- 0 until filter.getSizeInventory do
@@ -192,12 +202,12 @@ trait TChipFilter extends RoutingChip
                 val stack = filter.getStackInSlot(i)
                 if !stack.isEmpty then
                 {
-                    list+=(ChatFormatting.GRAY.toString+" - "+stack.getDisplayName)
+                    list+=(ChatFormatting.GRAY.toString+I18n.format(ChipLang+"listEntry", stack.getDisplayName))
                     added = true
                 }
             }
 
-            if !added then list+=(ChatFormatting.GRAY.toString+" - empty")
+            if !added then list+=(ChatFormatting.GRAY.toString+I18n.format(ChipLang+"listEmpty"))
         }
     }
 }
@@ -233,7 +243,7 @@ trait TChipPriority extends RoutingChip
 
     def addPriorityInfo(list:ListBuffer[String]): Unit =
     {
-        list+=(ChatFormatting.GRAY.toString+"Preference: "+preference)
+        list+=(ChatFormatting.GRAY.toString+I18n.format(ChipLang+"preference", preference))
     }
 }
 
@@ -255,11 +265,15 @@ trait TChipOrientation extends RoutingChip
         super.load(tag)
     }
 
-    private val dirs = Seq("Down", "Up", "North", "South", "West", "East")
+    /** Direction names, as lang key suffixes. Indexed by side 0-5. */
+    private val dirs = Seq("orientation.0", "orientation.1", "orientation.2",
+        "orientation.3", "orientation.4", "orientation.5")
 
     def addOrientInfo(list:ListBuffer[String]): Unit =
     {
-        list+=(ChatFormatting.GRAY.toString+"Extract orientation: "+(if extractOrient == -1 then "Default" else dirs(extractOrient)))
+        val dir = if extractOrient == -1 then I18n.format(ChipLang+"orientationDefault")
+            else I18n.format(ChipLang+dirs(extractOrient))
+        list+=(ChatFormatting.GRAY.toString+I18n.format(ChipLang+"extractOrientation", dir))
     }
 }
 
@@ -289,24 +303,23 @@ trait TChipStock extends RoutingChip
 
     def addStockInfo(list:ListBuffer[String]): Unit =
     {
-        list += (ChatFormatting.GRAY.toString+"Fill mode: "+(requestMode match
-        {
-            case 0 => "when missing"
-            case 1 => "when empty"
-            case 2 => "infinite"
-        }))
-        list += (ChatFormatting.GRAY.toString+"Stock: ")
+        val mode = requestMode match
+            case 0 => "fillShortMissing"
+            case 1 => "fillShortEmpty"
+            case 2 => "fillShortInfinite"
+        list += (ChatFormatting.GRAY.toString+I18n.format(ChipLang+"fillModeLabel", I18n.format(ChipLang+mode)))
+        list += (ChatFormatting.GRAY.toString+I18n.format(ChipLang+"stockTitle"))
         var added = false
         for i <- 0 until stock.getSizeInventory do
         {
             val stack = stock.getStackInSlot(i)
             if !stack.isEmpty then
             {
-                list += (ChatFormatting.GRAY.toString+" - "+stack.getDisplayName+" ("+stack.getCount+")")
+                list += (ChatFormatting.GRAY.toString+I18n.format(ChipLang+"listEntryCount", stack.getDisplayName, stack.getCount))
                 added = true
             }
         }
-        if !added then list += (ChatFormatting.GRAY.toString+" - empty")
+        if !added then list += (ChatFormatting.GRAY.toString+I18n.format(ChipLang+"listEmpty"))
     }
 }
 
@@ -430,7 +443,7 @@ trait TChipCrafter extends RoutingChip
 
     def addMatrixInfo(list:ListBuffer[String]): Unit =
     {
-        list += (ChatFormatting.GRAY.toString+"Matrix: ")
+        list += (ChatFormatting.GRAY.toString+I18n.format(ChipLang+"matrixTitle"))
         var added = false
 
         for i <- 0 until 9 do
@@ -439,20 +452,21 @@ trait TChipCrafter extends RoutingChip
 
             if !stack.isEmpty then
             {
-                list += (ChatFormatting.GRAY.toString+" - "+stack.getDisplayName+" (" + stack.getCount + ")")
+                list += (ChatFormatting.GRAY.toString+I18n.format(ChipLang+"listEntryCount", stack.getDisplayName, stack.getCount))
                 added = true
             }
         }
-        if !added then list += (ChatFormatting.GRAY.toString+" - empty")
+        if !added then list += (ChatFormatting.GRAY.toString+I18n.format(ChipLang+"listEmpty"))
 
         val stack = matrix.getStackInSlot(9)
-        if !stack.isEmpty then list += (ChatFormatting.GRAY.toString+" - Yields: "+stack.getDisplayName+" (" + stack.getCount + ")")
+        if !stack.isEmpty then
+            list += (ChatFormatting.GRAY.toString+I18n.format(ChipLang+"matrixYields", stack.getDisplayName, stack.getCount))
     }
 
     def addExtInfo(list:ListBuffer[String]): Unit =
     {
-        list += (ChatFormatting.GRAY.toString+"Extensions: "+
-                ChatFormatting.GRAY.toString+(0 until 9).count{!extMatrix.getStackInSlot(_).isEmpty})
+        val count = (0 until 9).count{!extMatrix.getStackInSlot(_).isEmpty}
+        list += (ChatFormatting.GRAY.toString+I18n.format(ChipLang+"extensionsCount", count))
     }
 }
 
@@ -477,6 +491,6 @@ trait TChipCrafterExtension extends RoutingChip
 
     def addExtIDInfo(list:ListBuffer[String]): Unit =
     {
-        list += ChatFormatting.GRAY.toString+"Extension ID: "+id.toString.split("-")(0)+" ..."
+        list += ChatFormatting.GRAY.toString+I18n.format(ChipLang+"extensionIdValue", id.toString.split("-")(0))
     }
 }

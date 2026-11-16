@@ -16,6 +16,7 @@ import net.minecraft.client.util.ITooltipFlag
 import net.minecraft.creativetab.CreativeTabs
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.item.{Item, ItemStack}
+import net.minecraft.client.resources.I18n
 import net.minecraft.nbt.NBTTagCompound
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.*
@@ -37,8 +38,10 @@ class ItemPartPipe extends ItemCore with TItemMultiPart
     override def newPart(item:ItemStack, player:EntityPlayer, world:World, pos:BlockPos, side:Int, vhit:Vector3) =
     {
         val pdef = PipeDefs.fromMeta(item.getItemDamage)
-        val p = MultiPartRegistry.loadPart(pdef.partname, null:NBTTagCompound).asInstanceOf[PayloadPipePart[?]]
-        if p != null then p.preparePlacement(side, item.getItemDamage)
+        val p = MultiPartRegistry.loadPart(pdef.partname, null:NBTTagCompound)
+        p match
+            case pipe:SubcorePipePart => pipe.preparePlacement(side, item.getItemDamage)
+            case _ =>
         p
     }
 
@@ -108,7 +111,7 @@ class ItemRoutingChip extends ItemCore
             r.infoCollection(s)
             list.addAll(s.asJava)
         }
-        else list.add(ChatFormatting.GRAY.toString+"not configured")
+        else list.add(ChatFormatting.GRAY.toString+I18n.format(ChipLang+"notConfigured"))
     }
 
     override def onItemRightClick(world:World, player:EntityPlayer, hand:EnumHand) =

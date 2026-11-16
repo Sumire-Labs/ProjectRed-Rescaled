@@ -10,7 +10,6 @@ import codechicken.lib.data.{MCDataInput, MCDataOutput}
 import codechicken.lib.model.bakery.generation.IBakery
 import codechicken.lib.model.bakery.{IBakeryProvider, ModelBakery, SimpleBlockRenderer}
 import codechicken.lib.render.buffer.BakingVertexBuffer
-import codechicken.lib.render.particle.CustomParticleHandler
 import codechicken.lib.render.{CCModel, CCRenderState}
 import codechicken.lib.util.VertexDataUtils
 import codechicken.lib.vec.uv.{MultiIconTransformation, UVTransformation}
@@ -71,11 +70,11 @@ class BlockFabricationMachine(bakery:IBakery) extends MultiTileBlock(Material.RO
 
     @SideOnly(Side.CLIENT)
     override def addHitEffects(state:IBlockState, world:World, target:RayTraceResult, manager:ParticleManager):Boolean =
-        CustomParticleHandler.handleHitEffects(state, world, target, manager)
+        mrtjp.projectred.core.BakeryParticles.hit(state, world, target, manager)
 
     @SideOnly(Side.CLIENT)
     override def addDestroyEffects(world:World, pos:BlockPos, manager:ParticleManager):Boolean =
-        CustomParticleHandler.handleDestroyEffects(world, pos, manager)
+        mrtjp.projectred.core.BakeryParticles.destroy(world, pos, manager)
 
 object BlockFabricationMachine
 :

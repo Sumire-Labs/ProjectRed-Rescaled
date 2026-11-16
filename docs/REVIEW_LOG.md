@@ -370,3 +370,32 @@ bus channel 15, layer transitions, upper-layer erasure and an L-shaped freehand
 wire path, alongside the large-circuit and existing module smoke checks.
 Screenshots were inspected. Historical saves from other forks still require
 case-by-case checks; their original runtime data remains available for recovery.
+
+## Complete Kappa fork comparison
+
+Compared all 53 commits from baseline `11da8db1` to Kappa's current 1.12 head
+`f55e7aab`, with 403 changed paths after source/resource relocation is normalized.
+The path and commit decisions are recorded in `KAPPA_AUDIT.json`; the rationale
+and remaining 1.21.1 migration work are described in `KAPPA_AUDIT.md`.
+
+The audit found a legacy item-factory cast that prevented Pneumatic Tube item
+placement, missing machine/lamp/framed-wire particles, the fabrication-machine
+fallback model, GUI/tooltips/player-message localization, Chinese inverted
+fallout-lamp keys and the deprecated JEI plugin base class. Those omissions are
+now addressed. Server messages preserve custom display names and defer ordinary
+item-name translation to the receiving client. Japanese translations cover the
+new keys.
+
+Actual hit callbacks also reproduced CCL's empty face-sprite crash on the low
+Fabrication table models. Fabrication block particles now use the bakery's
+declared particle sprite and actual bounds. Ordinary lamp particles follow color
+and lit state; framed-wire bounds remain available on the dedicated server.
+
+Development server, graphical client and installed Cleanroom server checks pass.
+New checks create every pipe variant through the item factory, place a Pneumatic
+Tube through `onItemUse`, preserve custom/localized item names and format English,
+Japanese and Chinese messages. Client fixtures synchronize 20 machine variants
+from the integrated server and exercise hit/destroy callbacks, all 32 lamp states
+and all insulated-wire colors. Existing GUI, 482-item rendering, IC migration,
+manufacturing and pneumatic delivery checks still pass. Auto Crafter and Plotting
+Table screenshots were inspected. The installed check omits JEI.

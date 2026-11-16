@@ -90,6 +90,8 @@ object RenderFireStarter extends SimpleBlockRenderer
     override def getItemTransforms(stack:ItemStack) = Triple.of(0, 0, iconT1)
 
     override def shouldCull() = true
+    override def getParticleTexture(state: IExtendedBlockState) = bottom
+
 
     def getIcon(s:Int, meta:Int) = s match
     {

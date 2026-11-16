@@ -54,6 +54,7 @@ object ClientSmokeChecks {
                     state = 1
                     mc.launchIntegratedServer("client-smoke", "ProjectRed Client Smoke", new WorldSettings(0L, GameType.CREATIVE, false, false, WorldType.FLAT))
                 case 1 if mc.player != null && mc.world != null && mc.currentScreen == null =>
+                    if !KappaAuditClientChecks.run() then return
                     val all = NonNullList.create[ItemStack]()
                     ForgeRegistries.ITEMS.getValuesCollection.asScala.filter(i => i.getRegistryName.getNamespace.startsWith("projectred")).foreach(_.getSubItems(CreativeTabs.SEARCH, all))
                     stacks = all.asScala.toVector.filterNot(_.isEmpty)

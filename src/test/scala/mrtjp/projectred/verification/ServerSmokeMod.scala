@@ -15,6 +15,7 @@ class ServerSmokeMod {
         val server = FMLCommonHandler.instance().getMinecraftServerInstance
         try {
             RegressionChecks.run(server.getWorld(0))
+            KappaAuditChecks.run(server.getWorld(0))
             ICScheduleChecks.run(server.getWorld(0))
             ICWireNetChecks.run()
             LargeICPacketChecks.run(server.getWorld(0))

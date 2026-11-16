@@ -9,6 +9,7 @@ import codechicken.multipart.BlockMultipart
 import mrtjp.core.gui.*
 import mrtjp.core.item.{ItemKey, ItemKeyStack}
 import mrtjp.core.vec.{Point, Rect, Size, Vec2}
+import net.minecraft.client.resources.I18n
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.inventory.Container
 import net.minecraft.util.ResourceLocation
@@ -154,14 +155,14 @@ class GuiRequester(pipe:IRouterContainer) extends NodeGui(256, 192)
         val ref = new MCButtonNode
         ref.position = Point(10, 158)
         ref.size = Size(50, 14)
-        ref.text = "Refresh"
+        ref.text = I18n.format("gui.projectred.transportation.requester.refresh")
         ref.clickDelegate = {() => askForListRefresh()}
         addChild(ref)
 
         val req = new MCButtonNode
         req.position = Point(10, 173)
         req.size = Size(50, 14)
-        req.text = "Submit"
+        req.text = I18n.format("gui.projectred.transportation.requester.submit")
         req.clickDelegate = {() => sendItemRequest()}
         addChild(req)
 
@@ -182,7 +183,7 @@ class GuiRequester(pipe:IRouterContainer) extends NodeGui(256, 192)
         val all = new MCButtonNode
         all.position = Point(176, 158)
         all.size = Size(24, 16)
-        all.text = "All"
+        all.text = I18n.format("gui.projectred.transportation.requester.all")
         all.clickDelegate = {() => if selectedItem != null then textCount.text = String.valueOf(Math.max(1, itemMap(selectedItem)))}
         addChild(all)
     }
@@ -215,9 +216,9 @@ class GuiRequester(pipe:IRouterContainer) extends NodeGui(256, 192)
 
     override def drawFront_Impl(mouse:Point, frame:Float): Unit =
     {
-        GuiDraw.drawString("Pull", 218, 144, EnumColour.GRAY.rgb, false)
-        GuiDraw.drawString("Craft", 218, 159, EnumColour.GRAY.rgb, false)
-        GuiDraw.drawString("Partial", 218, 174, EnumColour.GRAY.rgb, false)
+        GuiDraw.drawString(I18n.format("gui.projectred.transportation.requester.pull"), 218, 144, EnumColour.GRAY.rgb, false)
+        GuiDraw.drawString(I18n.format("gui.projectred.transportation.requester.craft"), 218, 159, EnumColour.GRAY.rgb, false)
+        GuiDraw.drawString(I18n.format("gui.projectred.transportation.requester.partial"), 218, 174, EnumColour.GRAY.rgb, false)
     }
 
     override def onAddedToParent_Impl(): Unit =
@@ -329,8 +330,7 @@ class GuiFirewallPipe(pipe:RoutedFirewallPipe, c:Container) extends NodeGui(c, 1
         }
         excl.position = Point(113, 45)
         excl.size = Size(14, 14)
-        excl.tooltipBuilder = {_ += ("Items are "+
-                (if pipe.filtExclude then "blacklisted" else "whitelisted"))}
+        excl.tooltipBuilder = {_ += I18n.format(ChipLang+(if pipe.filtExclude then "itemsBlacklisted" else "itemsWhitelisted"))}
         excl.clickDelegate = {() => sendMessage(0)}
         addChild(excl)
 
@@ -351,9 +351,9 @@ class GuiFirewallPipe(pipe:RoutedFirewallPipe, c:Container) extends NodeGui(c, 1
             addChild(b)
         }
 
-        makeButton(150, 28, pipe.allowRoute, "Push routing", 1)
-        makeButton(150, 45, pipe.allowBroadcast, "Pulling", 2)
-        makeButton(150, 62, pipe.allowCrafting, "Crafting", 3)
+        makeButton(150, 28, pipe.allowRoute, I18n.format(ChipLang+"firewallPush"), 1)
+        makeButton(150, 45, pipe.allowBroadcast, I18n.format(ChipLang+"firewallPull"), 2)
+        makeButton(150, 62, pipe.allowCrafting, I18n.format(ChipLang+"firewallCraft"), 3)
     }
 
     def sendMessage(id:Int): Unit =
@@ -366,7 +366,7 @@ class GuiFirewallPipe(pipe:RoutedFirewallPipe, c:Container) extends NodeGui(c, 1
     {
         TextureUtils.changeTexture(GuiFirewallPipe.backgroundImage)
         GuiDraw.drawTexturedModalRect(0, 0, 0, 0, size.width, size.height)
-        GuiDraw.drawString("Firewall Pipe", 8, 6, EnumColour.GRAY.argb, false)
+        GuiDraw.drawString(I18n.format("item.projectred.transportation.pipe|4.name"), 8, 6, EnumColour.GRAY.argb, false)
     }
 }
 

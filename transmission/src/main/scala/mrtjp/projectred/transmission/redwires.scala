@@ -5,12 +5,13 @@ import codechicken.lib.vec.Rotation
 import codechicken.multipart.*
 import codechicken.multipart.scalatraits.TRedstoneTile
 import mrtjp.core.world.Messenger
+import mrtjp.projectred.MsgLang
 import mrtjp.projectred.api.IConnectable
 import mrtjp.projectred.core.*
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.nbt.NBTTagCompound
 import net.minecraft.util.EnumFacing
-import net.minecraft.util.text.TextComponentString
+import net.minecraft.util.text.TextComponentTranslation
 import net.minecraftforge.fml.relauncher.{Side, SideOnly}
 
 trait TRedwireCommons extends TWireCommons with TRSAcquisitionsCommons with TRSPropagationCommons with IRedwirePart
@@ -72,8 +73,8 @@ trait TRedwireCommons extends TWireCommons with TRSAcquisitionsCommons with TRSP
 
     override def debug(player:EntityPlayer) =
     {
-        player.sendMessage(new TextComponentString(
-            (if world.isRemote then "Client" else "Server")+" signal strength: "+getSignal))
+        val side = new TextComponentTranslation(MsgLang+(if world.isRemote then "signal.side.client" else "signal.side.server"))
+        player.sendMessage(new TextComponentTranslation(MsgLang+"signal.strength", side, getSignal))
         true
     }
 
@@ -343,6 +344,9 @@ class InsulatedRedAlloyPart extends RedwirePart with TInsulatedCommons
 
 class FramedInsulatedRedAlloyPart extends FramedRedwirePart with TInsulatedCommons
 {
+    @SideOnly(Side.CLIENT)
+    override def getBrokenIcon(side:Int) = getWireType.wireSprites(0)
+
     override def weakPowerLevel(side:Int) =
     {
         if !maskConnects(side) then 0

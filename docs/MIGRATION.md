@@ -10,6 +10,8 @@ Remaining deviations must be recorded; a visual-only adaptation is not full pari
 The current scope and unresolved differences are tracked in [SPEC_PARITY.md](SPEC_PARITY.md).
 The newer IC backend and its remaining frontend work are described in
 [IC_ENGINE_BACKPORT.md](IC_ENGINE_BACKPORT.md).
+The complete Kappa fork comparison, including the later particle, localization
+and item-placement fixes, is recorded in [KAPPA_AUDIT.md](KAPPA_AUDIT.md).
 
 - ProjectRed baseline: `11da8db1` on the legacy Minecraft 1.12 branch.
 - The source migration uses kappa-maintainer/ProjectRed at

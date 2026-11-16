@@ -18,6 +18,7 @@ import mrtjp.core.vec.{Point, Size}
 import mrtjp.projectred.ProjectRedExpansion
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.texture.{TextureAtlasSprite, TextureMap}
+import net.minecraft.client.resources.I18n
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.inventory.*
 import net.minecraft.item.ItemStack
@@ -519,8 +520,8 @@ class GuiProjectBench(tile: TileProjectBench, c: ContainerProjectBench) extends 
             }
         }
 
-        GuiDraw.drawString("Project Bench", 8, 6, EnumColour.GRAY.argb, false)
-        GuiDraw.drawString("Inventory", 8, 116, EnumColour.GRAY.argb, false)
+        GuiDraw.drawString(I18n.format("tile.projectred.expansion.machine2|10.name"), 8, 6, EnumColour.GRAY.argb, false)
+        GuiDraw.drawString(I18n.format("container.inventory"), 8, 116, EnumColour.GRAY.argb, false)
     }
 
     override def drawFront_Impl(mouse: Point, rframe: Float): Unit = {
@@ -568,6 +569,8 @@ object RenderProjectBench extends SimpleBlockRenderer
     override def getWorldTransforms(state: IExtendedBlockState) = Triple.of(0, 0, iconT)
     override def getItemTransforms(stack: ItemStack) = Triple.of(0, 0, iconT)
     override def shouldCull() = true
+    override def getParticleTexture(state: IExtendedBlockState) = bottom
+
 
     override def registerIcons(map: TextureMap): Unit = {
         bottom = map.registerSprite(new ResourceLocation("projectred:blocks/mechanical/projectbench/bottom"))

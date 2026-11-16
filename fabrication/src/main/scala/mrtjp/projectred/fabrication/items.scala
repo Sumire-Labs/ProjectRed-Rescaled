@@ -21,6 +21,7 @@ import mrtjp.projectred.fabrication.IIOGateTile.*
 import mrtjp.projectred.integration.GateDefinition
 import net.minecraft.client.renderer.GlStateManager.*
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats
+import net.minecraft.client.resources.I18n
 import net.minecraft.client.util.ITooltipFlag
 import net.minecraft.creativetab.CreativeTabs
 import net.minecraft.entity.Entity
@@ -55,12 +56,14 @@ class ItemICBlueprint extends Item //hack to allow first-person map rendering of
             val (warnings, errors) = ItemICBlueprint.loadFlags(stack)
 
             if warnings != 0 then
-                tooltip.add(s"$YELLOW$BOLD" + "!" + s"$RESET$GRAY contains $warnings " + (if warnings > 1 then "warnings" else "warning"))
+                val key = "gui.projectred.fabrication.blueprint." + (if warnings > 1 then "containsWarnings" else "containsWarning")
+                tooltip.add(s"$YELLOW$BOLD" + "!" + s"$RESET$GRAY " + I18n.format(key, warnings))
 
             if errors != 0 then
-                tooltip.add(s"$RED$BOLD" + "X" + s"$RESET$GRAY contains $errors " + (if errors > 1 then "errors" else "error"))
+                val key = "gui.projectred.fabrication.blueprint." + (if errors > 1 then "containsErrors" else "containsError")
+                tooltip.add(s"$RED$BOLD" + "X" + s"$RESET$GRAY " + I18n.format(key, errors))
         }
-        else tooltip.add(GRAY.toString+"empty blueprint")
+        else tooltip.add(GRAY.toString+I18n.format("gui.projectred.fabrication.blueprint.empty"))
     }
 }
 
@@ -316,9 +319,9 @@ class ItemICChip extends ItemCore
     {
         ItemICChip.addInfo(stack, tooltip)
         if stack.getItemDamage == 1 then {
-            tooltip.add("Creative-mode only chip.")
-            tooltip.add("Instant and free prints.")
-            tooltip.add("Rightclick to add IC Gate to inventory.")
+            tooltip.add(I18n.format("gui.projectred.fabrication.chip.creativeOnly"))
+            tooltip.add(I18n.format("gui.projectred.fabrication.chip.instantPrints"))
+            tooltip.add(I18n.format("gui.projectred.fabrication.chip.rightclickGate"))
         }
     }
 

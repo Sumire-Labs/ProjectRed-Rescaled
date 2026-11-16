@@ -11,6 +11,7 @@ import codechicken.lib.texture.TextureUtils
 import com.mojang.realmsclient.gui.ChatFormatting
 import mrtjp.core.gui.*
 import mrtjp.core.vec.{Point, Size}
+import net.minecraft.client.resources.I18n
 import net.minecraft.util.ResourceLocation
 
 import scala.collection.mutable.ListBuffer
@@ -43,8 +44,8 @@ class FilterChipPanel(chip:TChipFilter) extends ChipPanelNode(chip)
         b.position = Point(88, 16)
         b.size = Size(14, 14)
         b.tooltipBuilder = { list =>
-            list += "Filter mode"
-            list += (ChatFormatting.GRAY.toString + "Items are " + (if chip.filterExclude then "blacklisted" else "whitelisted"))
+            list += I18n.format(ChipLang+"filterMode")
+            list += (ChatFormatting.GRAY.toString + I18n.format(ChipLang+(if chip.filterExclude then "itemsBlacklisted" else "itemsWhitelisted")))
         }
         b.clickDelegate = {() =>
             chip.toggleExcludeMode()
@@ -65,8 +66,8 @@ class FilterChipPanel(chip:TChipFilter) extends ChipPanelNode(chip)
             b.position = Point(70, 16)
             b.size = Size(14, 14)
             b.tooltipBuilder = { list =>
-                list += "Metadata matching"
-                list += (ChatFormatting.GRAY.toString+"Meta is "+(if chip.metaMatch then "checked" else "ignored"))
+                list += I18n.format(ChipLang+"metadataMatching")
+                list += (ChatFormatting.GRAY.toString+I18n.format(ChipLang+(if chip.metaMatch then "metaChecked" else "metaIgnored")))
             }
             b.clickDelegate = {() =>
                 chip.toggleMetaMode()
@@ -85,8 +86,8 @@ class FilterChipPanel(chip:TChipFilter) extends ChipPanelNode(chip)
             b.position = Point(70, 32)
             b.size = Size(14, 14)
             b.tooltipBuilder = { list =>
-                list += "NBT matching"
-                list += (ChatFormatting.GRAY.toString+"NBT is "+(if chip.nbtMatch then "checked" else "ignored"))
+                list += I18n.format(ChipLang+"nbtMatching")
+                list += (ChatFormatting.GRAY.toString+I18n.format(ChipLang+(if chip.nbtMatch then "nbtChecked" else "nbtIgnored")))
             }
             b.clickDelegate = {() =>
                 chip.toggleNBTMode()
@@ -105,8 +106,8 @@ class FilterChipPanel(chip:TChipFilter) extends ChipPanelNode(chip)
             b.position = Point(70, 48)
             b.size = Size(14, 14)
             b.tooltipBuilder = { list =>
-                list += "Ore Dictionary matching"
-                list += (ChatFormatting.GRAY.toString+"Ore Dictionary is "+(if chip.oreMatch then "checked" else "ignored"))
+                list += I18n.format(ChipLang+"oreMatching")
+                list += (ChatFormatting.GRAY.toString+I18n.format(ChipLang+(if chip.oreMatch then "oreChecked" else "oreIgnored")))
             }
             b.clickDelegate = {() =>
                 chip.toggleOreMode()
@@ -126,13 +127,10 @@ class FilterChipPanel(chip:TChipFilter) extends ChipPanelNode(chip)
             b.position = Point(88, 48)
             b.size = Size(20, 20)
             b.tooltipBuilder = { list =>
-                list += "Damage groups"
+                list += I18n.format(ChipLang+"damageGroups")
                 val percent = chip.grpPerc(chip.damageGroupMode)
-                list += (ChatFormatting.GRAY.toString+(percent match
-                {
-                    case -1 => "Tools are not grouped by damage."
-                    case _ => "Tools grouped at "+percent+"%"
-                }))
+                list += (ChatFormatting.GRAY.toString+(if percent == -1 then I18n.format(ChipLang+"damageNotGrouped")
+                    else I18n.format(ChipLang+"damageGrouped", percent)))
             }
             b.clickDelegate = {() =>
                 chip.shiftDamageGroup()
@@ -155,8 +153,9 @@ class FilterChipPanel(chip:TChipFilter) extends ChipPanelNode(chip)
             b.position = Point(88, 32)
             b.size = Size(14, 14)
             b.tooltipBuilder = { list =>
-                list += "Item hiding"
-                list += (ChatFormatting.GRAY.toString+"Hide "+(if chip.hideMode == 0 then "nothing" else chip.hide(chip.hideMode)))
+                list += I18n.format(ChipLang+"itemHiding")
+                list += (ChatFormatting.GRAY.toString+(if chip.hideMode == 0 then I18n.format(ChipLang+"hideNothing")
+                    else I18n.format(ChipLang+"hide", I18n.format(ChipLang+chip.hide(chip.hideMode)))))
             }
             b.clickDelegate = {() =>
                 chip.shiftHiding()
@@ -174,7 +173,7 @@ class FilterChipPanel(chip:TChipFilter) extends ChipPanelNode(chip)
 
     override def buildDotTooltip(list:ListBuffer[String]): Unit =
     {
-        list += "Filter"
+        list += I18n.format(ChipLang+"filter")
         chip.addFilterInfo(list)
     }
 
@@ -212,23 +211,21 @@ class OrientChipPanel(chip:TChipOrientation) extends ChipPanelNode(chip)
 
     override def buildDotTooltip(list:ListBuffer[String]): Unit =
     {
-        list += "Orientation"
+        list += I18n.format(ChipLang+"orientation")
         chip.addOrientInfo(list)
     }
-
-    private val names = Seq("bottom", "top", "North", "South", "West", "East")
 
     override def drawBack_Impl(mouse:Point, rframe:Float): Unit =
     {
         super.drawBack_Impl(mouse, rframe)
         val xOff = 52
         val yOff = 16
-        GuiDraw.drawString("Extraction is", position.x+xOff, position.y+yOff, EnumColour.GRAY.rgb, false)
-        if chip.extractOrient == -1 then GuiDraw.drawString("not simulated", position.x+xOff, position.y+yOff+10, EnumColour.GRAY.rgb, false)
+        GuiDraw.drawString(I18n.format("gui.projectred.transportation.extraction.is"), position.x+xOff, position.y+yOff, EnumColour.GRAY.rgb, false)
+        if chip.extractOrient == -1 then GuiDraw.drawString(I18n.format("gui.projectred.transportation.extraction.notSimulated"), position.x+xOff, position.y+yOff+10, EnumColour.GRAY.rgb, false)
         else
         {
-            GuiDraw.drawString("simulated from", position.x+xOff, position.y+yOff+10, EnumColour.GRAY.rgb, false)
-            GuiDraw.drawString("the " + names(chip.extractOrient), position.x+xOff, position.y+yOff+20, EnumColour.GRAY.rgb, false)
+            GuiDraw.drawString(I18n.format("gui.projectred.transportation.extraction.simulatedFrom"), position.x+xOff, position.y+yOff+10, EnumColour.GRAY.rgb, false)
+            GuiDraw.drawString(I18n.format("gui.projectred.transportation.extraction.direction." + chip.extractOrient), position.x+xOff, position.y+yOff+20, EnumColour.GRAY.rgb, false)
         }
     }
 }
@@ -267,7 +264,7 @@ class PriorityChipPanel(chip:TChipPriority) extends ChipPanelNode(chip)
 
     override def buildDotTooltip(list:ListBuffer[String]): Unit =
     {
-        list += "Priority"
+        list += I18n.format(ChipLang+"priority")
         chip.addPriorityInfo(list)
     }
 
@@ -305,13 +302,13 @@ class StockChipPanel(chip:TChipStock) extends ChipPanelNode(chip)
         b.position = Point(75, 32)
         b.size = Size(14, 14)
         b.tooltipBuilder = {list =>
-            list += "Fill mode"
-            list += ChatFormatting.GRAY.toString+(chip.requestMode match
+            list += I18n.format(ChipLang+"fillMode")
+            list += ChatFormatting.GRAY.toString+I18n.format(ChipLang+(chip.requestMode match
             {
-                case 0 => "refill when items missing"
-                case 1 => "refill when items empty"
-                case 2 => "refill infinitely"
-            })
+                case 0 => "fillMissing"
+                case 1 => "fillEmpty"
+                case 2 => "fillInfinite"
+            }))
         }
         b.clickDelegate = {() =>
             chip.shiftRequestMode()
@@ -328,7 +325,7 @@ class StockChipPanel(chip:TChipStock) extends ChipPanelNode(chip)
 
     override def buildDotTooltip(list:ListBuffer[String]): Unit =
     {
-        list += "Stock"
+        list += I18n.format(ChipLang+"stock")
         chip.addStockInfo(list)
     }
 
@@ -370,7 +367,7 @@ class CraftChipPanel(chip:TChipCrafter) extends ChipPanelNode(chip)
 
     override def buildDotTooltip(list:ListBuffer[String]): Unit =
     {
-        list += "Matrix"
+        list += I18n.format(ChipLang+"matrix")
         chip.addMatrixInfo(list)
     }
 
@@ -408,7 +405,7 @@ class CraftExtPanel(chip:TChipCrafter) extends ChipPanelNode(chip)
 
     override def buildDotTooltip(list:ListBuffer[String]): Unit =
     {
-        list += "Extensions"
+        list += I18n.format(ChipLang+"extensions")
         chip.addExtInfo(list)
     }
 
@@ -445,8 +442,8 @@ class MatrixMatchingPanel(chip:TChipMatchMatrix) extends ChipPanelNode(chip)
         b.position = Point(70, 12)
         b.size = Size(14, 14)
         b.tooltipBuilder = { list =>
-            list += "Metadata matching"
-            list += (ChatFormatting.GRAY.toString+"Meta is "+(if chip.matchMeta(idx) then "checked" else "ignored"))
+            list += I18n.format(ChipLang+"metadataMatching")
+            list += (ChatFormatting.GRAY.toString+I18n.format(ChipLang+(if chip.matchMeta(idx) then "metaChecked" else "metaIgnored")))
         }
         b.clickDelegate = {() =>
             chip.toggleMatchMeta(idx)
@@ -466,8 +463,8 @@ class MatrixMatchingPanel(chip:TChipMatchMatrix) extends ChipPanelNode(chip)
         b.position = Point(70, 28)
         b.size = Size(14, 14)
         b.tooltipBuilder = { list =>
-            list += "NBT matching"
-            list += (ChatFormatting.GRAY.toString+"NBT is "+(if chip.matchNBT(idx) then "checked" else "ignored"))
+            list += I18n.format(ChipLang+"nbtMatching")
+            list += (ChatFormatting.GRAY.toString+I18n.format(ChipLang+(if chip.matchNBT(idx) then "nbtChecked" else "nbtIgnored")))
         }
         b.clickDelegate = {() =>
             chip.toggleMatchNBT(idx)
@@ -487,8 +484,8 @@ class MatrixMatchingPanel(chip:TChipMatchMatrix) extends ChipPanelNode(chip)
         b.position = Point(70, 44)
         b.size = Size(14, 14)
         b.tooltipBuilder = { list =>
-            list += "Ore Dictionary matching"
-            list += (ChatFormatting.GRAY.toString+"Ore Dictionary is "+(if chip.matchOre(idx) then "checked" else "ignored"))
+            list += I18n.format(ChipLang+"oreMatching")
+            list += (ChatFormatting.GRAY.toString+I18n.format(ChipLang+(if chip.matchOre(idx) then "oreChecked" else "oreIgnored")))
         }
         b.clickDelegate = {() =>
             chip.toggleMatchOre(idx)
@@ -509,13 +506,10 @@ class MatrixMatchingPanel(chip:TChipMatchMatrix) extends ChipPanelNode(chip)
         b.position = Point(88, 26)
         b.size = Size(20, 20)
         b.tooltipBuilder = { list =>
-            list += "Damage groups"
+            list += I18n.format(ChipLang+"damageGroups")
             val percent = chip.grpPerc(chip.matchGroup(idx))
-            list += (ChatFormatting.GRAY.toString+(percent match
-            {
-                case -1 => "Tools are not grouped by damage."
-                case _ => "Tools grouped at "+percent+"%"
-            }))
+            list += (ChatFormatting.GRAY.toString+(if percent == -1 then I18n.format(ChipLang+"damageNotGrouped")
+                else I18n.format(ChipLang+"damageGrouped", percent)))
         }
         b.clickDelegate = {() =>
             chip.toggleMatchGroup(idx)
@@ -556,7 +550,7 @@ class MatrixMatchingPanel(chip:TChipMatchMatrix) extends ChipPanelNode(chip)
 
     override def buildDotTooltip(list:ListBuffer[String]): Unit =
     {
-        list += "Match options"
+        list += I18n.format(ChipLang+"matchOptions")
     }
 
     override def drawBack_Impl(mouse:Point, rframe:Float): Unit =
@@ -579,7 +573,7 @@ class ExtensionIDPanel(chip:TChipCrafterExtension) extends ChipPanelNode(chip)
         val ref = new MCButtonNode
         ref.position = Point(57, 38)
         ref.size = Size(58, 12)
-        ref.text = "randomize"
+        ref.text = I18n.format("gui.projectred.transportation.chip.randomize")
         ref.clickDelegate = {() =>
             chip.randomizeUUID()
             getContainer.saveChip()
@@ -595,7 +589,7 @@ class ExtensionIDPanel(chip:TChipCrafterExtension) extends ChipPanelNode(chip)
 
     override def buildDotTooltip(list:ListBuffer[String]): Unit =
     {
-        list += "Extension ID"
+        list += I18n.format(ChipLang+"extensionId")
         chip.addExtIDInfo(list)
     }
 

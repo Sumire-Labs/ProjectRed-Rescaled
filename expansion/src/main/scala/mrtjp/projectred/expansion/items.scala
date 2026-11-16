@@ -17,6 +17,7 @@ import mrtjp.projectred.ProjectRedExpansion
 import mrtjp.projectred.api.IScrewdriver
 import net.minecraft.client.Minecraft
 import net.minecraft.client.model.{ModelBiped, ModelRenderer}
+import net.minecraft.client.resources.I18n
 import net.minecraft.client.util.ITooltipFlag
 import net.minecraft.enchantment.Enchantment.Rarity
 import net.minecraft.enchantment.{Enchantment, EnchantmentHelper, EnumEnchantmentType}
@@ -419,7 +420,8 @@ class ItemInfusedEnderPearl extends ItemCore
         if hasLocation(stack) then
         {
             val bc = getLocation(stack)
-            slist.add(TextFormatting.GRAY.toString + s"Tied to [${bc.getX}, ${bc.getY}, ${bc.getZ}]")
+            slist.add(TextFormatting.GRAY.toString
+                + I18n.format("gui.projectred.expansion.infusedEnderPearl.tiedTo", bc.getX, bc.getY, bc.getZ))
         }
     }
 }

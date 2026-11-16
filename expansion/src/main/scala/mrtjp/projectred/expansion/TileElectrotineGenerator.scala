@@ -18,6 +18,7 @@ import mrtjp.core.world.WorldLib
 import mrtjp.projectred.core.PartDefs
 import mrtjp.projectred.{ProjectRedCore, ProjectRedExpansion}
 import net.minecraft.client.renderer.texture.{TextureAtlasSprite, TextureMap}
+import net.minecraft.client.resources.I18n
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NBTTagCompound
@@ -242,8 +243,8 @@ class GuiElectrotineGenerator(tile:TileElectrotineGenerator, c:ContainerElectrot
         if tile.burnTimeRemaining > tile.getBurnUseOnCharge && tile.powerStorage < tile.getMaxStorage then
             GuiDraw.drawTexturedModalRect(69, 45, 211, 10, 23, 9)
 
-        GuiDraw.drawString("Electrotine Generator", 8, 6, EnumColour.GRAY.argb, false)
-        GuiDraw.drawString("Inventory", 8, 79, EnumColour.GRAY.argb, false)
+        GuiDraw.drawString(I18n.format("tile.projectred.expansion.machine1|1.name"), 8, 6, EnumColour.GRAY.argb, false)
+        GuiDraw.drawString(I18n.format("container.inventory"), 8, 79, EnumColour.GRAY.argb, false)
     }
 }
 
@@ -313,6 +314,8 @@ object RenderElectrotineGenerator extends SimpleBlockRenderer
     override def getItemTransforms(stack: ItemStack) = Triple.of(0, 0, iconT1)
 
     override def shouldCull() = true
+    override def getParticleTexture(state: IExtendedBlockState) = bottom
+
 
     override def registerIcons(reg:TextureMap): Unit =
     {

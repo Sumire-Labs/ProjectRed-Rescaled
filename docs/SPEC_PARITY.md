@@ -10,6 +10,10 @@ on `Sumire-Labs/ProjectRed-Rescaled:1.21.1`. A future change of reference must b
 recorded explicitly. Kappa's 1.12 port is an implementation reference; it does not
 override the 1.21.1 specification or replace the Sumire dependency forks.
 
+[KAPPA_AUDIT.md](KAPPA_AUDIT.md) records the complete pinned Kappa comparison.
+Its identified omissions are addressed separately from the wider conformance
+work below.
+
 ## Current comparison
 
 | Area | Implemented comparison | Remaining work |

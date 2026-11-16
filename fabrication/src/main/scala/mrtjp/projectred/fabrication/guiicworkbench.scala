@@ -22,6 +22,7 @@ import mrtjp.projectred.fabrication.ICComponentStore.*
 import net.minecraft.client.gui.Gui
 import net.minecraft.client.renderer.GlStateManager
 import net.minecraft.client.renderer.GlStateManager.*
+import net.minecraft.client.resources.I18n
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.item.ItemStack
 import net.minecraft.util.ResourceLocation
@@ -203,7 +204,7 @@ class RenameICNode(oldName:String) extends TNode
             removeFromParent()
             completionDelegate()
         }
-        fin.text = "confirm"
+        fin.text = I18n.format("gui.projectred.fabrication.workbench.confirm")
         addChild(fin)
 
         textbox = new SimpleTextboxNode
@@ -313,7 +314,7 @@ class NewICNode extends TNode
             removeFromParent()
             completionDelegate()
         }
-        fin.text = "start"
+        fin.text = I18n.format("gui.projectred.fabrication.workbench.start")
         addChild(fin)
 
         textbox = new SimpleTextboxNode

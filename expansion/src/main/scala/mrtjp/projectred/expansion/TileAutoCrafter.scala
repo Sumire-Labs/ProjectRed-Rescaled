@@ -16,6 +16,7 @@ import mrtjp.core.inventory.{TInventory, TInventoryCapablilityTile}
 import mrtjp.core.vec.{Point, Size}
 import mrtjp.projectred.ProjectRedExpansion
 import net.minecraft.client.renderer.texture.{TextureAtlasSprite, TextureMap}
+import net.minecraft.client.resources.I18n
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.inventory.{IContainerListener, ISidedInventory}
 import net.minecraft.item.ItemStack
@@ -328,8 +329,8 @@ class GuiAutoCrafter(tile:TileAutoCrafter, c:ContainerAutoCrafter) extends NodeG
 
         GuiDraw.drawTexturedModalRect(100,41,193,23,tile.progressScaled(22)+1,14)
 
-        GuiDraw.drawString("Auto Crafting Bench", 8, 6, EnumColour.GRAY.argb, false)
-        GuiDraw.drawString("Inventory", 8, 120, EnumColour.GRAY.argb, false)
+        GuiDraw.drawString(I18n.format("tile.projectred.expansion.machine2|11.name"), 8, 6, EnumColour.GRAY.argb, false)
+        GuiDraw.drawString(I18n.format("container.inventory"), 8, 120, EnumColour.GRAY.argb, false)
     }
 
     override def drawFront_Impl(mouse:Point, rframe:Float): Unit =
@@ -390,6 +391,8 @@ object RenderAutoCrafter extends SimpleBlockRenderer
     }
     override def getItemTransforms(stack: ItemStack) = Triple.of(0, 0, iconT)
     override def shouldCull() = true
+    override def getParticleTexture(state: IExtendedBlockState) = bottom
+
 
     def getIcon(side:Int, meta:Int) = side match
     {

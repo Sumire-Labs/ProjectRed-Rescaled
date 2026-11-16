@@ -25,6 +25,7 @@ import mrtjp.projectred.ProjectRedExpansion
 import mrtjp.projectred.api.{IFrame, IRelocationAPI}
 import mrtjp.projectred.expansion.TileBlockPlacer.*
 import net.minecraft.client.renderer.texture.{TextureAtlasSprite, TextureMap}
+import net.minecraft.client.resources.I18n
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.entity.{Entity, EntityLivingBase}
 import net.minecraft.inventory.IInventory
@@ -329,8 +330,8 @@ class GuiBlockPlacer(c:ContainerBlockPlacer) extends NodeGui(c, 176, 168)
     {
         TextureUtils.changeTexture(GuiBlockPlacer.background)
         GuiDraw.drawTexturedModalRect(0, 0, 0, 0, 176, 168)
-        GuiDraw.drawString("Block Placer", 8, 6, EnumColour.GRAY.argb, false)
-        GuiDraw.drawString("Inventory", 8, 75, EnumColour.GRAY.argb, false)
+        GuiDraw.drawString(I18n.format("tile.projectred.expansion.machine2|2.name"), 8, 6, EnumColour.GRAY.argb, false)
+        GuiDraw.drawString(I18n.format("container.inventory"), 8, 75, EnumColour.GRAY.argb, false)
     }
 }
 
@@ -391,6 +392,8 @@ object RenderBlockPlacer extends SimpleBlockRenderer
 
     override def getItemTransforms(stack: ItemStack) = Triple.of(0, 0, iconT1)
     override def shouldCull() = true
+    override def getParticleTexture(state: IExtendedBlockState) = bottom
+
 
     def getIcon(s:Int, meta:Int) = s match
     {

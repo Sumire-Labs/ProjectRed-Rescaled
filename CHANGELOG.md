@@ -35,6 +35,12 @@
 
 ### Fixed
 
+- Fix a crash when placing Pneumatic Tubes from their item.
+- Restore machine, lamp, frame and framed-wire particles; use the lamp's actual color and lit state.
+- Localize GUI labels, routing-chip tooltips and server messages, preserving custom item names and adding Japanese translations.
+- Correct Chinese inverted fallout-lamp names and add the missing fabrication-machine model fallback.
+- Replace the deprecated JEI plugin base class with its supported interface.
+
 - Keep layered drawings, vertical wire connections and layer-specific edits intact across saves and synchronization.
 - Restore IC drawing alpha and GL state during layer transitions; keep analog zero-input levels consistent with the newer implementation.
 
